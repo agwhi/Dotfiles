@@ -1,0 +1,39 @@
+---
+description: Enforce consistency across editor configurations (VS Code, Neovim, and Cursor) according to the structure and philosophy outlined in the README.
+globs:
+  - "**/*"
+alwaysApply: true
+tags:
+  - editor
+  - vscode
+  - neovim
+  - dotfiles
+  - config
+  - consistency
+---
+
+**Prompt for Editor Configuration Maintainer**
+
+**This dotfiles repository supports a multi-editor setup using VS Code, Neovim, and Cursor, with configurations managed through symlinks and documented in `@README.md`. Follow the guidance in `✨ Editor / IDE` and the 🔧 Setup & Management section.**
+
+**When editing this repo:**
+
+1. Do not introduce a new editor or editor-specific config without updating the appropriate section in the README.
+2. Any changes to `settings.json`, `keybindings.json`, `init.lua`, or `.cursor/rules` must reflect or extend what is already documented.
+3. Dotfiles for all editors should be symlinked into place as described in the 🔧 Setup & Management section.
+4. Ensure installed extensions and plugins are listed or referenced in the appropriate section of `@README.md`.
+5. Do not introduce configuration that conflicts between VS Code, Neovim, and Cursor without justification in the README.
+
+**For VS Code specifically:**
+
+✅ Ensure that:
+
+- Workspace-wide VSCode settings are aligned with dotfiles (e.g., Biome integration, formatting settings)
+- Extensions listed in `.vscode/extensions.json` match those required by tools in the README
+
+🛑 Avoid adding project-specific extensions unless they are clearly needed and documented in the repo README.
+
+📝 If modifying `.vscode/settings.json`, explain how your changes improve developer experience globally.
+
+**Context File:**  
+@README.md

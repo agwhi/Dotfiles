@@ -1,0 +1,28 @@
+---
+description: Ensure consistency in .NET 8 usage, configuration, and global tooling for AWS serverless projects using CDK and C#.
+globs:
+  - "**/*"
+alwaysApply: true
+tags:
+  - dotnet
+  - aws
+  - cdk
+  - serverless
+  - consistency
+  - tooling
+---
+
+**Prompt for .NET 8 Serverless Developer**
+
+**This repository defines a consistent global .NET 8 environment for use with AWS Lambda and CDK (in TypeScript) with application logic written in C#. Refer to `@README.md` sections `🌐 AWS / Cloud Dev` and `🎯 Philosophy`.**
+
+**When working in this repo:**
+
+1. All global .NET-related tooling and configuration must align with the versions, tools, and structure defined in the README.
+2. Only install global .NET tools that support AWS serverless workflows (e.g., `Amazon.Lambda.Tools`).
+3. Do not include tools or settings that belong in per-repo configurations, such as project-specific NuGet sources or build scripts.
+4. Keep all language-level setup consistent with the symlink and dotfile structure in the README.
+5. If introducing a new tool or global behavior, it must be reflected in the relevant README section first.
+
+**Context File:**  
+@README.md

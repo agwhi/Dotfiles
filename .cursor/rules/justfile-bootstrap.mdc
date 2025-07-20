@@ -1,0 +1,29 @@
+---
+description: Enforce Justfile as the source of truth for setup/bootstrap tasks.
+globs:
+  - "justfile"
+  - "**/justfile"
+alwaysApply: true
+tags:
+  - bootstrap
+  - setup
+  - just
+---
+
+**Prompt for Justfile Bootstrap Consistency**
+
+All environment bootstrapping and developer onboarding tasks must be defined in the `justfile`, as described in the `🎯 Philosophy` section of `@README.md`.
+
+✅ Add or update tasks in the `justfile` for:
+
+- Installing packages via `brew`, `cargo`, or `pnpm`
+- Creating symlinks to dotfiles
+- Backing up system state (e.g., `.gitconfig.local`)
+- Running `topgrade` for upgrades
+
+🛑 Avoid using shell scripts or manual commands for these tasks unless there's a clear reason documented in the README.
+
+📌 The `justfile` should be the canonical source of truth for project-wide and machine setup workflows.
+
+**Context File:**  
+@README.md

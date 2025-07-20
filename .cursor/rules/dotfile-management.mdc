@@ -1,0 +1,29 @@
+---
+description: Enforce symlink-based dotfile management and secure handling of local overrides and backups.
+globs:
+  - "**/*"
+alwaysApply: true
+tags:
+  - dotfiles
+  - symlinks
+  - backup
+  - secrets
+  - config
+---
+
+**Prompt for Dotfile Manager**
+
+**This repository uses a symlink-based approach for managing configuration files, backed by a backup script and optional secure overrides. Follow the guidance in the 🔧 Setup & Management section of `@README.md`.**
+
+**When modifying this repo:**
+
+1. All editable tool configurations (e.g. `.gitconfig`, `env.nu`, VSCode settings, etc.) must be symlinked from the dotfiles directory to their active locations.
+2. Symlink paths must be consistent and tracked; the `backup.sh` script should remain available for non-symlinked or edge-case file recovery.
+3. Secrets or sensitive config (e.g. `.gitconfig.local`) should:
+   - Be added to `.gitignore`
+   - Have an `.example` version committed
+   - Be documented in the appropriate security section
+4. Do not copy/paste or hardcode dotfile paths — updates should always be reflected through symlinks or documented script logic. 5. If a new dotfile is added, update the relevant dotfile setup section in `@README.md`.
+
+**Context File:**  
+@README.md

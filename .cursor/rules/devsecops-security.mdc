@@ -1,0 +1,29 @@
+---
+description: Ensure global security tools are configured and used consistently across the development environment.
+globs:
+  - "**/*"
+alwaysApply: true
+tags:
+  - security
+  - devsecops
+  - secrets
+  - consistency
+  - tooling
+---
+
+**Prompt for DevSecOps Security Configuration**
+
+**This repository enforces global security standards via tools outlined in `@README.md`, specifically in the `🔒 DevSecOps` and `🎯 Philosophy` sections.**
+
+**When working in this repo:**
+
+1. Tools like `ripsecrets`, `gitleaks`, and `dotenv-linter` are part of the global security posture — changes to security tools must align with the current tooling stack in `@README.md`.
+2. Git hooks must avoid interfering with local repo-specific hooks (e.g., Husky) and operate only at the global level, scanning for secrets and config drift.
+3. If introducing a new global security tool, it must:
+   - Operate at a system or global Git level
+   - Not override or disrupt local `.git/hooks/`
+   - Be added to the `🔒 DevSecOps` section in the README
+4. Do not include CI-focused or repo-specific enforcement tools unless they provide system-wide consistency checks.
+
+**Context File:**  
+@README.md

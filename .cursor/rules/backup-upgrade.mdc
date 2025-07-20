@@ -1,0 +1,26 @@
+---
+description: Ensure the presence and correct usage of backup scripts and upgrade tooling as defined in the README.
+globs:
+  - "**/*"
+alwaysApply: true
+tags:
+  - backup
+  - upgrade
+  - maintenance
+---
+
+**Prompt for Backup and Upgrade Strategy**
+
+Your changes must align with the tooling and philosophy described in the 🔧 Setup & Management section of `@README.md`.
+
+✅ Ensure the presence of:
+
+1. A `backup.sh` script that backs up all dotfiles not covered by symlinks (e.g. Brewfile, manual config fragments).
+2. Use of `topgrade` as the unified upgrade tool for both `brew` and `cargo` installed binaries.
+
+🛑 Do not introduce other upgrade scripts or tooling unless they are first added to the README.
+
+ℹ️ Note: Since most config files are symlinked directly, the backup script is for edge cases and critical one-off files only.
+
+**Context File:**  
+@README.md

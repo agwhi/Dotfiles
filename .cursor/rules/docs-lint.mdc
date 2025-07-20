@@ -1,0 +1,27 @@
+---
+description: Encourage consistent, high-quality Markdown documentation for dotfiles and tooling.
+globs:
+  - "**/*.md"
+alwaysApply: false
+tags:
+  - docs
+  - markdown
+---
+
+**Prompt for Documentation Quality**
+
+Ensure documentation in markdown files is clear, consistent, and aligned with best practices defined implicitly in `@README.md`.
+
+✅ Make sure:
+
+- Tool explanations match those in the `README.md`
+- Lists are well formatted and follow consistent heading structure
+- Setup steps and usage notes are copy-paste friendly
+- Documentation follows the same structure and tone as the main README
+
+🛑 Avoid outdated instructions, mismatched sections, or tools not listed in the README.
+
+📌 Use markdown linting tools if available and follow general structure/patterns shown in `README.md`.
+
+**Context File:**  
+@README.md

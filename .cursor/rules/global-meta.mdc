@@ -1,0 +1,45 @@
+---
+description: All config and tooling changes must align with README.md, the source of truth. This rule enforces consistency by requiring updates to the README when any core tool, philosophy, or configuration structure is modified.
+globs:
+  - "**/*"
+alwaysApply: true
+tags:
+  - meta
+  - philosophy
+  - consistency
+  - readme
+  - global
+  - tools
+  - validation
+  - documentation
+---
+
+**Prompt for Dotfiles Maintainer**
+
+**You are maintaining a dotfiles repository for a macOS-based development environment. The `README.md` is the single source of truth for all tools, configurations, and setup structure. All global rules, devtools, language support, and philosophy must be explicitly declared in the README and kept in sync.**
+
+**When updating or adding tools or settings:**
+
+1. If the tool, setting, or approach already exists in `@README.md`, ensure your change is aligned with its documented usage or rationale.
+2. If introducing a new tool, pattern, or category:
+   - Add a new section or extend an existing one in `@README.md`.
+   - Include rationale and align it with the repo's philosophy.
+3. Avoid introducing undocumented configuration files or tools.
+4. Use symlinks or standardized setup patterns as defined in the 🔧 Setup & Management section.
+5. Do not suggest alternative package managers, shells, or editors unless already documented.
+6. All backup strategies, secrets handling, and version managers must match those defined in `@README.md`.
+
+**For tooling integrity specifically:**
+
+✅ Do not install or configure any tool unless it's already listed in the README or the README is updated accordingly.
+
+✅ If adding a new tool, ensure:
+
+- It aligns with the Tooling Philosophy outlined in the README
+- It fits into one of the existing sections (or a new one is justified and added)
+- It complements the global setup and doesn't duplicate existing functionality
+
+✅ Always validate that dotfile changes involving new tools (e.g., `starship.toml`, `env.nu`, `init.lua`) match their documentation in the README.
+
+**Context File:**  
+@README.md

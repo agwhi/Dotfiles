@@ -1,0 +1,28 @@
+---
+description: Enforce nushell and toolchain usage instead of POSIX/bash
+globs: ["*"]
+alwaysApply: true
+---
+
+**Shell Environment:**
+
+You are using `nushell` (not bash or zsh). Any shell commands, scripts, or examples should use `nushell` syntax and idioms, not POSIX-style shell.
+
+If unsure how to express something in `nushell`, prefer clarity and simplicity. Favor the tools listed in the `README.md` file, especially for file manipulation, scripting, and task automation.
+
+Your environment includes:
+
+- `nushell` with `env.nu` and `config.nu`
+- `starship`, `zoxide`, `fd`, `fzf`, `bat`, `ripgrep`, `just`, `carapace`, and other Rust-based tools
+- Node with `pnpm` (via `corepack`)
+- .NET 8
+- AWS CLI + CDK
+- `topgrade` for updates
+- `direnv` and `.envrc` for secrets/config
+
+Avoid suggesting `bash`, `sh`, or `zsh`. Prefer idiomatic `nushell`.
+
+Reference: See `nushell/` directory and `README.md` for environment details.
+
+**Context File:**  
+@README.md
