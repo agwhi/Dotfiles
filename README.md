@@ -83,8 +83,16 @@ A carefully curated developer setup for Node.js (via pnpm), .NET 8 (C#), TypeScr
 All configs are symlinked into correct system paths to maintain this repo as the single source of truth:
 
 ```bash
-just link-dotfiles
+just link
 ```
+
+The setup script (`setup_symlinks_simple.sh`) safely:
+- Backs up existing config files to `.backup` versions
+- Creates symlinks from dotfiles repo to system locations
+- Logs all actions to `symlink-backups.txt`
+- Handles idempotent re-runs safely
+- Optionally syncs existing config to the repo before backup
+- Uses robust path resolution for symlink verification
 
 ### Git Configuration
 
@@ -92,7 +100,7 @@ Symlink `.gitconfig` globally and separate sensitive config:
 
 ```bash
 cp git/.gitconfig.local.example ~/.gitconfig.local
-just link-dotfiles
+just link
 ```
 
 **Structure:**
@@ -107,6 +115,17 @@ just link-dotfiles
 
 ```bash
 topgrade
+```
+
+**Available Commands:**
+
+```bash
+just link                    # Set up all dotfile symlinks
+just backup                  # Backup non-symlinked files
+just upgrade                 # Run topgrade to update everything
+just install-brew           # Install all Homebrew packages
+just install-vscode-extensions # Install VS Code extensions
+just setup                  # Full setup: install packages and create symlinks
 ```
 
 **Backup non-symlinked files:**
@@ -125,10 +144,6 @@ Updates `Brewfile` and `vscode/extensions.txt` (symlinked files are already trac
 dotfiles/
 ├── .config/
 │   ├── starship.toml
-│   ├── carapace/
-│   │   └── carapace.yaml
-│   ├── zoxide/
-│   │   └── config.toml
 │   └── nvim/
 │       └── init.lua
 ├── .cursor/
