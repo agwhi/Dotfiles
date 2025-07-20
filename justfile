@@ -18,7 +18,11 @@ upgrade:
 
 # Install all Homebrew packages
 install-brew:
-  brew bundle install
+  # Install all CLI tools and apps defined in Brewfile
+  brew bundle --file=./Brewfile
+
+# Alias for install-brew task
+brew: install-brew
 
 # Install VS Code extensions
 install-vscode-extensions:
