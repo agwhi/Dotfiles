@@ -219,8 +219,10 @@ dotfiles/
 ├── vscode/                  # VS Code configuration
 │   ├── settings.json       # VS Code settings
 │   └── extensions.txt      # VS Code extensions list
+├── .editorconfig           # Editor configuration for consistent formatting
 ├── .gitignore              # Git ignore rules
 ├── Brewfile                # Homebrew packages and apps
+├── LICENSE                 # MIT License
 ├── backup.sh               # System backup script
 ├── backup-log.txt          # Backup operation logs
 ├── install.sh              # Prerequisites installer
