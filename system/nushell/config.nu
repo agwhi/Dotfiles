@@ -71,5 +71,17 @@ alias ghelp = just $'--justfile=($env.HOME)/.justfile' help
 
 # https://carapace-sh.github.io/carapace-bin/setup.html#nushell
 source ~/.cache/carapace/init.nu
-eval "$(direnv hook nushell)"
-eval "$(direnv hook nushell)"
+
+# Setup direnv for nushell (official nushell approach)
+$env.config.hooks.pre_prompt = (
+    $env.config.hooks.pre_prompt? | append { ||
+        if (which /opt/homebrew/bin/direnv | is-empty) {
+            return
+        }
+
+        do { /opt/homebrew/bin/direnv export json } | from json | default {} | load-env
+        if 'ENV_CONVERSIONS' in $env and 'PATH' in $env.ENV_CONVERSIONS {
+            $env.PATH = do $env.ENV_CONVERSIONS.PATH.from_string $env.PATH
+        }
+    }
+)

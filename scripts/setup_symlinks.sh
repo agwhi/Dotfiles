@@ -78,6 +78,12 @@ create_symlink "$DOTFILES_DIR/system/vscode/settings.jsonc" "$HOME/Library/Appli
 # Global justfile for system-wide commands
 create_symlink "$DOTFILES_DIR/system/global-justfile" "$HOME/.justfile" "Global justfile"
 
+# Topgrade configuration
+create_symlink "$DOTFILES_DIR/system/topgrade.toml" "$HOME/.config/topgrade.toml" "Topgrade config"
+
+# Direnv configuration
+create_symlink "$DOTFILES_DIR/system/direnv.toml" "$HOME/.config/direnv/direnv.toml" "Direnv config"
+
 # Global Git ignore setup
 if [[ -e "$DOTFILES_DIR/system/git/gitignore_global" ]]; then
     echo "🔧 Setting up global gitignore"

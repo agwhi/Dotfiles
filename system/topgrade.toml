@@ -1,0 +1,63 @@
+# Topgrade configuration for dotfiles environment
+# Disables npm and yarn, enables only pnpm
+
+[misc]
+# Disable node (includes npm) and yarn steps, keep pnpm
+disable = ["node", "yarn"]
+
+# Don't ask for confirmations
+assume_yes = true
+
+# Do not ask to retry failed steps
+no_retry = true
+
+# Display the time in step titles
+display_time = true
+
+# Cleanup temporary or old files
+cleanup = true
+
+# Send a notification for every step
+notify_each_step = false
+
+# Skip sending a notification at the end of a run
+skip_notify = true
+
+[brew]
+# For the BrewFormula step
+# Execute `brew autoremove` after the step
+autoremove = true
+
+# For the BrewCask step
+# Use the `--greedy` option
+greedy_cask = true
+
+[git]
+# How many repos to pull at max in parallel
+max_concurrency = 5
+
+# Arguments to pass Git when pulling Repositories
+arguments = "--rebase --autostash"
+
+# Don't pull the predefined git repos (we manage our own)
+pull_predefined = false
+
+# Additional git repositories to pull
+repos = [
+    "~/Dev/*/",
+    "~/.config/*/"
+]
+
+[vscode]
+# Update VS Code extensions
+
+[python]
+# Enable pip upgrades
+enable_pip_review = true
+
+[composer]
+# Self update composer
+self_update = true
+
+# Note: pnpm is enabled by default and not disabled in the config
+# npm and yarn are explicitly disabled above 

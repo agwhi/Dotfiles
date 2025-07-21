@@ -1,0 +1,16 @@
+# Direnv configuration
+# Enables automatic loading of .env files
+
+[global]
+# Enable automatic loading of .env files (requires direnv >= 2.31.0)
+load_dotenv = true
+
+# Hide environment diff when loading .envrc (optional, for cleaner output)
+hide_env_diff = true
+
+[whitelist]
+# Automatically allow .envrc files in development directories
+# This means you won't need to run 'direnv allow' for projects in these paths
+prefix = [
+    "~/Dev",
+] 
