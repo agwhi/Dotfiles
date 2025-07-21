@@ -12,9 +12,9 @@ backup:
 backup-and-link: backup link
     echo "✅ Backup and symlink setup complete!"
 
-# Upgrade all packages and tools
+# Upgrade all packages and tools (use global: dotfile upgrade)
 upgrade:
-    topgrade
+    @echo "Use 'dotfile upgrade' for system-wide upgrades"
 
 # Install all Homebrew packages
 install-brew:
@@ -72,9 +72,10 @@ install-node-tools: install-pnpm
     echo "   - AWS CDK: Available for AWS infrastructure development"
     echo "   - Use 'biome init' in projects to create biome.json"
 
-# Setup Node.js development environment
+# Setup Node.js development environment (use global: dotfile setup-node)
 setup-node: install-node install-node-tools
     echo "✅ Node.js development environment ready"
+    echo "💡 Use 'dotfile setup-node' for future Node.js setup in other projects"
 
 # Install global .NET Lambda tools
 install-dotnet-tools:
@@ -82,14 +83,16 @@ install-dotnet-tools:
     dotnet tool install -g Amazon.Lambda.TestTool-8.0 || echo "Amazon.Lambda.TestTool-8.0 already installed"
     echo "✅ .NET Lambda tools installed"
 
-# Setup .NET development environment
+# Setup .NET development environment (use global: dotfile setup-dotnet)
 setup-dotnet: install-dotnet-tools
     echo "✅ .NET development environment ready"
+    echo "💡 Use 'dotfile setup-dotnet' for future .NET setup in other projects"
 
-# Configure AWS CLI
+# Configure AWS CLI (use global: dotfile setup-aws)
 setup-aws-cli:
     aws configure sso
     echo "✅ AWS CLI configured"
+    echo "💡 Use 'dotfile setup-aws' for future AWS setup in other projects"
 
 # Setup direnv for environment management
 setup-direnv:
@@ -100,24 +103,17 @@ setup-direnv:
 setup-security: setup-direnv
     echo "✅ Security tools installed and configured"
 
-# Run security scans
+# Run security scans (use global: dotfile security-scan)
 security-scan:
-    ripsecrets --strict-ignore .
-    gitleaks detect --source . --verbose
-    echo "✅ Security scan complete"
+    @echo "Use 'dotfile security-scan' for system-wide security scans"
 
-# Run quality checks
+# Run quality checks (use global: dotfile quality-check)
 quality-check:
-    ripsecrets --strict-ignore .
-    gitleaks detect --source . --verbose
-    editorconfig-checker
-    dotenv-linter
-    echo "✅ Quality checks complete"
+    @echo "Use 'dotfile quality-check' for system-wide quality checks"
 
-# Fix formatting issues automatically
+# Fix formatting issues automatically (use global: dotfile fix-formatting)
 fix-formatting:
-    dotenv-linter fix
-    echo "✅ Formatting fixes applied (manual fixes may still be needed for editorconfig issues)"
+    @echo "Use 'dotfile fix-formatting' for system-wide formatting fixes"
 
 # Fix common formatting issues using sed
 fix-formatting-comprehensive:
@@ -129,12 +125,12 @@ fix-formatting-comprehensive:
     fd -t f -e json -e md -e mdc -e lua -e nu -e sh -e txt -e config -x sed -i '' 's/\t/    /g' {}
     echo "✅ Comprehensive formatting fixes applied"
 
-docs-lint:
+readme-lint:
     markdownlint README.md
     # Lint README.md for documentation issues
 
 # Lint all code using Biome
-lint:
+repo-lint:
     biome lint --files-ignore-unknown=true .
     # Lint all code using Biome (installed globally via pnpm)
     # Ignores files that Biome doesn't recognize

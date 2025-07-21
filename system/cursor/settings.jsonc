@@ -53,7 +53,7 @@
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
     // Git settings
-    "git.autofetch": true,
+    "git.autofetch": false,
     "git.confirmSync": false,
     // Terminal settings
     "terminal.integrated.defaultProfile.osx": "nu",

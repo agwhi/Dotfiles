@@ -1,0 +1,65 @@
+# Global Justfile - Available system-wide for all projects
+
+# Run quality checks (security + formatting)
+quality-check:
+    ripsecrets --strict-ignore .
+    gitleaks detect --source . --verbose
+    editorconfig-checker
+    dotenv-linter
+    echo "✅ Quality checks complete"
+
+# Run security scans only
+security-scan:
+    ripsecrets --strict-ignore .
+    gitleaks detect --source . --verbose
+    echo "✅ Security scan complete"
+
+# Lint code with Biome (if biome.json exists)
+lint:
+    sh -c 'if [ -f "biome.json" ]; then biome lint --files-ignore-unknown=true .; else echo "⚠️  No biome.json found. Run biome init to create one."; fi'
+
+# Format code with Biome (if biome.json exists)
+format:
+    sh -c 'if [ -f "biome.json" ]; then biome format .; else echo "⚠️  No biome.json found. Run biome init to create one."; fi'
+
+# Lint markdown files (if markdownlint is available)
+docs-lint:
+    sh -c 'if command -v markdownlint >/dev/null 2>&1; then markdownlint *.md; else echo "⚠️  markdownlint not installed. Install with: pnpm add -g markdownlint-cli"; fi'
+
+# Fix formatting issues
+fix-formatting:
+    dotenv-linter fix
+    echo "✅ Formatting fixes applied"
+
+# Upgrade all packages and tools
+upgrade:
+    topgrade
+
+# Setup Node.js environment (if fnm is available)
+setup-node:
+    sh -c 'if ! command -v fnm >/dev/null 2>&1; then echo "⚠️  fnm not found. Install with: brew install fnm"; exit 1; fi'
+    fnm install --lts
+    fnm use lts-latest
+    fnm default lts-latest
+    corepack enable
+    corepack prepare pnpm@latest --activate
+    echo "✅ Node.js LTS and pnpm ready"
+
+# Setup .NET environment
+setup-dotnet:
+    dotnet tool install -g Amazon.Lambda.Tools || echo "Amazon.Lambda.Tools already installed"
+    dotnet tool install -g Amazon.Lambda.TestTool-8.0 || echo "Amazon.Lambda.TestTool-8.0 already installed"
+    echo "✅ .NET Lambda tools installed"
+
+# Configure AWS CLI
+setup-aws:
+    aws configure sso
+    echo "✅ AWS CLI configured"
+
+# Initialize Biome in current project (if not already exists)
+init-biome:
+    sh -c 'if [ -f "biome.json" ]; then echo "⚠️  biome.json already exists"; else biome init; echo "✅ Biome initialized. Edit biome.json to customize settings."; fi'
+
+# Show available commands
+help:
+    @just --list 

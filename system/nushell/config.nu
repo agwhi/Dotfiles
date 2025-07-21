@@ -53,6 +53,22 @@ path add $"($env.HOME)/.dotnet/tools"
 alias vim = nvim
 alias lambda-test = dotnet-lambda-test-tool-8.0
 
+# Global justfile aliases
+alias dotfile = just $'--justfile=($env.HOME)/.justfile'
+alias gjust = just $'--justfile=($env.HOME)/.justfile'
+alias quality = just $'--justfile=($env.HOME)/.justfile' quality-check
+alias security = just $'--justfile=($env.HOME)/.justfile' security-scan
+alias glint = just $'--justfile=($env.HOME)/.justfile' lint
+alias gformat = just $'--justfile=($env.HOME)/.justfile' format
+alias gdocs = just $'--justfile=($env.HOME)/.justfile' docs-lint
+alias gfix = just $'--justfile=($env.HOME)/.justfile' fix-formatting
+alias gupgrade = just $'--justfile=($env.HOME)/.justfile' upgrade
+alias gnode = just $'--justfile=($env.HOME)/.justfile' setup-node
+alias gdotnet = just $'--justfile=($env.HOME)/.justfile' setup-dotnet
+alias gaws = just $'--justfile=($env.HOME)/.justfile' setup-aws
+alias gbiome = just $'--justfile=($env.HOME)/.justfile' init-biome
+alias ghelp = just $'--justfile=($env.HOME)/.justfile' help
+
 # https://carapace-sh.github.io/carapace-bin/setup.html#nushell
 source ~/.cache/carapace/init.nu
 eval "$(direnv hook nushell)"

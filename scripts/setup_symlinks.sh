@@ -75,6 +75,9 @@ create_symlink "$DOTFILES_DIR/system/ghostty/config" "$HOME/Library/Application 
 create_symlink "$DOTFILES_DIR/system/aws/config" "$HOME/.aws/config" "AWS config"
 create_symlink "$DOTFILES_DIR/system/vscode/settings.jsonc" "$HOME/Library/Application Support/Code/User/settings.json" "VS Code settings"
 
+# Global justfile for system-wide commands
+create_symlink "$DOTFILES_DIR/system/global-justfile" "$HOME/.justfile" "Global justfile"
+
 # Global Git ignore setup
 if [[ -e "$DOTFILES_DIR/system/git/gitignore_global" ]]; then
     echo "🔧 Setting up global gitignore"

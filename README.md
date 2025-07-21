@@ -304,21 +304,57 @@ topgrade
 **Available Commands:**
 
 ```bash
+# Dotfile management (local to this repo)
 just setup                  # Full setup: install packages and create symlinks
 just brew                  # Install all Homebrew packages from Brewfile
 just backup                # Back up current system config to repo
 just edit                  # Open dotfiles folder in Cursor editor
-just upgrade               # Update all packages and tools
 just link                  # Set up all dotfile symlinks only
 just install-vscode-extensions # Install VS Code extensions only
+just install-node-tools    # Install global Node.js tools from pnpm-global.txt
+just setup-security        # Install and configure security tools
+
+# Environment setup (use global commands for other projects)
 just setup-node            # Install Node.js LTS and global tools (Biome, CDK)
 just setup-dotnet          # Install .NET 8 Lambda tools
 just setup-aws             # Configure AWS CLI (CDK tools installed via Node.js)
-just setup-security        # Install and configure security tools
-just install-node-tools    # Install global Node.js tools from pnpm-global.txt
-just security-scan         # Run secret scanning and security checks
-just quality-check         # Run code quality and formatting checks
+
+# Quality checks
+just repo-lint             # Lint all code using Biome (local to dotfiles repo)
+just readme-lint           # Lint README.md for documentation issues
+just security-scan         # Redirects to global 'dotfile security-scan' command
+just quality-check         # Redirects to global 'dotfile quality-check' command
+just upgrade               # Redirects to global 'dotfile upgrade' command
 ```
+
+### **Global Justfile Commands**
+
+The dotfiles setup also creates a global justfile (`~/.justfile`) that provides useful commands for any project. These are available via convenient nushell aliases:
+
+```bash
+# Quality and security (available in any directory)
+quality                    # Run security scans + formatting checks
+security                   # Run secret scanning only
+glint                      # Lint with Biome (if biome.json exists)
+gformat                    # Format with Biome (if biome.json exists)
+gdocs                      # Lint markdown files
+gfix                       # Fix formatting issues
+
+# Environment setup (available anywhere)
+gnode                      # Setup Node.js environment
+gdotnet                    # Setup .NET environment
+gaws                       # Configure AWS CLI
+gupgrade                   # Upgrade all packages with topgrade
+
+# Project initialization
+gbiome                     # Initialize Biome in current project
+ghelp                      # Show all available commands
+
+# Direct access to global justfile
+dotfile <command>          # Run any global justfile command 
+```
+
+**Note:** These aliases are automatically available in any directory and work with the global justfile configuration.
 
 **Backup non-symlinked files:**
 
@@ -467,6 +503,7 @@ dotfiles/
 ├── .gitignore              # Repository-specific ignore rules
 ├── LICENSE                 # MIT License
 ├── justfile                # Task automation (all setup commands)
+├── system/global-justfile  # Global justfile for system-wide commands
 ├── README.md               # This documentation
 ├── biome.json              # Biome linting and formatting configuration
 ├── backup-log.txt          # Backup operation logs
