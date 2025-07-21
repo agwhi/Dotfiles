@@ -1,0 +1,558 @@
+---
+alwaysApply: true
+---
+
+# Nushell Cheatsheet for Dotfiles Environment
+
+## 🚨 CRITICAL: Use Nushell, Not Bash!
+
+**You are in a nushell environment. NEVER use bash-style commands or syntax.**
+
+## 📁 File Operations
+
+### Reading Files
+```nushell
+# View file with syntax highlighting (like cat but better)
+bat file.txt
+
+# Read file content for processing (when you need the raw text)
+open file.txt
+
+# Read specific lines
+open file.txt | lines | range 10..20
+
+# Count lines
+open file.txt | lines | length
+
+# Get line by number (0-indexed)
+open file.txt | lines | get 5
+```
+
+### Writing Files
+```nushell
+# Write content to file
+"content" | save file.txt
+
+# Append to file
+"new content" | save -a file.txt
+
+# Write JSON
+'{"key": "value"}' | save config.json
+```
+
+### File Information
+```nushell
+# List files with details
+ls
+
+# Filter by size
+ls | where size > 1mb
+
+# Filter by name
+ls | where name =~ "*.txt"
+
+# Get file stats
+ls file.txt | get 0.modified
+```
+
+## 🔍 Text Processing
+
+### Searching & Filtering
+```nushell
+# Search in files (like grep)
+open file.txt | lines | where $it =~ "pattern"
+
+# Search multiple files
+ls *.txt | each { |f| open $f.name | lines | where $it =~ "pattern" }
+
+# Count matches
+open file.txt | lines | where $it =~ "pattern" | length
+
+# View file with search highlighting
+bat file.txt | grep pattern
+```
+
+### String Operations
+```nushell
+# String length
+"hello" | str length
+
+# String contains
+"hello world" | str contains "world"
+
+# String replace
+"hello world" | str replace "world" "nushell"
+
+# Split string
+"a,b,c" | split row ","
+```
+
+## 📊 Data Processing
+
+### Working with Tables
+```nushell
+# Filter table rows
+ls | where size > 1mb
+
+# Sort table
+ls | sort-by size
+
+# Select columns
+ls | select name size
+
+# Group by
+ls | group-by type
+```
+
+### JSON Operations
+```nushell
+# Parse JSON
+'{"name": "value"}' | from json
+
+# Convert to JSON
+[1 2 3] | to json
+
+# Extract JSON values
+'{"key": "value"}' | from json | get key
+```
+
+## 🛠️ System Operations
+
+### Process Management
+```nushell
+# List processes
+ps
+
+# Kill process
+ps | where name =~ "process" | each { |p| kill $p.pid }
+
+# Process info
+ps | where cpu > 10
+```
+
+### Environment Variables
+```nushell
+# Get env var
+$env.PATH
+
+# Set env var
+$env.MY_VAR = "value"
+
+# List all env vars
+$env | table
+```
+
+## 🔧 Common Patterns
+
+### Conditional Operations
+```nushell
+# If file exists
+if (ls | where name =~ "file.txt" | length) > 0 {
+    "File exists"
+} else {
+    "File not found"
+}
+
+# Check command success
+if (some-command | complete | get exit_code) == 0 {
+    "Success"
+} else {
+    "Failed"
+}
+```
+
+### Loops & Iteration
+```nushell
+# Iterate over files
+ls *.txt | each { |f| echo $"Processing ($f.name)" }
+
+# Range iteration
+1..5 | each { |i| echo $i }
+
+# While loop
+mut counter = 0
+while $counter < 5 {
+    echo $counter
+    $counter = $counter + 1
+}
+```
+
+## 🚫 What NOT to Do
+
+### ❌ Bash Commands to Avoid
+```bash
+# DON'T use these:
+echo "content" > file.txt          # Use: "content" | save file.txt
+cat file.txt                       # Use: bat file.txt (for viewing) or open file.txt (for processing)
+grep pattern file.txt              # Use: open file.txt | lines | where $it =~ "pattern"
+find . -name "*.txt"               # Use: ls **/*.txt
+wc -l file.txt                     # Use: open file.txt | lines | length
+sed -i 's/old/new/g' file.txt      # Use: open file.txt | str replace "old" "new" | save file.txt
+head -n 10 file.txt                # Use: open file.txt | lines | first 10
+tail -n 10 file.txt                # Use: open file.txt | lines | last 10
+```
+
+### ❌ Bash Syntax to Avoid
+```bash
+# DON'T use:
+> for redirection                 # Use: | save
+>> for append                     # Use: | save -a
+| grep                           # Use: | where $it =~ "pattern"
+$(command)                       # Use: (command)
+```
+
+## ✅ Best Practices
+
+### 1. Use Structured Data
+```nushell
+# Good: Work with structured data
+ls | where size > 1mb | sort-by size
+
+# Bad: Parse text output
+ls -la | lines | where $it =~ "^-"
+```
+
+### 2. Leverage Nushell's Type System
+```nushell
+# Good: Use proper types
+[1 2 3] | math sum
+
+# Bad: String manipulation
+"1,2,3" | split row "," | each { |s| $s | into int } | math sum
+```
+
+### 3. Use Built-in Commands
+```nushell
+# Good: Use nushell built-ins
+open file.txt | lines | length
+
+# Bad: External commands
+wc -l file.txt
+```
+
+## 🎯 Environment-Specific Commands
+
+### Working with This Dotfiles Repo
+```nushell
+# Check symlinks
+ls -la ~ | where name =~ "^\." | where type == "symlink"
+
+# View README with syntax highlighting
+bat README.md
+
+# Verify file contents
+open README.md | lines | length
+
+# Check justfile tasks
+just --list
+
+# Run quality checks
+just quality-check
+```
+
+### Common Debugging
+```nushell
+# Check current directory
+pwd
+
+# List environment
+$env | table
+
+# Check command history
+history | last 10
+
+# Test command output
+some-command | table
+```
+
+## 📚 Remember
+
+- **Always prefer nushell built-ins** over external commands
+- **Use structured data** instead of text parsing
+- **Leverage the type system** for better operations
+- **Think in pipelines** rather than command chaining
+- **Use `bat` for viewing files** (syntax highlighting)
+- **Use `open` for processing file content**
+- **Use `save` instead of `>`**
+- **Use `where` instead of `grep`**
+- **Use `lines` for line-by-line processing**
+
+When in doubt, ask yourself: "Is there a nushell way to do this?" The answer is usually yes!
+
+# Nushell Cheatsheet for Dotfiles Environment
+
+## 🚨 CRITICAL: Use Nushell, Not Bash!
+
+**You are in a nushell environment. NEVER use bash-style commands or syntax.**
+
+## 📁 File Operations
+
+### Reading Files
+```nushell
+# View file with syntax highlighting (like cat but better)
+bat file.txt
+
+# Read file content for processing (when you need the raw text)
+open file.txt
+
+# Read specific lines
+open file.txt | lines | range 10..20
+
+# Count lines
+open file.txt | lines | length
+
+# Get line by number (0-indexed)
+open file.txt | lines | get 5
+```
+
+### Writing Files
+```nushell
+# Write content to file
+"content" | save file.txt
+
+# Append to file
+"new content" | save -a file.txt
+
+# Write JSON
+'{"key": "value"}' | save config.json
+```
+
+### File Information
+```nushell
+# List files with details
+ls
+
+# Filter by size
+ls | where size > 1mb
+
+# Filter by name
+ls | where name =~ "*.txt"
+
+# Get file stats
+ls file.txt | get 0.modified
+```
+
+## 🔍 Text Processing
+
+### Searching & Filtering
+```nushell
+# Search in files (like grep)
+open file.txt | lines | where $it =~ "pattern"
+
+# Search multiple files
+ls *.txt | each { |f| open $f.name | lines | where $it =~ "pattern" }
+
+# Count matches
+open file.txt | lines | where $it =~ "pattern" | length
+
+# View file with search highlighting
+bat file.txt | grep pattern
+```
+
+### String Operations
+```nushell
+# String length
+"hello" | str length
+
+# String contains
+"hello world" | str contains "world"
+
+# String replace
+"hello world" | str replace "world" "nushell"
+
+# Split string
+"a,b,c" | split row ","
+```
+
+## 📊 Data Processing
+
+### Working with Tables
+```nushell
+# Filter table rows
+ls | where size > 1mb
+
+# Sort table
+ls | sort-by size
+
+# Select columns
+ls | select name size
+
+# Group by
+ls | group-by type
+```
+
+### JSON Operations
+```nushell
+# Parse JSON
+'{"name": "value"}' | from json
+
+# Convert to JSON
+[1 2 3] | to json
+
+# Extract JSON values
+'{"key": "value"}' | from json | get key
+```
+
+## 🛠️ System Operations
+
+### Process Management
+```nushell
+# List processes
+ps
+
+# Kill process
+ps | where name =~ "process" | each { |p| kill $p.pid }
+
+# Process info
+ps | where cpu > 10
+```
+
+### Environment Variables
+```nushell
+# Get env var
+$env.PATH
+
+# Set env var
+$env.MY_VAR = "value"
+
+# List all env vars
+$env | table
+```
+
+## 🔧 Common Patterns
+
+### Conditional Operations
+```nushell
+# If file exists
+if (ls | where name =~ "file.txt" | length) > 0 {
+    "File exists"
+} else {
+    "File not found"
+}
+
+# Check command success
+if (some-command | complete | get exit_code) == 0 {
+    "Success"
+} else {
+    "Failed"
+}
+```
+
+### Loops & Iteration
+```nushell
+# Iterate over files
+ls *.txt | each { |f| echo $"Processing ($f.name)" }
+
+# Range iteration
+1..5 | each { |i| echo $i }
+
+# While loop
+mut counter = 0
+while $counter < 5 {
+    echo $counter
+    $counter = $counter + 1
+}
+```
+
+## 🚫 What NOT to Do
+
+### ❌ Bash Commands to Avoid
+```bash
+# DON'T use these:
+echo "content" > file.txt          # Use: "content" | save file.txt
+cat file.txt                       # Use: bat file.txt (for viewing) or open file.txt (for processing)
+grep pattern file.txt              # Use: open file.txt | lines | where $it =~ "pattern"
+find . -name "*.txt"               # Use: ls **/*.txt
+wc -l file.txt                     # Use: open file.txt | lines | length
+sed -i 's/old/new/g' file.txt      # Use: open file.txt | str replace "old" "new" | save file.txt
+head -n 10 file.txt                # Use: open file.txt | lines | first 10
+tail -n 10 file.txt                # Use: open file.txt | lines | last 10
+```
+
+### ❌ Bash Syntax to Avoid
+```bash
+# DON'T use:
+> for redirection                 # Use: | save
+>> for append                     # Use: | save -a
+| grep                           # Use: | where $it =~ "pattern"
+$(command)                       # Use: (command)
+```
+
+## ✅ Best Practices
+
+### 1. Use Structured Data
+```nushell
+# Good: Work with structured data
+ls | where size > 1mb | sort-by size
+
+# Bad: Parse text output
+ls -la | lines | where $it =~ "^-"
+```
+
+### 2. Leverage Nushell's Type System
+```nushell
+# Good: Use proper types
+[1 2 3] | math sum
+
+# Bad: String manipulation
+"1,2,3" | split row "," | each { |s| $s | into int } | math sum
+```
+
+### 3. Use Built-in Commands
+```nushell
+# Good: Use nushell built-ins
+open file.txt | lines | length
+
+# Bad: External commands
+wc -l file.txt
+```
+
+## 🎯 Environment-Specific Commands
+
+### Working with This Dotfiles Repo
+```nushell
+# Check symlinks
+ls -la ~ | where name =~ "^\." | where type == "symlink"
+
+# View README with syntax highlighting
+bat README.md
+
+# Verify file contents
+open README.md | lines | length
+
+# Check justfile tasks
+just --list
+
+# Run quality checks
+just quality-check
+```
+
+### Common Debugging
+```nushell
+# Check current directory
+pwd
+
+# List environment
+$env | table
+
+# Check command history
+history | last 10
+
+# Test command output
+some-command | table
+```
+
+## 📚 Remember
+
+- **Always prefer nushell built-ins** over external commands
+- **Use structured data** instead of text parsing
+- **Leverage the type system** for better operations
+- **Think in pipelines** rather than command chaining
+- **Use `bat` for viewing files** (syntax highlighting)
+- **Use `open` for processing file content**
+- **Use `save` instead of `>`**
+- **Use `where` instead of `grep`**
+- **Use `lines` for line-by-line processing**
+
+When in doubt, ask yourself: "Is there a nushell way to do this?" The answer is usually yes!
+

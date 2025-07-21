@@ -1,2 +1,0 @@
-# VS Code extensions
-# TODO: Add VS Code extensions list 

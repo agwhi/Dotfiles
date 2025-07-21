@@ -11,7 +11,7 @@ echo "🔧 Installing prerequisites for dotfiles..."
 if ! command -v brew > /dev/null 2>&1; then
     echo "📦 Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    
+
     # Add Homebrew to PATH for Apple Silicon Macs
     if [[ $(uname -m) == "arm64" ]]; then
         echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
@@ -46,4 +46,4 @@ echo "  just brew     # Install Homebrew packages only"
 echo "  just backup   # Backup current system config"
 echo "  just edit     # Open dotfiles in Cursor"
 echo ""
-echo "For more commands, run: just --list" 
+echo "For more commands, run: just --list"

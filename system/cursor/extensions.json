@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "biomejs.biome",
+        "ms-vscode.vscode-json",
+        "yzhang.markdown-all-in-one",
+        "ms-vscode.makefile-tools",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next"
+    ]
+}

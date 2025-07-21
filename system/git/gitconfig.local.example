@@ -3,13 +3,13 @@
 # This file should NOT be committed to version control
 
 [user]
-	# Your personal information
-	name = Your Full Name
-	email = your.email@example.com
+    # Your personal information
+    name = Your Full Name
+    email = your.email@example.com
 
-	# Optional: Different email for work projects
-	# This will be overridden by directory-specific configs below
-	# email = your.work.email@company.com
+    # Optional: Different email for work projects
+    # This will be overridden by directory-specific configs below
+    # email = your.work.email@company.com
 
 
 # Directory-specific user configuration
@@ -17,7 +17,7 @@
 # Example: Work projects in ~/work/ will use work credentials
 
 [includeIf "gitdir:~/work/"]
-	path = ~/.gitconfig.work
+    path = ~/.gitconfig.work
 
 # Example work configuration (create ~/.gitconfig.work)
 # [user]

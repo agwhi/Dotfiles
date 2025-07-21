@@ -1,0 +1,28 @@
+[
+    // Format document on save
+    {
+        "key": "cmd+s",
+        "command": "workbench.action.files.save",
+        "when": "editorTextFocus"
+    },
+    // Quick file navigation
+    {
+        "key": "cmd+p",
+        "command": "workbench.action.quickOpen"
+    },
+    // Command palette
+    {
+        "key": "cmd+shift+p",
+        "command": "workbench.action.showCommands"
+    },
+    // Terminal toggle
+    {
+        "key": "ctrl+`",
+        "command": "workbench.action.terminal.toggleTerminal"
+    },
+    // Explorer toggle
+    {
+        "key": "cmd+shift+e",
+        "command": "workbench.view.explorer"
+    }
+]

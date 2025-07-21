@@ -1,0 +1,74 @@
+# --- Core CLI Tools (Rust-based, fast replacements) ---
+brew "bat"           # Syntax-highlighted cat
+brew "fd"            # Fast find alternative
+brew "eza"           # Modern ls replacement
+brew "fzf"           # Fuzzy finder
+brew "ripgrep"       # Fast grep alternative
+brew "zoxide"        # Smarter cd
+brew "starship"      # Minimal, fast prompt
+brew "carapace"      # Completion engine for CLIs
+
+# --- Shells & Editors ---
+brew "nushell"       # Modern shell
+brew "neovim"        # Terminal editor
+cask "ghostty"       # GPU-accelerated terminal
+cask "cursor"        # AI-powered code editor
+cask "visual-studio-code" # Main GUI IDE
+
+# --- Node.js & Package Management ---
+brew "fnm"           # Fast Node.js version manager
+brew "corepack"      # Node.js package manager wrapper
+brew "pnpm"          # Fast Node.js package manager
+
+# --- .NET & AWS Development ---
+brew "dotnet@8"      # .NET 8 SDK
+brew "awscli"        # AWS CLI
+brew "aws-sso-util"  # AWS SSO helper
+
+# --- Security & DevSecOps ---
+brew "gitleaks"      # Secret scanning
+brew "ripsecrets"    # Fast secret scanner
+brew "dotenv-linter" # Lint .env files
+brew "editorconfig-checker" # Enforce EditorConfig
+brew "direnv"        # Environment variable manager
+
+# --- Productivity & Utilities ---
+brew "just"          # Task runner
+brew "gh"            # GitHub CLI
+brew "git"           # Git version control
+brew "gnupg"         # GPG for signing
+brew "zlib"          # Compression library
+brew "topgrade"      # One command to upgrade everything
+
+# --- Fonts & UI ---
+cask "font-fira-code-nerd-font" # Dev font
+cask "arc"           # Browser
+cask "raycast"       # Productivity launcher
+cask "google-chrome" # Browser
+cask "secretive"     # Secure key storage
+cask "chatgpt"       # AI assistant
+cask "slack"         # Messaging
+cask "spotify"       # Music
+
+# --- VS Code Extensions (auto-installed) ---
+vscode "amazonwebservices.aws-toolkit-vscode"
+vscode "bradlc.vscode-tailwindcss"
+vscode "dbaeumer.vscode-eslint"
+vscode "eamodio.gitlens"
+vscode "esbenp.prettier-vscode"
+vscode "github.copilot"
+vscode "github.copilot-chat"
+vscode "ionide.ionide-fsharp"
+vscode "ms-dotnettools.csdevkit"
+vscode "ms-dotnettools.csharp"
+vscode "ms-dotnettools.dotnet-interactive-vscode"
+vscode "ms-dotnettools.vscode-dotnet-pack"
+vscode "ms-dotnettools.vscode-dotnet-runtime"
+vscode "ms-toolsai.jupyter"
+vscode "ms-toolsai.jupyter-keymap"
+vscode "ms-toolsai.jupyter-renderers"
+vscode "ms-toolsai.vscode-jupyter-cell-tags"
+vscode "ms-toolsai.vscode-jupyter-slideshow"
+vscode "ms-vscode.vscode-typescript-next"
+vscode "nrwl.angular-console"
+vscode "openai.chatgpt"

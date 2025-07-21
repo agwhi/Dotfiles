@@ -25,7 +25,7 @@ use std/util "path add"
 path add "~/.local/bin"
 path add "/opt/homebrew/bin"
 
-# Add starship prompt 
+# Add starship prompt
 mkdir ($nu.data-dir | path join "vendor/autoload")
 starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")
 
@@ -45,8 +45,8 @@ if not (which fnm | is-empty) {
 # Add zoxide (cd alternative)
 source ~/.zoxide.nu
 
-# Dotnet
-path add "/usr/local/share/dotnet"
+# Dotnet (brew version)
+path add "/opt/homebrew/opt/dotnet@8/bin"
 path add $"($env.HOME)/.dotnet/tools"
 
 # Aliases
@@ -55,3 +55,5 @@ alias lambda-test = dotnet-lambda-test-tool-8.0
 
 # https://carapace-sh.github.io/carapace-bin/setup.html#nushell
 source ~/.cache/carapace/init.nu
+eval "$(direnv hook nushell)"
+eval "$(direnv hook nushell)"

@@ -1,3 +1,7 @@
+# Sensitive files - .example files are used as templates
+gitconfig.local
+
+# Backup directories and files
+backups/
 symlink-backups.txt
 backup-log.txt
-gitconfig.local

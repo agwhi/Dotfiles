@@ -1,2 +1,0 @@
--- Neovim configuration
--- TODO: Add Neovim configuration 

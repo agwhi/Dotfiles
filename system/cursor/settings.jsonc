@@ -1,0 +1,69 @@
+{
+    // Language-specific settings
+    "[json]": {
+        "editor.detectIndentation": false,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "[jsonc]": {
+        "editor.detectIndentation": false,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "[lua]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "[markdown]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "[nu]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "[shellscript]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    "[yaml]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+    },
+    // Default formatter
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.detectIndentation": false,
+    "editor.formatOnPaste": true,
+    // Format on save
+    "editor.formatOnSave": true,
+    "editor.insertFinalNewline": true,
+    "editor.insertSpaces": true,
+    // Editor settings
+    "editor.tabSize": 4,
+    "editor.trimAutoWhitespace": true,
+    // Explorer settings
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    // File associations
+    "files.associations": {
+        "*.mdc": "markdown",
+        "justfile": "makefile"
+    },
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    // Git settings
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    // Terminal settings
+    "terminal.integrated.defaultProfile.osx": "nu",
+    "terminal.integrated.profiles.osx": {
+        "nu": {
+            "args": [],
+            "path": "/opt/homebrew/bin/nu"
+        }
+    },
+    // Workbench settings
+    "workbench.editor.enablePreview": false,
+    "workbench.startupEditor": "none"
+}

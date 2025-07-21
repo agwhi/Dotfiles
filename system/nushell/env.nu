@@ -19,3 +19,8 @@
 
 # Carapace autocomplete setup
 $env.CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense' # optional
+
+# pnpm
+$env.PNPM_HOME = "~/Library/pnpm"
+$env.PATH = ($env.PATH | split row (char esep) | prepend $env.PNPM_HOME )
+# pnpm end
