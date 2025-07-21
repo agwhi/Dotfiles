@@ -31,3 +31,7 @@ install-vscode-extensions:
 # Full setup: install packages and create symlinks
 setup: install-brew install-vscode-extensions backup-and-link
   echo "✅ Full dotfiles setup complete!"
+
+# Open dotfiles folder in Cursor editor
+edit:
+  cursor .

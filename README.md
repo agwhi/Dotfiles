@@ -1,6 +1,8 @@
-# 💻 Dotfiles Setup – macOS Dev Environment (M4 Pro)
+# 💻 Dotfiles Setup – macOS Dev Environment
 
 A carefully curated developer setup for Node.js (via pnpm), .NET 8 (C#), TypeScript (CDK + Serverless), and React/Next.js on macOS, designed to maximise dev experience and developer security with a fast, consistent toolchain.
+
+This repository manages your macOS development environment through dotfiles, providing a unified setup for all your development tools and configurations.
 
 ---
 
@@ -11,6 +13,43 @@ A carefully curated developer setup for Node.js (via pnpm), .NET 8 (C#), TypeScr
 - **Terminal native**: Most tools are CLI or TUI based, Rust-preferred if options exist
 - **Single source of truth**: All config is tracked, versioned, and symlinked
 - **Secure by default**: DevSecOps from day one
+
+---
+
+## 🚀 Quick Start
+
+### 1. Install Prerequisites
+
+Run the install script to set up Homebrew, just, and other requirements:
+
+```bash
+./install.sh
+```
+
+### 2. Set Up Your Environment
+
+Run the full setup to install all packages and create symlinks:
+
+```bash
+just setup
+```
+
+This will:
+- Install all Homebrew packages from `Brewfile`
+- Install VS Code extensions
+- Back up existing config files
+- Create symlinks to your dotfiles
+
+### 3. Available Commands
+
+```bash
+just setup                  # Full setup: install packages and create symlinks
+just brew                  # Install all Homebrew packages from Brewfile
+just backup                # Back up current system config to repo
+just edit                  # Open dotfiles folder in Cursor editor
+just upgrade               # Update all packages and tools
+just --list                # Show all available commands
+```
 
 ---
 
@@ -86,13 +125,30 @@ All configs are symlinked into correct system paths to maintain this repo as the
 just link
 ```
 
-The setup script (`setup_symlinks_simple.sh`) safely:
+The setup script (`setup_symlinks.sh`) safely:
 - Backs up existing config files to `.backup` versions
 - Creates symlinks from dotfiles repo to system locations
 - Logs all actions to `symlink-backups.txt`
 - Handles idempotent re-runs safely
-- Optionally syncs existing config to the repo before backup
 - Uses robust path resolution for symlink verification
+
+### Backup System
+
+**Backup current system state:**
+
+```bash
+just backup
+```
+
+This runs `backup.sh` which:
+- Backs up non-symlinked files to the repo
+- Updates `Brewfile` with current Homebrew packages
+- Updates `vscode/extensions.txt` with current VS Code extensions
+- Logs all actions to `backup-log.txt`
+
+**Backup logs:**
+- `symlink-backups.txt` - Log of symlink creation and backups
+- `backup-log.txt` - Log of system state backups
 
 ### Git Configuration
 
@@ -120,12 +176,13 @@ topgrade
 **Available Commands:**
 
 ```bash
-just link                    # Set up all dotfile symlinks
-just backup                  # Backup non-symlinked files
-just upgrade                 # Run topgrade to update everything
-just install-brew           # Install all Homebrew packages
-just install-vscode-extensions # Install VS Code extensions
 just setup                  # Full setup: install packages and create symlinks
+just brew                  # Install all Homebrew packages from Brewfile
+just backup                # Back up current system config to repo
+just edit                  # Open dotfiles folder in Cursor editor
+just upgrade               # Update all packages and tools
+just link                  # Set up all dotfile symlinks only
+just install-vscode-extensions # Install VS Code extensions only
 ```
 
 **Backup non-symlinked files:**
@@ -142,55 +199,75 @@ Updates `Brewfile` and `vscode/extensions.txt` (symlinked files are already trac
 
 ```
 dotfiles/
-├── .config/
-│   ├── starship.toml
-│   └── nvim/
-│       └── init.lua
-├── .cursor/
-│   └── rules/
-├── aws/
+├── .config/                 # Global config directory
+│   ├── starship.toml       # Starship prompt configuration
+│   └── nvim/               # Neovim configuration
+│       └── init.lua        # Neovim initialization script
+├── .cursor/                 # Cursor editor configuration
+│   └── rules/              # AI context rules for development
+├── aws/                     # AWS CLI configuration
 │   └── config
-├── ghostty/
+├── ghostty/                 # Ghostty terminal configuration
 │   └── config
-├── git/
-│   ├── gitconfig
-│   ├── .gitconfig.local.example
-│   └── gitignore_global
-├── nushell/
-│   ├── config.nu
-│   └── env.nu
-├── vscode/
-│   ├── settings.json
-│   └── extensions.txt
-├── .fzf.zsh
-├── Brewfile
-├── justfile
-├── backup.sh
-└── README.md
+├── git/                     # Git configuration
+│   ├── gitconfig           # Global git config
+│   ├── gitconfig.local.example # Template for local git config
+│   └── gitignore_global    # Global gitignore
+├── nushell/                 # Nushell shell configuration
+│   ├── config.nu           # Main shell config
+│   └── env.nu              # Environment variables
+├── vscode/                  # VS Code configuration
+│   ├── settings.json       # VS Code settings
+│   └── extensions.txt      # VS Code extensions list
+├── .gitignore              # Git ignore rules
+├── Brewfile                # Homebrew packages and apps
+├── backup.sh               # System backup script
+├── backup-log.txt          # Backup operation logs
+├── install.sh              # Prerequisites installer
+├── justfile                # Task automation
+├── README.md               # This documentation
+├── setup_symlinks.sh       # Symlink creation script
+└── symlink-backups.txt     # Symlink operation logs
 ```
 
 ---
 
 ## 🤖 AI Usage & Cursor Rules
 
-This repository uses [Cursor](https://cursor.com) with custom `.cursor/rules` to ensure consistency and alignment with our philosophy.
+This repository uses [Cursor](https://cursor.com) with custom `.cursor/rules` to ensure consistency and alignment with our philosophy. These rules are automatically applied when working in this repository and provide AI context for development decisions.
 
-### Rule Enforcement Areas
+### Rule Categories
 
-| Area                   | Based on Section      |
-| ---------------------- | --------------------- |
-| Shell & Terminal Tools | 🖥 Terminal + Shell    |
-| Editor & Dev Tooling   | ✨ Editor / IDE       |
-| Runtime Tooling        | 📦 Package Managers   |
-| Cloud & CDK Tools      | 🌐 AWS / Cloud Dev    |
-| Security & Linting     | 🔒 DevSecOps          |
-| Dotfile Management     | 🔧 Setup & Management |
+The `.cursor/rules/` directory contains specialized rules for different areas:
+
+| Rule File | Purpose | Based on Section |
+|-----------|---------|------------------|
+| `global-meta.mdc` | Overall repository philosophy and structure | 🎯 Philosophy |
+| `terminal-shell.mdc` | Shell and terminal tooling decisions | 🖥 Terminal + Shell |
+| `editor-config.mdc` | Editor and IDE configuration | ✨ Editor / IDE |
+| `backup-upgrade.mdc` | Backup and upgrade strategies | 🔧 Setup & Management |
+| `dotfile-management.mdc` | Dotfile organization and symlinks | 🔧 Setup & Management |
+| `devsecops-security.mdc` | Security and DevSecOps practices | 🔒 DevSecOps |
+| `biome-linting.mdc` | Code formatting and linting | 🔒 DevSecOps |
+| `language-dotnet.mdc` | .NET 8 and AWS Lambda development | 🌐 AWS / Cloud Dev |
+| `justfile-bootstrap.mdc` | Task automation and justfile usage | 🔧 Setup & Management |
+| `shell-env.mdc` | Shell environment configuration | 🖥 Terminal + Shell |
+| `docs-lint.mdc` | Documentation standards | 📋 Documentation |
+
+### How Rules Work
+
+These rules are automatically loaded by Cursor when you open this repository and provide context for:
+- Tool selection and configuration decisions
+- Code style and formatting preferences
+- Security and best practices
+- Development workflow patterns
 
 ### Contributor Guidelines
 
 1. Check if tools/settings are already listed in the README
 2. Update relevant sections when adding new tools
 3. Use Cursor rules as a consistency checklist
+4. Rules are automatically enforced - follow the guidance they provide
 
 ---
 
