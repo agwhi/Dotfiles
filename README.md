@@ -1,6 +1,7 @@
 # 💻 Dotfiles Setup – macOS Dev Environment
 
-A carefully curated developer setup for Node.js (via pnpm), .NET 8 (C#),
+A carefully curated developer setup for Node.js (via fnm-managed Node and
+Corepack/pnpm), .NET 8 (C#),
 TypeScript (CDK + Serverless), and React/Next.js on macOS, designed to
 maximise dev experience and developer security with a fast, consistent
 toolchain.
@@ -154,10 +155,10 @@ After bootstrap, you can:
 
 | Tool       | Description                                      |
 | ---------- | ------------------------------------------------ |
-| [Homebrew] | macOS-native package manager                     |
-| [pnpm]     | Preferred Node.js package manager (via Corepack) |
-| [fnm]      | Fast Node.js version manager                     |
-| [cargo]    | Rust package manager (used for many tools)       |
+| [Homebrew] | macOS-native package manager and fnm installer        |
+| [fnm]      | Owner for the Node.js runtime and trusted JS commands |
+| [pnpm]     | Preferred Node.js package manager via fnm/Corepack    |
+| [cargo]    | Rust package manager (used for many tools)            |
 
 ### ✨ Editor / IDE
 
@@ -312,7 +313,7 @@ just backup                # Back up current system config to repo
 just edit                  # Open dotfiles folder in Cursor editor
 just link                  # Set up all dotfile symlinks only
 just install-vscode-extensions # Install VS Code extensions only
-just install-node-tools    # Install global Node.js tools from system/packages/pnpm-global.txt
+just install-node-tools    # Install global Node.js tools through fnm/Corepack/pnpm
 just setup-security        # Install and configure security tools
 just setup-network-security # Configure DNS encryption and VPN tools
 
@@ -332,7 +333,9 @@ just upgrade               # Redirects to global 'dotfile upgrade' command
 
 ### **Global Justfile Commands**
 
-The dotfiles setup also creates a global justfile (`~/.justfile`) that provides useful commands for any project. These are available via convenient nushell aliases:
+The dotfiles setup also creates a global justfile (`~/.justfile`) that provides
+useful commands for any project. These are available via convenient nushell
+aliases:
 
 ```bash
 # Quality and security (available in any directory)
@@ -369,7 +372,8 @@ ghelp                      # Show all available commands
 dotfile <command>          # Run any global justfile command 
 ```
 
-**Note:** These aliases are automatically available in any directory and work with the global justfile configuration.
+**Note:** These aliases are automatically available in any directory and work
+with the global justfile configuration.
 
 **Backup non-symlinked files:**
 
@@ -489,24 +493,28 @@ dns-test
 ### **What Each Tool Does**
 
 #### **DNS Encryption (dnscrypt-proxy)**
+
 - **Purpose**: Encrypts DNS queries to prevent snooping
 - **How it works**: Routes DNS through secure resolvers (Cloudflare, Quad9)
 - **Protection**: Hides which websites you're visiting from network observers
 - **Setup**: `brew services start dnscrypt-proxy`
 
 #### **VPN (NordVPN)**
+
 - **Purpose**: Encrypts all internet traffic
 - **How it works**: Routes traffic through secure servers
 - **Protection**: Hides your IP address and encrypts all data
 - **Setup**: Install via `brew install --cask nordvpn`, then configure account
 
 #### **Firewall (LuLu)**
+
 - **Purpose**: Blocks unknown outbound connections
 - **How it works**: Prompts for permission when apps try to connect
 - **Protection**: Prevents malware from phoning home
 - **Setup**: Install via `brew install lulu`, configure rules
 
 #### **Browser (Brave)**
+
 - **Purpose**: Privacy-focused browsing with built-in protections
 - **Features**: Shields, WebRTC protection, fingerprinting resistance
 - **Setup**: Install via `brew install --cask brave-browser`
@@ -514,6 +522,7 @@ dns-test
 ### **Manual Configuration Steps**
 
 #### **Brave Browser Settings**
+
 1. Open Brave and go to `brave://settings/`
 2. Enable **Shields** for all sites
 3. Go to `brave://settings/shields/` and enable:
@@ -525,6 +534,7 @@ dns-test
    - Allow sites to check if you have payment methods saved
 
 #### **LuLu Firewall Configuration**
+
 1. Open LuLu and go to Preferences
 2. Enable "Automatically allow signed applications"
 3. Set "Unknown applications" to "Ask user"
@@ -532,6 +542,7 @@ dns-test
 5. Restore rules: `lulu-restore`
 
 #### **macOS System Hardening**
+
 1. **Wi-Fi Settings**:
    - Go to System Preferences → Network → Wi-Fi → Advanced
    - Uncheck "Remember networks this computer has joined"
@@ -549,6 +560,7 @@ dns-test
 ### **When to Use Secure Mode**
 
 **Enable `secure-on` when:**
+
 - Using café Wi-Fi
 - Connecting at airports or hotels
 - Attending conferences (AWS re:Invent, etc.)
@@ -556,6 +568,7 @@ dns-test
 - Working with sensitive data
 
 **Disable `secure-off` when:**
+
 - Back on your home/office network
 - VPN is causing connectivity issues
 - You need maximum speed for downloads
@@ -563,6 +576,7 @@ dns-test
 ### **Troubleshooting**
 
 #### **DNS Issues**
+
 ```bash
 # Check if dnscrypt-proxy is running
 brew services list | grep dnscrypt-proxy
@@ -576,6 +590,7 @@ nslookup google.com 127.0.0.1
 ```
 
 #### **VPN Issues**
+
 ```bash
 # Check NordVPN status
 nordvpn status
@@ -586,6 +601,7 @@ vpn-on
 ```
 
 #### **Performance Impact**
+
 - DNS encryption: Minimal impact (~1-5ms)
 - VPN: Moderate impact (10-50ms latency, reduced bandwidth)
 - Combined: Best protection, moderate performance cost
@@ -741,7 +757,8 @@ direnv allow
 #### **Adding New Tools**
 
 1. **Homebrew packages**: Add to `system/packages/Brewfile`
-2. **Node.js tools**: Add to `system/packages/pnpm-global.txt`
+2. **Node.js tools**: Add to `system/packages/pnpm-global.txt`; they install
+   through the `fnm` default Node plus Corepack/pnpm path
 3. **VS Code extensions**: Add to `system/packages/vscode-extensions.txt`
 4. **Configuration files**: Add to `setup_symlinks.sh`
 5. **Run bootstrap**: `just bootstrap` to install and configure everything
@@ -788,7 +805,7 @@ git push
 - **Security first**: Run security scans regularly
 - **Environment isolation**: Use direnv for project-specific configs
 
-#### **Troubleshooting**
+#### **Dotfiles Troubleshooting**
 
 - **Symlink issues**: Run `just link` to recreate symlinks
 - **Tool conflicts**: Check for conflicting global installations

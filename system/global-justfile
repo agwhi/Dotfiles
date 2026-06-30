@@ -1,4 +1,5 @@
 # Global Justfile - Available system-wide for all projects
+js_toolchain := "$HOME/.dotfiles/scripts/js_toolchain.sh"
 
 # Run quality checks (security + formatting)
 quality-check:
@@ -16,15 +17,15 @@ security-scan:
 
 # Lint code with Biome (if biome.json exists)
 lint:
-    sh -c 'if [ -f "biome.json" ]; then biome lint --files-ignore-unknown=true .; else echo "⚠️  No biome.json found. Run biome init to create one."; fi'
+    sh -c 'if [ -f "biome.json" ]; then {{js_toolchain}} biome lint --files-ignore-unknown=true .; else echo "⚠️  No biome.json found. Run biome init to create one."; fi'
 
 # Format code with Biome (if biome.json exists)
 format:
-    sh -c 'if [ -f "biome.json" ]; then biome format .; else echo "⚠️  No biome.json found. Run biome init to create one."; fi'
+    sh -c 'if [ -f "biome.json" ]; then {{js_toolchain}} biome format .; else echo "⚠️  No biome.json found. Run biome init to create one."; fi'
 
 # Lint markdown files (if markdownlint is available)
 docs-lint:
-    sh -c 'if command -v markdownlint >/dev/null 2>&1; then markdownlint *.md; else echo "⚠️  markdownlint not installed. Install with: pnpm add -g markdownlint-cli"; fi'
+    sh -c 'if {{js_toolchain}} markdownlint --version >/dev/null 2>&1; then {{js_toolchain}} markdownlint *.md; else echo "⚠️  markdownlint not installed. Run: dotfile setup-node"; fi'
 
 # Fix formatting issues
 fix-formatting:
@@ -41,8 +42,8 @@ setup-node:
     fnm install --lts
     fnm use lts-latest
     fnm default lts-latest
-    corepack enable
-    corepack prepare pnpm@latest --activate
+    {{js_toolchain}} corepack enable
+    {{js_toolchain}} corepack prepare pnpm@latest --activate
     echo "✅ Node.js LTS and pnpm ready"
 
 # Setup .NET environment
@@ -58,7 +59,7 @@ setup-aws:
 
 # Initialize Biome in current project (if not already exists)
 init-biome:
-    sh -c 'if [ -f "biome.json" ]; then echo "⚠️  biome.json already exists"; else biome init; echo "✅ Biome initialized. Edit biome.json to customize settings."; fi'
+    sh -c 'if [ -f "biome.json" ]; then echo "⚠️  biome.json already exists"; else {{js_toolchain}} biome init; echo "✅ Biome initialized. Edit biome.json to customize settings."; fi'
 
 
 

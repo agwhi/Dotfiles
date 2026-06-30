@@ -16,9 +16,8 @@ cask "cursor"        # AI-powered code editor
 cask "visual-studio-code" # Main GUI IDE
 
 # --- Node.js & Package Management ---
+# Homebrew installs fnm only; fnm's default Node owns Node, Corepack, and pnpm.
 brew "fnm"           # Fast Node.js version manager
-brew "corepack"      # Node.js package manager wrapper
-brew "pnpm"          # Fast Node.js package manager
 
 # --- .NET & AWS Development ---
 brew "dotnet@8"      # .NET 8 SDK

@@ -1,4 +1,5 @@
 # Justfile for dotfiles task automation
+js_toolchain := "./scripts/js_toolchain.sh"
 
 # Set up all dotfile symlinks safely
 link:
@@ -69,14 +70,14 @@ install-node:
 
 # Enable corepack and install pnpm
 install-pnpm:
-    corepack enable
-    corepack prepare pnpm@latest --activate
-    pnpm setup
+    {{js_toolchain}} corepack enable
+    {{js_toolchain}} corepack prepare pnpm@latest --activate
+    {{js_toolchain}} pnpm setup
     echo "✅ pnpm installed, activated, and configured"
 
 # Install global Node.js tools
 install-node-tools: install-pnpm
-    source ~/.config/nushell/env.nu; cat system/packages/pnpm-global.txt | xargs -n 1 pnpm add -g
+    sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; p' system/packages/pnpm-global.txt | xargs -n 1 {{js_toolchain}} pnpm add -g
     echo "✅ Global Node.js tools installed from system/packages/pnpm-global.txt"
     echo "   - Biome: Available for project-specific configuration"
     echo "   - AWS CDK: Available for AWS infrastructure development"
@@ -149,11 +150,11 @@ fix-formatting-comprehensive:
     echo "✅ Comprehensive formatting fixes applied"
 
 readme-lint:
-    markdownlint README.md
+    {{js_toolchain}} markdownlint README.md
     # Lint README.md for documentation issues
 
 # Lint all code using Biome
 repo-lint:
-    biome lint --files-ignore-unknown=true .
+    {{js_toolchain}} biome lint --files-ignore-unknown=true .
     # Lint all code using Biome (installed globally via pnpm)
     # Ignores files that Biome doesn't recognize

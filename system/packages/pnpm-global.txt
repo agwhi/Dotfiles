@@ -1,3 +1,4 @@
 @biomejs/biome
 aws-cdk
 cdk-dia
+markdownlint-cli
