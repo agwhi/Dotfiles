@@ -84,6 +84,9 @@ create_symlink "$DOTFILES_DIR/system/topgrade.toml" "$HOME/.config/topgrade.toml
 # Direnv configuration
 create_symlink "$DOTFILES_DIR/system/direnv.toml" "$HOME/.config/direnv/direnv.toml" "Direnv config"
 
+# DNS encryption configuration
+create_symlink "$DOTFILES_DIR/system/dnscrypt-proxy/dnscrypt-proxy.toml" "$HOME/.config/dnscrypt-proxy/dnscrypt-proxy.toml" "DNS encryption config"
+
 # Global Git ignore setup
 if [[ -e "$DOTFILES_DIR/system/git/gitignore_global" ]]; then
     echo "🔧 Setting up global gitignore"

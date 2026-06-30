@@ -1,0 +1,58 @@
+# dnscrypt-proxy configuration for secure DNS
+# This file is symlinked to ~/.config/dnscrypt-proxy/dnscrypt-proxy.toml
+
+# Server configuration
+listen_addresses = ['127.0.0.1:53']
+max_clients = 250
+user_name = '_dnscrypt-proxy'
+
+# Use secure resolvers
+server_names = ['cloudflare', 'quad9-dnscrypt-ip4-filter-pri']
+
+# Fallback resolvers (if primary fails)
+fallback_resolvers = ['9.9.9.9:53', '1.1.1.1:53']
+
+# Security settings
+require_dnssec = true
+require_nolog = true
+require_nofilter = false
+
+# Performance settings
+cache = true
+cache_size = 4096
+cache_min_ttl = 2400
+cache_max_ttl = 86400
+cache_neg_min_ttl = 60
+cache_neg_max_ttl = 600
+
+# Logging (minimal for privacy)
+log_level = 2
+log_file = '/var/log/dnscrypt-proxy.log'
+use_syslog = true
+
+# Block malicious domains
+blacklist_file = '/opt/homebrew/etc/dnscrypt-proxy/blacklist.txt'
+whitelist_file = '/opt/homebrew/etc/dnscrypt-proxy/whitelist.txt'
+
+# Anonymized DNS (relay through other servers)
+[anonymized_dns]
+routes = [
+    { server_name='cloudflare', via=['anon-cloudflare', 'anon-quad9-dnscrypt-ip4-filter-pri'] },
+    { server_name='quad9-dnscrypt-ip4-filter-pri', via=['anon-cloudflare', 'anon-quad9-dnscrypt-ip4-filter-pri'] }
+]
+
+# Source configuration
+[sources]
+[sources.'public-resolvers']
+url = 'https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md'
+minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3' # gitleaks:allow public DNSCrypt resolver list signing key
+cache_file = '/opt/homebrew/var/cache/dnscrypt-proxy/public-resolvers.md'
+refresh_delay = 72
+prefix = ''
+
+[sources.'relays']
+url = 'https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/relays.md'
+minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3' # gitleaks:allow public DNSCrypt relay list signing key
+cache_file = '/opt/homebrew/var/cache/dnscrypt-proxy/relays.md'
+refresh_delay = 72
+prefix = 'anon-'

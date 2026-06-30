@@ -60,6 +60,64 @@ setup-aws:
 init-biome:
     sh -c 'if [ -f "biome.json" ]; then echo "⚠️  biome.json already exists"; else biome init; echo "✅ Biome initialized. Edit biome.json to customize settings."; fi'
 
+
+
+# --- Network Security & Privacy Commands ---
+
+# Start DNS encryption service
+dns-secure-start:
+    brew services start dnscrypt-proxy
+    echo "✅ DNS encryption started (dnscrypt-proxy)"
+
+# Stop DNS encryption service
+dns-secure-stop:
+    brew services stop dnscrypt-proxy
+    echo "✅ DNS encryption stopped"
+
+# Connect to VPN
+vpn-secure-on:
+    nordvpn connect
+    echo "✅ VPN connected"
+
+# Disconnect VPN
+vpn-secure-off:
+    nordvpn disconnect
+    echo "✅ VPN disconnected"
+
+# Start both VPN and DNS encryption (use on untrusted networks)
+secure-mode-on:
+    # Use this on untrusted networks (cafés, airports, hotels, conferences)
+    just dns-secure-start
+    sleep 2
+    just vpn-secure-on
+    echo "🛡️  Secure mode enabled: DNS encryption + VPN active"
+    echo "💡 Use 'just secure-mode-off' to disable"
+
+# Stop both VPN and DNS encryption
+secure-mode-off:
+    just vpn-secure-off
+    sleep 2
+    just dns-secure-stop
+    echo "✅ Secure mode disabled"
+
+# Test for DNS leaks
+dns-leak-test:
+    open https://dnsleaktest.com
+    echo "🌐 DNS leak test opened in browser"
+    echo "💡 Check that your DNS shows encrypted resolvers (not ISP)"
+
+# Backup LuLu firewall rules
+lulu-backup:
+    sh -c 'if [ -f "$HOME/.dotfiles/scripts/lulu_backup.sh" ]; then $HOME/.dotfiles/scripts/lulu_backup.sh backup; else echo "⚠️  LuLu backup script not found. Run dotfiles setup first."; fi'
+
+# Restore LuLu firewall rules
+lulu-restore:
+    sh -c 'if [ -f "$HOME/.dotfiles/scripts/lulu_backup.sh" ]; then $HOME/.dotfiles/scripts/lulu_backup.sh restore; else echo "⚠️  LuLu backup script not found. Run dotfiles setup first."; fi'
+
+# List LuLu firewall rule backups
+lulu-list:
+    sh -c 'if [ -f "$HOME/.dotfiles/scripts/lulu_backup.sh" ]; then $HOME/.dotfiles/scripts/lulu_backup.sh list; else echo "⚠️  LuLu backup script not found. Run dotfiles setup first."; fi'
+
 # Show available commands
 help:
-    @just --list 
+    @just --list

@@ -42,5 +42,6 @@
 # # Just for example:
 # resize-overlay-duration = 4s 200ms
 
+keybind = alt+backspace=text:\x1b\x7f
 shell-integration = none
 command = /opt/homebrew/bin/nu

@@ -32,6 +32,12 @@ brew "dotenv-linter" # Lint .env files
 brew "editorconfig-checker" # Enforce EditorConfig
 brew "direnv"        # Environment variable manager
 
+# --- Network Security & Privacy ---
+brew "dnscrypt-proxy" # Encrypted DNS proxy
+cask "lulu"          # macOS firewall
+cask "nordvpn"       # VPN service
+cask "brave-browser" # Privacy-focused browser
+
 # --- Productivity & Utilities ---
 brew "just"          # Task runner
 brew "gh"            # GitHub CLI

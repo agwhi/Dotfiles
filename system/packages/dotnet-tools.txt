@@ -1,0 +1,2 @@
+Amazon.Lambda.Tools
+Amazon.Lambda.TestTool-8.0

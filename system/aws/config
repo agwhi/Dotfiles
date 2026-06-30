@@ -1,2 +1,6 @@
 # AWS configuration
 # TODO: Add AWS configuration
+
+[profile gen-ai]
+region = eu-west-1
+output = json

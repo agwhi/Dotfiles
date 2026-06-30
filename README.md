@@ -91,11 +91,12 @@ just bootstrap
 
 This comprehensive setup will:
 
-- Install all Homebrew packages from `Brewfile`
+- Install all Homebrew packages from `system/packages/Brewfile`
 - Install VS Code extensions
 - Install Node.js LTS and global tools (Biome, AWS CDK)
 - Install .NET 8 and Lambda tools
 - Configure security tools and direnv
+- Configure network security tools (DNS encryption, VPN, firewall)
 - Back up existing config files to `backups/`
 - Create symlinks from dotfiles to system locations
 
@@ -111,7 +112,7 @@ just security-scan
 
 ```bash
 just bootstrap              # Complete laptop setup (alias: just install)
-just brew                  # Install all Homebrew packages from Brewfile
+just brew                  # Install all Homebrew packages from system/packages/Brewfile
 just backup                # Back up current system config to repo
 just edit                  # Open dotfiles folder in Cursor editor
 just upgrade               # Update all packages and tools
@@ -269,8 +270,8 @@ just backup
 This runs `backup.sh` which:
 
 - Backs up non-symlinked files to the repo
-- Updates `Brewfile` with current Homebrew packages
-- Updates `vscode/extensions.txt` with current VS Code extensions
+- Updates `system/packages/Brewfile` with current Homebrew packages
+- Updates `system/packages/vscode-extensions.txt` with current VS Code extensions
 - Logs all actions to `backup-log.txt`
 
 **Backup logs:**
@@ -306,13 +307,14 @@ topgrade
 ```bash
 # Dotfile management (local to this repo)
 just setup                  # Full setup: install packages and create symlinks
-just brew                  # Install all Homebrew packages from Brewfile
+just brew                  # Install all Homebrew packages from system/packages/Brewfile
 just backup                # Back up current system config to repo
 just edit                  # Open dotfiles folder in Cursor editor
 just link                  # Set up all dotfile symlinks only
 just install-vscode-extensions # Install VS Code extensions only
-just install-node-tools    # Install global Node.js tools from pnpm-global.txt
+just install-node-tools    # Install global Node.js tools from system/packages/pnpm-global.txt
 just setup-security        # Install and configure security tools
+just setup-network-security # Configure DNS encryption and VPN tools
 
 # Environment setup (use global commands for other projects)
 just setup-node            # Install Node.js LTS and global tools (Biome, CDK)
@@ -325,6 +327,7 @@ just readme-lint           # Lint README.md for documentation issues
 just security-scan         # Redirects to global 'dotfile security-scan' command
 just quality-check         # Redirects to global 'dotfile quality-check' command
 just upgrade               # Redirects to global 'dotfile upgrade' command
+
 ```
 
 ### **Global Justfile Commands**
@@ -346,6 +349,18 @@ gdotnet                    # Setup .NET environment
 gaws                       # Configure AWS CLI
 gupgrade                   # Upgrade all packages with topgrade
 
+# Network security (available anywhere)
+secure-on                  # Enable DNS encryption + VPN (for public Wi-Fi)
+secure-off                 # Disable DNS encryption + VPN
+dns-start                  # Start DNS encryption only
+dns-stop                   # Stop DNS encryption only
+vpn-on                     # Connect VPN only
+vpn-off                    # Disconnect VPN only
+dns-test                   # Test for DNS leaks
+lulu-backup                # Backup LuLu firewall rules
+lulu-restore               # Restore LuLu firewall rules
+lulu-list                  # List LuLu firewall rule backups
+
 # Project initialization
 gbiome                     # Initialize Biome in current project
 ghelp                      # Show all available commands
@@ -362,8 +377,8 @@ dotfile <command>          # Run any global justfile command
 just backup
 ```
 
-Updates `Brewfile` and `vscode/extensions.txt` (symlinked files are already
-tracked).
+Updates `system/packages/Brewfile` and
+`system/packages/vscode-extensions.txt` (symlinked files are already tracked).
 
 ### AWS Development Setup
 
@@ -453,6 +468,130 @@ Copy this to `.git/hooks/pre-commit` to enforce checks before every commit
 
 ---
 
+## 🔒 Privacy & Safety on Public Networks
+
+This setup includes tools to protect your privacy and security when using
+public Wi-Fi networks (cafés, airports, hotels, conferences like AWS re:Invent).
+
+### **Quick Start for Public Networks**
+
+```bash
+# Enable full protection (DNS encryption + VPN)
+secure-on
+
+# Disable when done
+secure-off
+
+# Test for DNS leaks
+dns-test
+```
+
+### **What Each Tool Does**
+
+#### **DNS Encryption (dnscrypt-proxy)**
+- **Purpose**: Encrypts DNS queries to prevent snooping
+- **How it works**: Routes DNS through secure resolvers (Cloudflare, Quad9)
+- **Protection**: Hides which websites you're visiting from network observers
+- **Setup**: `brew services start dnscrypt-proxy`
+
+#### **VPN (NordVPN)**
+- **Purpose**: Encrypts all internet traffic
+- **How it works**: Routes traffic through secure servers
+- **Protection**: Hides your IP address and encrypts all data
+- **Setup**: Install via `brew install --cask nordvpn`, then configure account
+
+#### **Firewall (LuLu)**
+- **Purpose**: Blocks unknown outbound connections
+- **How it works**: Prompts for permission when apps try to connect
+- **Protection**: Prevents malware from phoning home
+- **Setup**: Install via `brew install lulu`, configure rules
+
+#### **Browser (Brave)**
+- **Purpose**: Privacy-focused browsing with built-in protections
+- **Features**: Shields, WebRTC protection, fingerprinting resistance
+- **Setup**: Install via `brew install --cask brave-browser`
+
+### **Manual Configuration Steps**
+
+#### **Brave Browser Settings**
+1. Open Brave and go to `brave://settings/`
+2. Enable **Shields** for all sites
+3. Go to `brave://settings/shields/` and enable:
+   - Block trackers & ads
+   - Block fingerprinting
+   - Block social media trackers
+4. Go to `brave://settings/privacy/` and disable:
+   - WebRTC IP handling (set to "Disable non-proxied UDP")
+   - Allow sites to check if you have payment methods saved
+
+#### **LuLu Firewall Configuration**
+1. Open LuLu and go to Preferences
+2. Enable "Automatically allow signed applications"
+3. Set "Unknown applications" to "Ask user"
+4. Backup your rules: `lulu-backup`
+5. Restore rules: `lulu-restore`
+
+#### **macOS System Hardening**
+1. **Wi-Fi Settings**:
+   - Go to System Preferences → Network → Wi-Fi → Advanced
+   - Uncheck "Remember networks this computer has joined"
+   - Uncheck "Ask to join new networks"
+
+2. **AirDrop & Sharing**:
+   - Go to System Preferences → Sharing
+   - Disable all services when on public networks
+   - Turn off AirDrop in Control Center
+
+3. **Firewall**:
+   - Go to System Preferences → Security & Privacy → Firewall
+   - Enable firewall and set to "Block all incoming connections"
+
+### **When to Use Secure Mode**
+
+**Enable `secure-on` when:**
+- Using café Wi-Fi
+- Connecting at airports or hotels
+- Attending conferences (AWS re:Invent, etc.)
+- Using any untrusted network
+- Working with sensitive data
+
+**Disable `secure-off` when:**
+- Back on your home/office network
+- VPN is causing connectivity issues
+- You need maximum speed for downloads
+
+### **Troubleshooting**
+
+#### **DNS Issues**
+```bash
+# Check if dnscrypt-proxy is running
+brew services list | grep dnscrypt-proxy
+
+# Restart DNS service
+dns-stop
+dns-start
+
+# Test DNS resolution
+nslookup google.com 127.0.0.1
+```
+
+#### **VPN Issues**
+```bash
+# Check NordVPN status
+nordvpn status
+
+# Reconnect VPN
+vpn-off
+vpn-on
+```
+
+#### **Performance Impact**
+- DNS encryption: Minimal impact (~1-5ms)
+- VPN: Moderate impact (10-50ms latency, reduced bandwidth)
+- Combined: Best protection, moderate performance cost
+
+---
+
 ## 🧱 Structure
 
 This repository is organized to provide a clear separation of concerns and
@@ -469,8 +608,7 @@ dotfiles/
 │   │   ├── argv.jsonc      # Cursor command line arguments
 │   │   └── extensions.json # Cursor recommended extensions
 │   ├── vscode/             # Global VS Code configuration
-│   │   ├── settings.jsonc  # VS Code settings (formatting, extensions)
-│   │   └── extensions.txt  # VS Code extensions list
+│   │   └── settings.jsonc  # VS Code settings (formatting, extensions)
 │   ├── nushell/            # Global shell configuration
 │   │   ├── config.nu       # Main shell config (aliases, functions)
 │   │   └── env.nu          # Environment variables and PATH setup
@@ -486,8 +624,21 @@ dotfiles/
 │   │   └── starship.toml   # Starship prompt configuration (themes, modules)
 │   ├── neovim/             # Global Neovim configuration
 │   │   └── init.lua        # Neovim initialization script (minimal setup)
-│   ├── Brewfile            # Homebrew packages and apps
-│   ├── pnpm-global.txt     # Global Node.js tools list
+│   ├── dnscrypt-proxy/     # DNS encryption configuration
+│   │   └── dnscrypt-proxy.toml # DNS proxy settings for privacy
+│   ├── packages/           # Package manifests for bootstrap and doctor
+│   │   ├── Brewfile        # Homebrew packages and apps
+│   │   ├── pnpm-global.txt # Global Node.js tools list
+│   │   ├── vscode-extensions.txt # VS Code extensions list
+│   │   ├── cursor-extensions.txt # Cursor extension recommendations
+│   │   ├── dotnet-tools.txt # Global .NET tools list
+│   │   └── manual-apps.md  # Manual or approval-gated tools
+│   ├── ai/                 # Managed AI Tool Surface scaffolding
+│   │   ├── apm/            # AI Asset Manager package declarations
+│   │   ├── codex/          # Codex-safe managed configuration
+│   │   ├── claude/         # Claude-safe managed configuration
+│   │   ├── opencode/       # opencode-safe managed configuration
+│   │   └── shared/         # Shared AI Asset declarations
 │   └── .editorconfig       # Global editor configuration
 ├── .cursor/                 # Repository-specific Cursor rules
 │   └── rules/              # AI context rules for development consistency
@@ -527,6 +678,7 @@ single source of truth:
 - `system/cursor/settings.jsonc` → `~/.cursor/settings.json`
 - `system/git/gitconfig` → `~/.gitconfig`
 - `system/nushell/config.nu` → `~/Library/Application Support/nushell/config.nu`
+- `system/dnscrypt-proxy/dnscrypt-proxy.toml` → `~/.config/dnscrypt-proxy/dnscrypt-proxy.toml`
 
 ### **Git Ignore Strategy**
 
@@ -588,9 +740,9 @@ direnv allow
 
 #### **Adding New Tools**
 
-1. **Homebrew packages**: Add to `Brewfile`
-2. **Node.js tools**: Add to `pnpm-global.txt`
-3. **VS Code extensions**: Add to `vscode/extensions.txt`
+1. **Homebrew packages**: Add to `system/packages/Brewfile`
+2. **Node.js tools**: Add to `system/packages/pnpm-global.txt`
+3. **VS Code extensions**: Add to `system/packages/vscode-extensions.txt`
 4. **Configuration files**: Add to `setup_symlinks.sh`
 5. **Run bootstrap**: `just bootstrap` to install and configure everything
 

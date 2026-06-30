@@ -23,6 +23,7 @@ use std/util "path add"
 
 # Add homebrew
 path add "~/.local/bin"
+path add "/usr/local/bin"
 path add "/opt/homebrew/bin"
 
 # Add starship prompt
@@ -37,7 +38,7 @@ if not (which fnm | is-empty) {
     $env.config.hooks.env_change.PWD = (
         $env.config.hooks.env_change.PWD? | append {
             condition: {|| ['.nvmrc' '.node-version', 'package.json'] | any {|el| $el | path exists}}
-            code: {|| ^fnm use}
+            code: {|| ^fnm use --install-if-missing}
         }
     )
 }
@@ -52,6 +53,8 @@ path add $"($env.HOME)/.dotnet/tools"
 # Aliases
 alias vim = nvim
 alias lambda-test = dotnet-lambda-test-tool-8.0
+alias fnm-install = fnm install
+alias fnm-use = fnm use
 
 # Global justfile aliases
 alias dotfile = just $'--justfile=($env.HOME)/.justfile'
@@ -68,6 +71,18 @@ alias gdotnet = just $'--justfile=($env.HOME)/.justfile' setup-dotnet
 alias gaws = just $'--justfile=($env.HOME)/.justfile' setup-aws
 alias gbiome = just $'--justfile=($env.HOME)/.justfile' init-biome
 alias ghelp = just $'--justfile=($env.HOME)/.justfile' help
+
+# Network security aliases
+alias secure-on = just $'--justfile=($env.HOME)/.justfile' secure-mode-on
+alias secure-off = just $'--justfile=($env.HOME)/.justfile' secure-mode-off
+alias dns-start = just $'--justfile=($env.HOME)/.justfile' dns-secure-start
+alias dns-stop = just $'--justfile=($env.HOME)/.justfile' dns-secure-stop
+alias vpn-on = just $'--justfile=($env.HOME)/.justfile' vpn-secure-on
+alias vpn-off = just $'--justfile=($env.HOME)/.justfile' vpn-secure-off
+alias dns-test = just $'--justfile=($env.HOME)/.justfile' dns-leak-test
+alias lulu-backup = just $'--justfile=($env.HOME)/.justfile' lulu-backup
+alias lulu-restore = just $'--justfile=($env.HOME)/.justfile' lulu-restore
+alias lulu-list = just $'--justfile=($env.HOME)/.justfile' lulu-list
 
 # https://carapace-sh.github.io/carapace-bin/setup.html#nushell
 source ~/.cache/carapace/init.nu

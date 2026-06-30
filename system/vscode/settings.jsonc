@@ -63,5 +63,7 @@
     },
     // Workbench settings
     "workbench.editor.enablePreview": false,
-    "workbench.startupEditor": "none"
+    "workbench.startupEditor": "none",
+    "gitlens.ai.model": "vscode",
+    "gitlens.ai.vscode.model": "copilot:gpt-4.1"
 }

@@ -21,6 +21,9 @@
 $env.CARAPACE_BRIDGES = 'zsh,fish,bash,inshellisense' # optional
 
 # pnpm
-$env.PNPM_HOME = "~/Library/pnpm"
-$env.PATH = ($env.PATH | split row (char esep) | prepend $env.PNPM_HOME )
+$env.PNPM_HOME = ($env.HOME | path join "Library/pnpm")
+$env.PATH = ($env.PATH | prepend $env.PNPM_HOME | uniq)
 # pnpm end
+
+# Homebrew sbin (for dnscrypt-proxy)
+$env.PATH = ($env.PATH | split row (char esep) | prepend "/opt/homebrew/sbin")

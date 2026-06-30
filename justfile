@@ -18,22 +18,24 @@ upgrade:
 
 # Install all Homebrew packages
 install-brew:
-    # Install all CLI tools and apps defined in Brewfile
-    brew bundle --file=./system/Brewfile
+    # Install all CLI tools and apps defined in the package manifest
+    brew bundle --file=./system/packages/Brewfile
 
 # Alias for install-brew task
 brew: install-brew
 
 # Install VS Code extensions
 install-vscode-extensions:
-    cat system/vscode/extensions.txt | xargs -n 1 code --install-extension
+    sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; p' system/packages/vscode-extensions.txt | xargs -n 1 code --install-extension
 
 # Full bootstrap: complete laptop setup
-bootstrap: install-brew install-vscode-extensions setup-node setup-dotnet setup-security backup-and-link
+bootstrap: install-brew install-vscode-extensions setup-node setup-dotnet setup-security setup-network-security backup-and-link
     echo "✅ Complete laptop bootstrap complete!"
     echo "📝 Next steps:"
     echo "   - Run 'just setup-aws-cli' to configure AWS"
     echo "   - Copy system/git/gitconfig.local.example to ~/.gitconfig.local and edit"
+    echo "   - Configure NordVPN account and Brave browser settings"
+    echo "   - Use 'secure-on' when on public Wi-Fi networks"
     echo "   - Restart your terminal to load all changes"
 
 # Alias for bootstrap (for discoverability)
@@ -66,8 +68,8 @@ install-pnpm:
 
 # Install global Node.js tools
 install-node-tools: install-pnpm
-    source ~/.config/nushell/env.nu; cat system/pnpm-global.txt | xargs -n 1 pnpm add -g
-    echo "✅ Global Node.js tools installed from pnpm-global.txt"
+    source ~/.config/nushell/env.nu; cat system/packages/pnpm-global.txt | xargs -n 1 pnpm add -g
+    echo "✅ Global Node.js tools installed from system/packages/pnpm-global.txt"
     echo "   - Biome: Available for project-specific configuration"
     echo "   - AWS CDK: Available for AWS infrastructure development"
     echo "   - Use 'biome init' in projects to create biome.json"
@@ -106,6 +108,19 @@ setup-security: setup-direnv
 # Run security scans (use global: dotfile security-scan)
 security-scan:
     @echo "Use 'dotfile security-scan' for system-wide security scans"
+
+# Network security commands are available globally via 'dotfile' aliases
+# Use: dotfile secure-mode-on, dotfile dns-leak-test, etc.
+
+# Setup network security tools
+setup-network-security:
+    # Create dnscrypt-proxy config directory
+    mkdir -p ~/.config/dnscrypt-proxy
+    echo "✅ Network security tools configured"
+    echo "📝 Next steps:"
+    echo "   - Run 'secure-on' to enable protection"
+    echo "   - Configure NordVPN account in the app"
+    echo "   - Set up Brave browser privacy settings"
 
 # Run quality checks (use global: dotfile quality-check)
 quality-check:
