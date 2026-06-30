@@ -4,6 +4,14 @@
 link:
     ./scripts/setup_symlinks.sh
 
+# Run read-only Development Ecosystem audit
+doctor *args:
+    @./scripts/doctor.py {{args}}
+
+# Alias for doctor
+audit *args:
+    @./scripts/doctor.py {{args}}
+
 # Backup existing config files before symlinking
 backup:
     ./scripts/backup.sh

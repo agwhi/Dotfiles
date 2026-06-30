@@ -5,3 +5,7 @@ gitconfig.local
 backups/
 symlink-backups.txt
 backup-log.txt
+
+# Python validation/cache artifacts
+__pycache__/
+*.py[cod]
