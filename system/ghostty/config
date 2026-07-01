@@ -44,4 +44,4 @@
 
 keybind = alt+backspace=text:\x1b\x7f
 shell-integration = none
-command = /opt/homebrew/bin/nu
+command = /bin/zsh -l

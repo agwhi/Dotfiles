@@ -28,6 +28,9 @@ DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
 NUSHELL_CONFIG = ROOT / "system/nushell/config.nu"
 NUSHELL_ENV = ROOT / "system/nushell/env.nu"
+ZSH_ENV = ROOT / "system/zsh/.zshenv"
+ZSH_PROFILE = ROOT / "system/zsh/.zprofile"
+ZSH_RC = ROOT / "system/zsh/.zshrc"
 DOTNET_READ_ONLY_ENV = {
     **os.environ,
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
@@ -1040,12 +1043,13 @@ def editor_shell_policy() -> dict[str, Any]:
     ghostty = ROOT / "system/ghostty/config"
     if ghostty.exists():
         text = ghostty.read_text(encoding="utf-8")
-        command_match = re.search(r"(?m)^\s*command\s*=\s*(\S+)", text)
+        command_match = re.search(r"(?m)^\s*command\s*=\s*(.+?)\s*$", text)
         command = command_match.group(1) if command_match else None
+        command_path = command.split()[0] if command else None
         policies["ghostty"] = {
             "configured": bool(command),
             "command": command,
-            "default_shell": Path(command).name if command else None,
+            "default_shell": Path(command_path).name if command_path else None,
             "source": str(ghostty.relative_to(ROOT)),
         }
     else:
@@ -1070,7 +1074,12 @@ def shell_alias_policy() -> dict[str, Any]:
             "sources": [str(NUSHELL_CONFIG.relative_to(ROOT))],
         }
 
-    zsh_sources = [HOME / ".zshenv", HOME / ".zprofile", HOME / ".zshrc"]
+    repo_zsh_sources = [ZSH_ENV, ZSH_PROFILE, ZSH_RC]
+    zsh_sources = (
+        repo_zsh_sources
+        if any(source.exists() for source in repo_zsh_sources)
+        else [HOME / ".zshenv", HOME / ".zprofile", HOME / ".zshrc"]
+    )
     zsh_aliases = []
     for source in zsh_sources:
         if not source.exists():
@@ -1086,7 +1095,11 @@ def shell_alias_policy() -> dict[str, Any]:
                 text,
             )
         )
-        result["zsh"]["sources"].append(str(source))
+        try:
+            display_source = str(source.relative_to(ROOT))
+        except ValueError:
+            display_source = str(source)
+        result["zsh"]["sources"].append(display_source)
     result["zsh"]["aliases"] = sorted(set(zsh_aliases))
     return result
 

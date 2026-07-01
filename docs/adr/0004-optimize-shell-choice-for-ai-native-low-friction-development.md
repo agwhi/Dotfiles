@@ -1,41 +1,67 @@
-# Optimize Shell Choice for AI-Native Low-Friction Development
+# Optimize Shell Choice For AI-Native Low-Friction Development
 
-The shell strategy is a bounded dual-shell model. Nushell remains the Primary
-Shell for Alex's interactive and editor-terminal workflows, while
-POSIX-compatible zsh/sh remains the Automation Shell contract for bootstrap
-scripts, `just` recipes, installer docs, Codex-generated commands, and other
-AI-executed commands.
+Status: accepted for zsh-primary trial.
 
-This is not a Nu-only strategy. Shell parity must be generated or verified from
-shared environment ownership before plain commands such as `node`, `pnpm`,
-`corepack`, or `dotnet` are considered safe across Nu, zsh, Codex, `just`, and
-editor contexts. Until then, automation should prefer explicit wrappers such as
-`scripts/js_toolchain.sh`, full command names, and POSIX-compatible syntax
-rather than aliases or interactive shell startup behavior.
+The shell strategy is now a zsh-primary trial. Repo-managed editor terminals
+should launch zsh for Alex's daily interactive development while Nushell remains
+installed, declared, symlinked, and available as an optional structured-data
+shell.
+
+This is not a Nushell removal decision. Nushell config stays repo-managed under
+`system/nushell/`, the Homebrew manifest keeps `nushell`, and no login shell is
+changed with `chsh`. Any future Nu removal or cleanup requires explicit approval
+after the zsh trial proves parity.
 
 ## Considered Options
 
-- zsh as Primary Shell
+- zsh as Primary Shell with Nushell retained optionally
 - Nushell as Primary Shell with zsh/POSIX as Automation Shell
 - both shells supported through generated shared environment configuration
-- Nushell retained only as an optional structured-data tool
+- Nushell retained only as an optional structured-data tool after a later
+  cleanup approval
+
+## Decision
+
+Use zsh as the primary interactive/editor shell for the trial because it reduces
+friction for AI agents, vendor docs, bootstrap commands, `just` recipes, and
+POSIX-compatible examples. Keep Nushell available for structured-data workflows
+and as a rollback target.
+
+Automation should continue to use POSIX-compatible command text and explicit
+tool wrappers. Interactive aliases can exist in zsh for daily convenience, but
+scripts, recipes, setup docs, and AI-generated instructions should not depend on
+those aliases.
 
 ## Evidence
 
-`docs/plans/shell-parity-and-strategy-plan.md` records the current probe
-evidence. The decisive facts are that repo-managed editor terminals point at
-Nu, Codex and `just` run from zsh/current-process contexts, `fnm` activates only
-in the Nu login probe, `pnpm` resolves through different sources across
-contexts, and zsh/Codex/just keep literal tilde PATH entries that hide tools.
+`docs/plans/shell-parity-and-strategy-plan.md` recorded that repo-managed editor
+terminals previously launched Nu while Codex and `just` usually ran from
+zsh/current-process contexts. That split created avoidable friction around
+command syntax, `PNPM_HOME`, `.dotnet/tools`, `fnm`, Corepack, and AI CLI
+visibility.
+
+The zsh-primary trial ports the useful Nu startup behavior into repo-managed
+zsh files:
+
+- Homebrew login PATH setup
+- expanded `PNPM_HOME`
+- `fnm` activation with `--use-on-cd`
+- Starship, zoxide, direnv, carapace, and fzf
+- `.dotnet/tools` plus the temporary Homebrew `dotnet@8` path
+- existing daily aliases for interactive use
 
 ## Consequences
 
-Codex-generated commands should target the zsh/Codex execution context by
-default, but use POSIX-compatible command text unless a task explicitly needs a
-zsh feature. `just` bootstrap should assume portable shell semantics, not
-Nushell syntax or aliases. Future shell setup work should make shared PATH and
-tool ownership explicit before removing compatibility sources.
+VS Code, Cursor, and Ghostty launch zsh by default for the trial. Nu remains a
+selectable editor terminal profile and its language/editor settings remain in
+place.
 
-Doctor shell parity checks should remain non-mutating by default. Login/startup
-shell probes are opt-in because they execute user startup files and can write
-caches or run hooks.
+Doctor shell parity checks remain read-only by default. Login/startup probes are
+still opt-in because they execute user startup files and can run hooks. Doctor
+may statically inspect repo-managed zsh files so the trial state is observable
+without first mutating home startup files.
+
+Rollback is intentionally small: restore the editor terminal defaults to Nu and
+either rerun the symlink flow with previous zsh backups or remove the zsh home
+symlinks after restoring the backed-up files. No Nushell install or config state
+needs to be recreated because it is retained throughout the trial.

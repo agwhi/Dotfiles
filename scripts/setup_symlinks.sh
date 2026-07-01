@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Safe Symlink Setup Script for Dotfiles
-# ✅ Overrides existing files (use backup.sh first if needed)
+# ✅ Backs up existing files before replacing them
 # ✅ Uses absolute paths for safety
 
 set -euo pipefail
@@ -9,6 +9,29 @@ set -euo pipefail
 echo "🔗 Setting up symlinks from dotfiles repo..."
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BACKUP_DIR=""
+
+backup_existing_target() {
+    local target="$1"
+    local description="$2"
+
+    if [[ ! -e "$target" && ! -L "$target" ]]; then
+        return
+    fi
+
+    if [[ -z "$BACKUP_DIR" ]]; then
+        local timestamp
+        timestamp="$(date +%F_%H-%M-%S)"
+        BACKUP_DIR="$DOTFILES_DIR/backups/symlinks-$timestamp"
+        mkdir -p "$BACKUP_DIR"
+        echo "$timestamp → $BACKUP_DIR" >> "$DOTFILES_DIR/symlink-backups.txt"
+    fi
+
+    local dest="$BACKUP_DIR${target/#$HOME/}"
+    mkdir -p "$(dirname "$dest")"
+    cp -a "$target" "$dest"
+    echo "💾 Backed up existing $description to $dest"
+}
 
 # Function to create symlink safely
 create_symlink() {
@@ -23,6 +46,11 @@ create_symlink() {
     local target_dir
     target_dir="$(dirname "$target")"
     mkdir -p "$target_dir"
+
+    if [[ "$source" == "$target" ]]; then
+        echo "✅ $description already lives at target"
+        return
+    fi
 
     # Don't sync if target is inside the dotfiles repo
     if [[ "$target" != "$DOTFILES_DIR"* ]] && [[ -e "$target" ]] && [[ ! -e "$source" ]]; then
@@ -48,6 +76,7 @@ create_symlink() {
 
     # Remove existing file/directory/symlink if it exists
     if [[ -e "$target" || -L "$target" ]]; then
+        backup_existing_target "$target" "$description"
         echo "🗑️  Removing existing $description"
         rm -rf "$target"
     fi
@@ -57,8 +86,12 @@ create_symlink() {
 }
 
 # Symlink list (source → target)
+create_symlink "$DOTFILES_DIR" "$HOME/.dotfiles" "Dotfiles repo shortcut"
 create_symlink "$DOTFILES_DIR/system/starship/starship.toml" "$HOME/.config/starship.toml" "Starship config"
 create_symlink "$DOTFILES_DIR/system/neovim/init.lua" "$HOME/.config/nvim/init.lua" "Neovim config"
+create_symlink "$DOTFILES_DIR/system/zsh/.zshenv" "$HOME/.zshenv" "zsh env"
+create_symlink "$DOTFILES_DIR/system/zsh/.zprofile" "$HOME/.zprofile" "zsh login config"
+create_symlink "$DOTFILES_DIR/system/zsh/.zshrc" "$HOME/.zshrc" "zsh interactive config"
 
 # Cursor configuration - link system-wide config files to home directory
 create_symlink "$DOTFILES_DIR/system/cursor/settings.jsonc" "$HOME/.cursor/settings.json" "Cursor settings"

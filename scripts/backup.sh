@@ -22,6 +22,9 @@ echo "📦 Starting backup to: $backup_dir"
 
 # List of files to back up (matches symlink targets)
 files_to_backup=(
+    "$HOME/.zshenv"
+    "$HOME/.zprofile"
+    "$HOME/.zshrc"
     "$HOME/.config/starship.toml"
     "$HOME/.config/nvim/init.lua"
     "$HOME/.cursor"

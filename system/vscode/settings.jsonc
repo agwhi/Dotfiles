@@ -54,8 +54,14 @@
     "git.autofetch": false,
     "git.confirmSync": false,
     // Terminal settings
-    "terminal.integrated.defaultProfile.osx": "nu",
+    "terminal.integrated.defaultProfile.osx": "zsh",
     "terminal.integrated.profiles.osx": {
+        "zsh": {
+            "args": [
+                "-l"
+            ],
+            "path": "/bin/zsh"
+        },
         "nu": {
             "args": [],
             "path": "/opt/homebrew/bin/nu"

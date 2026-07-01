@@ -57,32 +57,32 @@ alias fnm-install = fnm install
 alias fnm-use = fnm use
 
 # Global justfile aliases
-alias dotfile = just $'--justfile=($env.HOME)/.justfile'
-alias gjust = just $'--justfile=($env.HOME)/.justfile'
-alias quality = just $'--justfile=($env.HOME)/.justfile' quality-check
-alias security = just $'--justfile=($env.HOME)/.justfile' security-scan
-alias glint = just $'--justfile=($env.HOME)/.justfile' lint
-alias gformat = just $'--justfile=($env.HOME)/.justfile' format
-alias gdocs = just $'--justfile=($env.HOME)/.justfile' docs-lint
-alias gfix = just $'--justfile=($env.HOME)/.justfile' fix-formatting
-alias gupgrade = just $'--justfile=($env.HOME)/.justfile' upgrade
-alias gnode = just $'--justfile=($env.HOME)/.justfile' setup-node
-alias gdotnet = just $'--justfile=($env.HOME)/.justfile' setup-dotnet
-alias gaws = just $'--justfile=($env.HOME)/.justfile' setup-aws
-alias gbiome = just $'--justfile=($env.HOME)/.justfile' init-biome
-alias ghelp = just $'--justfile=($env.HOME)/.justfile' help
+alias dotfile = just --global-justfile
+alias gjust = just --global-justfile
+alias quality = just --global-justfile quality-check
+alias security = just --global-justfile security-scan
+alias glint = just --global-justfile lint
+alias gformat = just --global-justfile format
+alias gdocs = just --global-justfile docs-lint
+alias gfix = just --global-justfile fix-formatting
+alias gupgrade = just --global-justfile upgrade
+alias gnode = just --global-justfile setup-node
+alias gdotnet = just --global-justfile setup-dotnet
+alias gaws = just --global-justfile setup-aws
+alias gbiome = just --global-justfile init-biome
+alias ghelp = just --global-justfile help
 
 # Network security aliases
-alias secure-on = just $'--justfile=($env.HOME)/.justfile' secure-mode-on
-alias secure-off = just $'--justfile=($env.HOME)/.justfile' secure-mode-off
-alias dns-start = just $'--justfile=($env.HOME)/.justfile' dns-secure-start
-alias dns-stop = just $'--justfile=($env.HOME)/.justfile' dns-secure-stop
-alias vpn-on = just $'--justfile=($env.HOME)/.justfile' vpn-secure-on
-alias vpn-off = just $'--justfile=($env.HOME)/.justfile' vpn-secure-off
-alias dns-test = just $'--justfile=($env.HOME)/.justfile' dns-leak-test
-alias lulu-backup = just $'--justfile=($env.HOME)/.justfile' lulu-backup
-alias lulu-restore = just $'--justfile=($env.HOME)/.justfile' lulu-restore
-alias lulu-list = just $'--justfile=($env.HOME)/.justfile' lulu-list
+alias secure-on = just --global-justfile secure-mode-on
+alias secure-off = just --global-justfile secure-mode-off
+alias dns-start = just --global-justfile dns-secure-start
+alias dns-stop = just --global-justfile dns-secure-stop
+alias vpn-on = just --global-justfile vpn-secure-on
+alias vpn-off = just --global-justfile vpn-secure-off
+alias dns-test = just --global-justfile dns-leak-test
+alias lulu-backup = just --global-justfile lulu-backup
+alias lulu-restore = just --global-justfile lulu-restore
+alias lulu-list = just --global-justfile lulu-list
 
 # https://carapace-sh.github.io/carapace-bin/setup.html#nushell
 source ~/.cache/carapace/init.nu
