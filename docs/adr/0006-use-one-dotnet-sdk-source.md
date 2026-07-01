@@ -79,6 +79,23 @@ That wrapper requires `mise` and the repo-managed config. It must fail clearly
 when `mise` or the SDKs are absent instead of silently using Microsoft pkg .NET
 or Homebrew `dotnet@8`.
 
+Bootstrap has an explicit SDK step before global tool installation:
+
+```text
+Homebrew installs mise -> mise installs SDKs -> wrapper installs global tools
+```
+
+The SDK step is `install-dotnet-sdks`, which runs
+`scripts/dotnet_sdk_install.sh`. That script is intentionally mutating when
+executed: it locates `mise`, requires `system/mise/config.toml`, sets
+`MISE_GLOBAL_CONFIG_FILE` to that repo-managed config, and installs only the
+declared `dotnet` SDK lines through `mise`. It does not fall back to Microsoft
+pkg .NET or Homebrew `dotnet@8`.
+
+`setup-dotnet` must keep the order `install-dotnet-sdks` before
+`install-dotnet-tools` so global tools are installed through the ADR-0006 SDK
+source rather than a migration exception.
+
 The installer surface for global tools is a separate implementation decision:
 the repo may keep using `dotnet tool install --global` through the
 `mise`-managed SDK, or it may use `mise`'s `dotnet:ToolName` backend where that

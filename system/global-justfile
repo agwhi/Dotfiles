@@ -3,6 +3,7 @@ set shell := ["sh", "-cu"]
 
 dev_env := "$HOME/.dotfiles/scripts/dev_env.sh"
 js_toolchain := "$HOME/.dotfiles/scripts/js_toolchain.sh"
+dotnet_sdk_install := "$HOME/.dotfiles/scripts/dotnet_sdk_install.sh"
 dotnet_toolchain := "$HOME/.dotfiles/scripts/dotnet_toolchain.sh"
 dotnet_tools_manifest := "$HOME/.dotfiles/system/packages/dotnet-tools.txt"
 
@@ -51,13 +52,18 @@ setup-node:
     {{js_toolchain}} corepack prepare pnpm@latest --activate
     echo "✅ Node.js LTS and pnpm ready"
 
+# Install ADR-0006 .NET SDK lines through mise
+install-dotnet-sdks:
+    {{dotnet_sdk_install}}
+    echo "✅ ADR-0006 .NET SDK lines installed through mise"
+
 # Install global .NET tools through the ADR-0006 mise-managed SDK
 install-dotnet-tools:
     sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; s/[[:space:]]*#.*$//; p' {{dotnet_tools_manifest}} | while IFS= read -r tool; do {{dotnet_toolchain}} dotnet tool install --global "$tool" || {{dotnet_toolchain}} dotnet tool update --global "$tool"; done
     echo "✅ .NET global tools installed from system/packages/dotnet-tools.txt"
 
 # Setup .NET environment
-setup-dotnet: install-dotnet-tools
+setup-dotnet: install-dotnet-sdks install-dotnet-tools
     echo "✅ .NET development environment ready"
 
 # Configure AWS CLI

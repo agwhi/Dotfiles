@@ -20,13 +20,19 @@ parity and global tool paths are verified.
 Per ADR-0006, Homebrew declares `mise` as the strategic .NET SDK manager.
 `system/mise/config.toml` declares .NET 10 as the default SDK line and .NET 8
 as the compatibility line, and `scripts/setup_symlinks.sh` links it to
-`~/.config/mise/config.toml`. .NET commands in repo recipes should go through
-`scripts/dotnet_toolchain.sh` so they fail clearly until `mise` and the SDKs
-exist.
+`~/.config/mise/config.toml`.
 
-The SDK installs themselves are a later approved migration step. Existing
-Microsoft pkg .NET and Homebrew `dotnet@8` remain managed exceptions until the
-`mise` SDK root, editor discovery, workloads, and global tools are verified.
+Bootstrap order is Homebrew installs `mise`, `install-dotnet-sdks` installs the
+declared SDK lines through `scripts/dotnet_sdk_install.sh`, and then
+`install-dotnet-tools` installs global tools through
+`scripts/dotnet_toolchain.sh`. The SDK installer is explicitly mutating when
+run, requires the repo-managed `system/mise/config.toml`, and does not fall
+back to Microsoft pkg .NET or Homebrew `dotnet@8`.
+
+The SDK install recipe should run only as a later approved migration step.
+Existing Microsoft pkg .NET and Homebrew `dotnet@8` remain managed exceptions
+until the `mise` SDK root, editor discovery, workloads, and global tools are
+verified.
 
 ## Manual And Approval-Gated State
 

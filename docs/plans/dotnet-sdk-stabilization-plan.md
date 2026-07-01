@@ -65,6 +65,9 @@ Local command evidence collected on 2026-07-01:
   .NET 10 plus .NET 8 without declaring Node.
 - `scripts/dotnet_toolchain.sh` is the canonical wrapper for .NET commands; it
   requires `mise` and does not silently fall back to Homebrew `dotnet@8`.
+- `scripts/dotnet_sdk_install.sh` is the explicit mutating SDK installer that
+  should run only after Homebrew has installed `mise`; it uses
+  `system/mise/config.toml` via `MISE_GLOBAL_CONFIG_FILE`.
 - No `.csproj`, `.fsproj`, `.vbproj`, `.sln`, `global.json`, `.props`, or
   `.targets` files exist in this repo.
 - Installed global tools are user-local packages:
@@ -169,8 +172,11 @@ migration-pending until the SDKs are installed through `mise`.
 Just recipes:
 Current recipes route .NET global tool installs through
 `scripts/dotnet_toolchain.sh`, which runs under the ADR-0006 `mise` context.
-Compatibility projects should pin their SDK instead of relying on a global
-shell default.
+Bootstrap order is explicit: Homebrew installs `mise`, `install-dotnet-sdks`
+runs `scripts/dotnet_sdk_install.sh` to install the declared SDK lines through
+`mise`, and then `install-dotnet-tools` runs `scripts/dotnet_toolchain.sh` to
+install global tools through that SDK context. Compatibility projects should
+pin their SDK instead of relying on a global shell default.
 
 Editor terminals:
 VS Code, Cursor, and other editor terminals should resolve the same `mise`
@@ -199,6 +205,10 @@ remove existing global tools until that choice is explicit.
 Keep `system/packages/dotnet-tools.txt` as the Package Manifest for approved
 global tools. Future installs or updates should run through the canonical
 `mise`-managed .NET SDK after shell parity is fixed.
+
+`setup-dotnet` depends on `install-dotnet-sdks` before `install-dotnet-tools`.
+That makes the bootstrap path clear, but validation of this readiness work must
+use `just --dry-run` only unless the mutation is explicitly approved.
 
 Current decisions:
 
@@ -270,24 +280,28 @@ Before removing or changing global tools:
    SDK version policy. Done.
 4. Add a `.NET` wrapper and recipes that use the `mise` context without
    mutating the laptop during validation. Done.
-5. Install .NET 10 and .NET 8 through `mise` in a later approved mutation step.
-6. Activate `mise` in zsh/Codex and editor terminals after install.
-7. Re-run doctor and shell checks from zsh, Codex, VS Code, Cursor, and AI
+5. Add an explicit `install-dotnet-sdks` recipe that installs the ADR-0006 SDK
+   lines through `mise` only when deliberately run. Done.
+6. Install .NET 10 and .NET 8 through `mise` in a later approved mutation step
+   by running `install-dotnet-sdks` after Homebrew installs `mise`.
+7. Activate `mise` in zsh/Codex and editor terminals after install.
+8. Re-run doctor and shell checks from zsh, Codex, VS Code, Cursor, and AI
    command surfaces.
-8. Decide whether .NET global tools stay as `dotnet tool --global` installs or
+9. Decide whether .NET global tools stay as `dotnet tool --global` installs or
    move to `mise` `dotnet:ToolName` declarations.
-9. Decide global tool manifest changes for `dotnet-ef`, `csharpier`,
+10. Decide global tool manifest changes for `dotnet-ef`, `csharpier`,
    `deadcsharp`, and the legacy Lambda test tool package.
-10. Only after all gates pass, ask for explicit approval to remove Microsoft pkg
+11. Only after all gates pass, ask for explicit approval to remove Microsoft pkg
    .NET and Homebrew `dotnet@8`.
-11. Remove .NET 8 from `mise` only after all compatibility projects have
+12. Remove .NET 8 from `mise` only after all compatibility projects have
    migrated and a separate approval gate passes.
 
 ## What Not To Do
 
 - Do not install `mise` during this readiness pass.
 - Do not install, uninstall, relink, unlink, repair, or upgrade any .NET
-  SDK/runtime.
+  SDK/runtime during this readiness pass; `install-dotnet-sdks` is repo wiring
+  and must be validated with dry-runs only until an approved mutation step.
 - Do not remove Microsoft pkg files or Homebrew `dotnet@8`.
 - Do not install or uninstall global tools until SDK ownership and PATH parity
   are stable; recipes may declare the intended install command, but validation

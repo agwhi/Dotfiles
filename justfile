@@ -2,6 +2,7 @@
 set shell := ["sh", "-cu"]
 
 js_toolchain := "./scripts/js_toolchain.sh"
+dotnet_sdk_install := "./scripts/dotnet_sdk_install.sh"
 dotnet_toolchain := "./scripts/dotnet_toolchain.sh"
 
 # Set up all dotfile symlinks safely
@@ -91,13 +92,18 @@ setup-node: install-node install-node-tools
     echo "✅ Node.js development environment ready"
     echo "💡 Use 'dotfile setup-node' for future Node.js setup in other projects"
 
+# Install ADR-0006 .NET SDK lines through mise
+install-dotnet-sdks:
+    {{dotnet_sdk_install}}
+    echo "✅ ADR-0006 .NET SDK lines installed through mise"
+
 # Install global .NET tools through the ADR-0006 mise-managed SDK
 install-dotnet-tools:
     sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; s/[[:space:]]*#.*$//; p' system/packages/dotnet-tools.txt | while IFS= read -r tool; do {{dotnet_toolchain}} dotnet tool install --global "$tool" || {{dotnet_toolchain}} dotnet tool update --global "$tool"; done
     echo "✅ .NET global tools installed from system/packages/dotnet-tools.txt"
 
 # Setup .NET development environment (use global: dotfile setup-dotnet)
-setup-dotnet: install-dotnet-tools
+setup-dotnet: install-dotnet-sdks install-dotnet-tools
     echo "✅ .NET development environment ready"
     echo "💡 Use 'dotfile setup-dotnet' for future .NET setup in other projects"
 
