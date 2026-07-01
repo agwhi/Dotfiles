@@ -32,7 +32,8 @@ We favor tools that reduce friction and are fast to use:
 
 - **Rust-based tools** (fd, bat, ripgrep, topgrade) for performance
 - **Just task runner** for simple, fast automation
-- **Nushell** for structured data and better scripting
+- **zsh** as the primary interactive/editor shell for AI-friendly command
+  compatibility
 - **Minimal prompts** (Starship) that don't slow down your workflow
 
 ### **Terminal Native**
@@ -142,7 +143,7 @@ After bootstrap, you can:
 | Tool       | Description                               |
 | ---------- | ----------------------------------------- |
 | [Ghostty]  | Terminal emulator (fast, GPU-accelerated) |
-| [Nushell]  | Smart shell with structured data support  |
+| [zsh]      | Primary interactive and editor shell      |
 | [Starship] | Minimal, fast prompt                      |
 | [Carapace] | Completion engine for CLIs                |
 | [Zoxide]   | Smarter `cd`                              |
@@ -334,7 +335,7 @@ just upgrade               # Redirects to global 'dotfile upgrade' command
 ### **Global Justfile Commands**
 
 The dotfiles setup also creates a global justfile (`~/.justfile`) that provides
-useful commands for any project. These are available via convenient nushell
+useful commands for any project. These are available via convenient zsh
 aliases:
 
 ```bash
@@ -422,7 +423,7 @@ This will:
 
 - Install ripsecrets, gitleaks, direnv, dotenv-linter, and
   editorconfig-checker
-- Configure direnv for nushell environment management
+- Configure direnv through the repo-managed zsh startup files
 - Back up security tool versions
 
 **Run security scans:**
@@ -625,9 +626,10 @@ dotfiles/
 │   │   └── extensions.json # Cursor recommended extensions
 │   ├── vscode/             # Global VS Code configuration
 │   │   └── settings.jsonc  # VS Code settings (formatting, extensions)
-│   ├── nushell/            # Global shell configuration
-│   │   ├── config.nu       # Main shell config (aliases, functions)
-│   │   └── env.nu          # Environment variables and PATH setup
+│   ├── zsh/                # Global shell configuration
+│   │   ├── .zshenv         # Non-interactive-safe environment
+│   │   ├── .zprofile       # Login-shell PATH setup
+│   │   └── .zshrc          # Interactive aliases and tool hooks
 │   ├── git/                # Global Git configuration
 │   │   ├── gitconfig       # Global git config (safe to commit)
 │   │   ├── gitconfig.local.example # Template for local git config (credentials)
@@ -692,8 +694,10 @@ single source of truth:
 
 - `system/vscode/settings.jsonc` → `~/Library/Application Support/Code/User/settings.json`
 - `system/cursor/settings.jsonc` → `~/.cursor/settings.json`
+- `system/zsh/.zshenv` → `~/.zshenv`
+- `system/zsh/.zprofile` → `~/.zprofile`
+- `system/zsh/.zshrc` → `~/.zshrc`
 - `system/git/gitconfig` → `~/.gitconfig`
-- `system/nushell/config.nu` → `~/Library/Application Support/nushell/config.nu`
 - `system/dnscrypt-proxy/dnscrypt-proxy.toml` → `~/.config/dnscrypt-proxy/dnscrypt-proxy.toml`
 
 ### **Git Ignore Strategy**
@@ -904,7 +908,7 @@ and provide context for:
 <!-- Reference link definitions for table links -->
 
 [Ghostty]: https://ghostty.app
-[Nushell]: https://www.nushell.sh
+[zsh]: https://www.zsh.org
 [Starship]: https://starship.rs
 [Carapace]: https://github.com/rsteube/carapace
 [Zoxide]: https://github.com/ajeetdsouza/zoxide

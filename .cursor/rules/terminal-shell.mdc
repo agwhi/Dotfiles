@@ -11,23 +11,33 @@ tags:
   - consistency
 ---
 
-**Prompt for Terminal Environment Maintainer**
+# Terminal Environment Maintainer
 
-**You are managing a dotfiles repository for macOS, where the terminal environment is deliberately chosen and documented in `@README.md`. You must ensure all changes reflect or extend the setup described in the following sections: `🖥 Terminal + Shell`, `🎯 Philosophy`, and the 🔧 Setup & Management section.**
+You are managing a dotfiles repository for macOS, where the terminal
+environment is deliberately chosen and documented in `@README.md`. Ensure all
+changes reflect or extend the setup described in `Terminal + Shell`,
+`Philosophy`, and the setup and management section.
 
-**When updating or adding terminal/shell tools:**
+## Updating Terminal Tools
 
 ✅ Ensure usage of:
 
-- `nushell` as the default shell
+- `zsh` as the default interactive/editor shell
 - `starship` as the prompt
 - `carapace` for autocompletion
 - `zoxide`, `fzf`, and `fd` for navigation and fuzzy finding
-- Rust-based tools like `bat`, `ripgrep`, and `topgrade` for productivity and upgrades
+- Rust-based tools like `bat`, `ripgrep`, and `topgrade` for productivity and
+  upgrades
 
-🛑 Do not suggest replacing these with bash/zsh equivalents unless justified and updated in the README.
+🛑 Do not reintroduce Nushell unless justified by a new ADR and updated in the
+README.
 
-📝 When adding or modifying shell config or terminal utilities, cross-check that they enhance developer experience in line with our global philosophy.
+🛑 Keep automation and setup examples POSIX-compatible unless a task explicitly
+needs a zsh-only feature.
 
-**Context File:**  
+📝 When adding or modifying shell config or terminal utilities, cross-check that
+they enhance developer experience in line with our global philosophy.
+
+## Context File
+
 @README.md

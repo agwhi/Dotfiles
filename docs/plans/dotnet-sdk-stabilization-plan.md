@@ -152,18 +152,12 @@ Target global tool path:
 /Users/alex/.dotnet/tools
 ```
 
-Nushell:
-Add `mise` activation only after installing `mise` and verifying the exact
-activation command in this repo's Nushell version. The current repo config
-manually adds Homebrew `dotnet@8`; that should become migration debt once
-`mise` is active.
-
 zsh/Codex:
-Current zsh/Codex resolves `/usr/local/share/dotnet/dotnet`, leaves
-`DOTNET_ROOT` unset, and contains a literal `~/.dotnet/tools` PATH entry.
-That is drift under the `mise` target. A later implementation should activate
-`mise`, put the expanded global tool path on PATH, and verify plain `dotnet`
-resolves through `mise`.
+Current zsh startup temporarily prepends Homebrew `dotnet@8` and
+`.dotnet/tools`, while some non-login/agent contexts can still inherit a
+different `dotnet`. That is drift under the `mise` target. A later
+implementation should activate `mise`, put the expanded global tool path on
+PATH, and verify plain `dotnet` resolves through `mise`.
 
 Just recipes:
 Current recipes call plain `dotnet`, so they inherit whichever shell launched
@@ -179,10 +173,8 @@ until C# extension discovery, SDK listing, and terminal `dotnet --info` match
 the target owner.
 
 Automation:
-`nu --commands` in this Codex context did not load the repo `config.nu` path
-additions and resolved the Microsoft pkg. Automation must not assume that a
-Nushell command receives interactive Nushell PATH. Use explicit `mise exec`
-commands or verified shell parity for automation.
+Automation must not assume interactive shell startup has run. Use explicit
+`mise exec` commands or verified zsh/agent parity for automation.
 
 ## Global Tool Policy
 
@@ -231,8 +223,8 @@ Before making `mise` active in shells:
 - Prove `mise` installs and lists the target .NET 10 and .NET 8 SDKs.
 - Prove `DOTNET_ROOT` points to the `mise` .NET root.
 - Prove `dotnet --list-sdks` sees both SDK lines from the `mise` root.
-- Prove Nushell, zsh login, zsh non-login, Codex, VS Code terminal, and Cursor
-  terminal resolve the `mise` `dotnet`.
+- Prove zsh login, zsh non-login, Codex, VS Code terminal, Cursor terminal, and
+  AI command surfaces resolve the `mise` `dotnet`.
 - Prove editor C# tooling discovers the `mise` SDK root.
 - Prove global tool commands are invokable from supported shells.
 
@@ -269,8 +261,9 @@ Before removing or changing global tools:
 3. In a later approved implementation, add Homebrew `mise` to the package
    manifest and add a repo-managed `mise` SDK version policy.
 4. Install .NET 10 and .NET 8 through `mise`.
-5. Activate `mise` in Nushell, zsh/Codex, and editor terminals.
-6. Re-run doctor and shell checks from Nushell, zsh, Codex, VS Code, and Cursor.
+5. Activate `mise` in zsh/Codex and editor terminals.
+6. Re-run doctor and shell checks from zsh, Codex, VS Code, Cursor, and AI
+   command surfaces.
 7. Decide whether .NET global tools stay as `dotnet tool --global` installs or
    move to `mise` `dotnet:ToolName` declarations.
 8. Decide global tool manifest changes for `dotnet-ef`, `csharpier`,
@@ -290,5 +283,5 @@ Before removing or changing global tools:
   are stable.
 - Do not treat a literal `~/.dotnet/tools` PATH entry as equivalent to
   `/Users/alex/.dotnet/tools`.
-- Do not assume `nu --commands` uses the same PATH as configured interactive
-  Nushell.
+- Do not assume non-login or AI command contexts use the same PATH as an
+  interactive zsh login shell.

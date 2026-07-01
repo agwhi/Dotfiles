@@ -54,13 +54,11 @@ Repo grounding:
 
 - ADR-0005 says the ecosystem should have one Node runtime owner and one global
   JS tool path.
-- `system/nushell/config.nu` loads `fnm env --json`, prepends the
-  `FNM_MULTISHELL_PATH` bin directory, and runs `fnm use --install-if-missing`
-  on directory changes.
-- `system/nushell/env.nu` sets `PNPM_HOME` to `~/Library/pnpm` and prepends it
-  to PATH.
-- `justfile` currently uses `corepack`, `pnpm`, and `fnm` directly from the
-  current shell context.
+- `system/zsh/.zshrc` activates `fnm` with `fnm env --shell zsh --use-on-cd`
+  for interactive zsh.
+- `system/zsh/.zshenv` sets expanded `PNPM_HOME`.
+- `justfile` should use the repo JS wrapper instead of trusting whatever
+  `node`, `corepack`, or `pnpm` appears first in the current shell context.
 
 External primary sources used:
 
@@ -73,10 +71,10 @@ External primary sources used:
 
 <!-- markdownlint-disable MD013 -->
 
-| Option | Laptop reproducibility | Nushell support | POSIX/zsh/Codex friendliness | Project-local version files | Corepack/pnpm behavior | AI-agent ergonomics | Long-term maintenance risk | Migration cost | Verdict |
+| Option | Laptop reproducibility | Shell integration | POSIX/zsh/Codex friendliness | Project-local version files | Corepack/pnpm behavior | AI-agent ergonomics | Long-term maintenance risk | Migration cost | Verdict |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Keep `fnm` | Strongest current fit: declared, installed, modeled by doctor, and already configured in repo Nu files. | Good enough in this repo through `fnm env --json`; official shell output lists bash/zsh/fish/powershell, so Nu support is repo-integrated rather than first-class shell output. | Good when commands use `fnm exec --using default`; current Codex/zsh PATH still needs parity work. | Strong: fnm supports `.node-version`, `.nvmrc`, and engines resolution; current Nu hook already runs `fnm use --install-if-missing`. | Good with the `fnm` default Node. Corepack is visible now, but `FNM_COREPACK_ENABLED=false` and Node 25+ needs a caveat. | Strong: explicit `fnm exec --using default` gives Codex a deterministic command prefix independent of runtime PATH. | Medium-low: specialized scope, few moving parts, but Corepack distribution changes after Node 24 must be watched. | Low: no runtime-manager migration; cleanup is mostly removing duplicates later. | Select. |
-| Replace `fnm` with `mise` | Credible for projects that already standardize on `mise`, but no local evidence shows better Node-specific Tool Fit than `fnm`. | Strong: `mise activate` has an explicit `nu` shell type. | Strong: supports activation and shims across common shells, but would require new parity policy. | Strong but not free: `.nvmrc`, `.node-version`, and `devEngines` support require explicit enabling. | Strong potential: `node.corepack` can install Corepack shims after Node installs. | Good after migration, but agents would need new commands, shims, and docs. | Medium: broader surface area and more settings for a problem already solved by `fnm`. | High: replace installed/configured runtime manager, update docs, doctor, Nu, zsh, recipes, manifests, and cleanup old fnm state. | Reject for this ecosystem unless a later Node-specific ADR proves stronger Tool Fit. |
+| Replace `fnm` with `mise` | Credible for projects that already standardize on `mise`, but no local evidence shows better Node-specific Tool Fit than `fnm`. | Strong: `mise activate` supports common shells and shim-based workflows. | Strong: supports activation and shims across common shells, but would require new parity policy. | Strong but not free: `.nvmrc`, `.node-version`, and `devEngines` support require explicit enabling. | Strong potential: `node.corepack` can install Corepack shims after Node installs. | Good after migration, but agents would need new commands, shims, and docs. | Medium: broader surface area and more settings for a problem already solved by `fnm`. | High: replace installed/configured runtime manager, update docs, doctor, zsh, recipes, manifests, and cleanup old fnm state. | Reject for this ecosystem unless a later Node-specific ADR proves stronger Tool Fit. |
 | Use Homebrew `node` only | Weak for a living laptop source of truth because it makes the Node version track Homebrew rather than project/runtime policy. | Simple PATH behavior, but no runtime-manager integration in Nu. | Simple in zsh/Codex, but only because it ignores project-local switching. | Weak: no native `.node-version` or `.nvmrc` switching. | Mixed: Homebrew `pnpm` is present, Homebrew `corepack` is absent, and local metadata says Homebrew `corepack` depends on Homebrew `node` and conflicts with `pnpm`. | Weak: current simplicity hides global version drift and encourages current-process assumptions. | Medium-high: Homebrew upgrades can change Node major versions outside project intent. | Medium: would need to discard ADR-0005's modeled direction and migrate fnm-owned state. | Reject. |
 | Other specialized Node manager (`volta`, `nvm`, `nodenv`) | No current repo or doctor evidence supports introducing one. | Unknown to this repo; would require new shell work. | Variable; no candidate beats current `fnm` evidence. | Variable, but not enough to justify churn. | Variable; no stronger Corepack/pnpm story is proven here. | Worse initially: new agent commands and docs without local evidence. | Medium-high because it adds a new owner while solving the same class of problem. | High relative to benefit. | Do not pursue unless a specific blocker appears. |
 
@@ -85,7 +83,7 @@ External primary sources used:
 ## Why `fnm` Wins For Alex
 
 `fnm` is the best Tool Fit for the current Stabilization goal. It is already
-declared, installed, configured in Nushell, and trusted by doctor. It is a
+declared, installed, configured in zsh, and trusted by doctor. It is a
 Specialized Tool, which is a feature here: the problem is not that Alex lacks a
 generic runtime manager, it is that one existing Node manager has not been made
 the only owner yet.
@@ -117,7 +115,7 @@ fnm exec --using default pnpm list -g --depth 0 --json
 ```
 
 That keeps AI-executed commands independent of whether the session was launched
-from Nushell, zsh, the Codex app, or an editor terminal.
+from zsh, the Codex app, another AI command surface, or an editor terminal.
 
 ## Corepack Decision
 
@@ -210,7 +208,8 @@ Destructive or state-moving actions that need explicit approval later:
   `v24.14.1`, and `v25.9.0`.
 - Replace `fnm` with `mise` if a future ADR chooses that Stabilizing
   Replacement.
-- Rewrite shell PATH ownership for zsh/Nushell/Codex after shell parity checks.
+- Rewrite shell PATH ownership for zsh/Codex/AI command surfaces after shell
+  parity checks.
 - Move or remove any AI CLI, cache, config, history, or trusted-project state.
 
 ## Later Manifest Changes
@@ -235,18 +234,19 @@ edits after Alex approves the target state.
 - Do not add `@mariozechner/pi-coding-agent` until AI tooling policy decides
   whether Pi is baseline, local state, or a Managed Exception.
 
-`system/nushell/config.nu` and `system/nushell/env.nu`:
+`system/zsh/.zshenv` and `system/zsh/.zshrc`:
 
-- Keep the `fnm env --json` approach unless a future shell ADR changes it.
+- Keep `fnm env --shell zsh --use-on-cd` for interactive zsh unless a future
+  ADR changes it.
 - Add an explicit Corepack enablement policy for the `fnm` path.
-- Verify whether `PNPM_HOME` should stay `~/Library/pnpm` for trusted `fnm`
-  pnpm, and document why current-process Codex runtime `pnpm` is excluded.
+- Keep `PNPM_HOME` expanded for trusted `fnm` pnpm, and document why
+  current-process Codex runtime `pnpm` is excluded.
 
 `justfile`:
 
 - Change JS recipes to use `fnm exec --using default` instead of whatever
   `corepack` or `pnpm` appears first in the current shell.
-- Remove the suspicious POSIX recipe pattern that sources a Nushell env file.
+- Keep recipes on explicit wrappers rather than shell startup side effects.
 - Make `install-node-tools` install from `system/packages/pnpm-global.txt`
   through the trusted `fnm`/Corepack path.
 
@@ -257,8 +257,8 @@ edits after Alex approves the target state.
   Homebrew `corepack`, and npm globals should fail unless declared as Managed
   Exceptions.
 - Report `FNM_COREPACK_ENABLED` as actionable when the target state is accepted.
-- Add explicit zsh, Nushell, and Codex parity checks before enforcing PATH
-  strictness.
+- Add explicit zsh, Codex, and AI command-surface parity checks before
+  enforcing PATH strictness.
 
 ## Ordered Implementation Roadmap
 
@@ -277,7 +277,7 @@ edits after Alex approves the target state.
 ### P1 Migrate Or Remove Duplicates
 
 1. Confirm `node`, `npm`, `npx`, `corepack`, and `pnpm` resolve through the
-   trusted `fnm` path in Nushell, zsh, and Codex-command contexts.
+   trusted `fnm` path in zsh and Codex-command contexts.
 2. After approval, remove Homebrew npm global `aws-cdk` once `cdk` resolves
    through pnpm.
 3. After approval, remove Homebrew `pnpm`.

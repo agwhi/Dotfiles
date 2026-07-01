@@ -26,8 +26,6 @@ CURSOR_EXTENSIONS = ROOT / "system/packages/cursor-extensions.txt"
 PNPM_GLOBAL = ROOT / "system/packages/pnpm-global.txt"
 DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
-NUSHELL_CONFIG = ROOT / "system/nushell/config.nu"
-NUSHELL_ENV = ROOT / "system/nushell/env.nu"
 ZSH_ENV = ROOT / "system/zsh/.zshenv"
 ZSH_PROFILE = ROOT / "system/zsh/.zprofile"
 ZSH_RC = ROOT / "system/zsh/.zshrc"
@@ -55,7 +53,7 @@ AREA_ORDER = [
     "other",
 ]
 
-SHELL_NAMES = {"bash", "fish", "nu", "nushell", "sh", "zsh"}
+SHELL_NAMES = {"bash", "fish", "sh", "zsh"}
 JS_COMMANDS = ["node", "npm", "npx", "pnpm", "corepack"]
 
 DEV_RE = re.compile(
@@ -92,7 +90,6 @@ SHELL_PARITY_COMMANDS = [
     "pi",
     "apm",
     "just",
-    "nu",
     "zsh",
     "dotnet-lambda-test-tool-8.0",
     "dotnet-ef",
@@ -497,7 +494,6 @@ def parent_process_chain(limit: int = 8) -> list[dict[str, Any]]:
 def collect_execution_context() -> dict[str, Any]:
     path_raw = os.environ.get("PATH", "")
     path_entries = [entry for entry in path_raw.split(os.pathsep) if entry]
-    nu_env = {key: value for key, value in sorted(os.environ.items()) if key.startswith("NU_")}
     chain = parent_process_chain()
     parent_shells = [
         item.get("basename")
@@ -507,9 +503,6 @@ def collect_execution_context() -> dict[str, Any]:
     ]
     shell_env = os.environ.get("SHELL")
     shell_env_name = Path(shell_env).name if shell_env else None
-    appears_from_nushell = bool(nu_env) or any(
-        str(item.get("basename", "")).lower() in {"nu", "nushell"} for item in chain
-    )
     return {
         "pid": os.getpid(),
         "python_executable": sys.executable,
@@ -518,10 +511,8 @@ def collect_execution_context() -> dict[str, Any]:
         "path_entries": path_entries,
         "shell_env": shell_env,
         "shell_env_name": shell_env_name,
-        "nu_env": nu_env,
         "parent_process_chain": chain,
         "detected_parent_shells": parent_shells,
-        "appears_running_from_nushell": appears_from_nushell,
     }
 
 
@@ -653,11 +644,6 @@ payload = {{
         for key, value in sorted(os.environ.items())
         if key.startswith("MISE_")
     }},
-    "nu_env": {{
-        key: value
-        for key, value in sorted(os.environ.items())
-        if key.startswith("NU_")
-    }},
     "path_contains": {{
         "codex_runtime": any(
             "codex" in entry.lower() or "/pkg/env/" in entry
@@ -698,7 +684,6 @@ def parse_shell_probe_stdout(stdout: str) -> dict[str, Any] | None:
 
 def shell_probe_contexts() -> list[dict[str, Any]]:
     python_command = f'/usr/bin/python3 -c "${SHELL_PROBE_ENV_KEY}"'
-    nu_command = f"^/usr/bin/python3 -c $env.{SHELL_PROBE_ENV_KEY}"
     return [
         {
             "name": "codex_process",
@@ -715,17 +700,6 @@ def shell_probe_contexts() -> list[dict[str, Any]]:
             "startup_probe": True,
             "requires": ["/bin/zsh", "/usr/bin/python3"],
             "args": ["/bin/zsh", "-lic", python_command],
-        },
-        {
-            "name": "nushell_commands",
-            "requires": ["nu", "/usr/bin/python3"],
-            "args": ["nu", "--commands", nu_command],
-        },
-        {
-            "name": "nushell_login",
-            "startup_probe": True,
-            "requires": ["nu", "/usr/bin/python3"],
-            "args": ["nu", "--login", "--commands", nu_command],
         },
         {
             "name": "just_default_recipe_shell",
@@ -884,7 +858,7 @@ def shell_parity_gaps(
         gaps.append(
             {
                 "area": "fnm",
-                "finding": "Node resolves through fnm only in contexts that load the Nushell login config.",
+                "finding": "Node resolves through fnm only in fnm-activated contexts.",
                 "impact": f"Observed sources: {node_sources}.",
                 "recommendation": "Keep Node automation on `fnm exec --using default` rather than plain node/npm/pnpm.",
             }
@@ -972,17 +946,13 @@ def shell_parity_gaps(
             }
         )
 
-    nu_aliases = alias_policy.get("nushell", {}).get("aliases", [])
     zsh_aliases = alias_policy.get("zsh", {}).get("aliases", [])
-    if nu_aliases and not zsh_aliases:
+    if not zsh_aliases:
         gaps.append(
             {
                 "area": "aliases",
-                "finding": "Repo-managed aliases are Nushell-only.",
-                "impact": (
-                    f"Nushell defines {len(nu_aliases)} aliases; zsh startup "
-                    "files define no comparable repo-managed aliases."
-                ),
+                "finding": "Repo-managed zsh aliases were not detected.",
+                "impact": "Interactive convenience aliases may be missing from the primary shell.",
                 "recommendation": "Do not use aliases in bootstrap, just recipes, or AI-generated commands.",
             }
         )
@@ -1006,9 +976,9 @@ def shell_parity_gaps(
         gaps.append(
             {
                 "area": "editor_terminal",
-                "finding": "Repo-managed editor terminals are configured for Nushell.",
+                "finding": "Repo-managed editor terminals are configured for deprecated Nu.",
                 "impact": f"Editor policy: {editor_shells}.",
-                "recommendation": "Keep editor terminals on Nu only if shared PATH ownership makes Nu and zsh equivalent for tools.",
+                "recommendation": "Use zsh as the primary editor terminal shell.",
             }
         )
 
@@ -1036,7 +1006,6 @@ def editor_shell_policy() -> dict[str, Any]:
             "configured": bool(default_profile),
             "default_profile_osx": default_profile,
             "default_shell": default_profile,
-            "nu_path": "/opt/homebrew/bin/nu" if '"/opt/homebrew/bin/nu"' in text else None,
             "source": str(path.relative_to(ROOT)),
         }
 
@@ -1059,21 +1028,8 @@ def editor_shell_policy() -> dict[str, Any]:
 
 def shell_alias_policy() -> dict[str, Any]:
     result: dict[str, Any] = {
-        "nushell": {"aliases": [], "sources": []},
         "zsh": {"aliases": [], "sources": []},
     }
-    if NUSHELL_CONFIG.exists():
-        aliases = []
-        for match in re.finditer(
-            r"(?m)^\s*alias\s+([A-Za-z0-9_.-]+)\s*=",
-            NUSHELL_CONFIG.read_text(encoding="utf-8"),
-        ):
-            aliases.append(match.group(1))
-        result["nushell"] = {
-            "aliases": aliases,
-            "sources": [str(NUSHELL_CONFIG.relative_to(ROOT))],
-        }
-
     repo_zsh_sources = [ZSH_ENV, ZSH_PROFILE, ZSH_RC]
     zsh_sources = (
         repo_zsh_sources
@@ -1883,38 +1839,6 @@ def parse_fnm_inventory(fnm_list: str) -> dict[str, Any]:
     }
 
 
-def model_nushell_fnm_config() -> dict[str, Any]:
-    config_text = NUSHELL_CONFIG.read_text(encoding="utf-8") if NUSHELL_CONFIG.exists() else ""
-    env_text = NUSHELL_ENV.read_text(encoding="utf-8") if NUSHELL_ENV.exists() else ""
-    checks = {
-        "config_exists": NUSHELL_CONFIG.exists(),
-        "env_exists": NUSHELL_ENV.exists(),
-        "config_calls_fnm_env_json": "fnm env --json" in config_text,
-        "config_loads_fnm_env": "load-env" in config_text and "fnm env --json" in config_text,
-        "config_prepends_fnm_multishell_bin": "FNM_MULTISHELL_PATH" in config_text
-        and "prepend" in config_text,
-        "config_has_pwd_hook": "hooks.env_change.PWD" in config_text,
-        "config_hook_can_install_on_cd": "--install-if-missing" in config_text,
-        "env_declares_pnpm_home": "PNPM_HOME" in env_text,
-    }
-    configured = all(
-        checks[key]
-        for key in (
-            "config_exists",
-            "config_calls_fnm_env_json",
-            "config_loads_fnm_env",
-            "config_prepends_fnm_multishell_bin",
-        )
-    )
-    return {
-        "configured": configured,
-        "checks": checks,
-        "config_path": str(NUSHELL_CONFIG),
-        "env_path": str(NUSHELL_ENV),
-        "method": "static read-only model of repo Nushell files; does not source config.nu",
-    }
-
-
 def check_fnm(findings: list[dict[str, Any]], brew_declared: dict[str, set[str]]) -> None:
     fnm_path = shutil.which("fnm")
     if not fnm_path:
@@ -1989,29 +1913,8 @@ def check_fnm(findings: list[dict[str, Any]], brew_declared: dict[str, set[str]]
         details={
             "path": fnm_path,
             "provenance": provenance,
-            "scope": "current process PATH only; not a login-shell or Nushell assertion",
+            "scope": "current process PATH only; not a login-shell assertion",
         },
-    )
-
-    model = model_nushell_fnm_config()
-    add_finding(
-        findings,
-        area="fnm",
-        classification="canonical" if model["configured"] else "unknown",
-        name="fnm.nushell_configured",
-        source=str(NUSHELL_CONFIG.relative_to(ROOT)),
-        severity="info" if model["configured"] else "low",
-        summary=(
-            "Repo Nushell config is modeled as configuring fnm."
-            if model["configured"]
-            else "Repo Nushell config is not modeled as fully configuring fnm."
-        ),
-        details=model,
-        recommendation=(
-            "Check system/nushell/config.nu before treating fnm as configured for Nushell."
-            if not model["configured"]
-            else None
-        ),
     )
 
 
@@ -2651,7 +2554,6 @@ def emit_markdown(payload: dict[str, Any]) -> None:
     print()
     print("## execution-context")
     print(f"- `SHELL`: `{context.get('shell_env')}`")
-    print(f"- Appears running from Nushell: `{context.get('appears_running_from_nushell')}`")
     parent_shells = context.get("detected_parent_shells") or []
     print(f"- Detected parent/current shells: `{', '.join(parent_shells) if parent_shells else 'none'}`")
     print(f"- Python executable: `{context.get('python_executable')}`")
@@ -2661,13 +2563,6 @@ def emit_markdown(payload: dict[str, Any]) -> None:
         ppid = item.get("ppid")
         command = item.get("command") or item.get("basename") or "unknown"
         print(f"  - pid={pid} ppid={ppid} command=`{command}`")
-    nu_env = context.get("nu_env", {})
-    if nu_env:
-        print("- `NU_*` signals:")
-        for key, value in nu_env.items():
-            print(f"  - `{key}`=`{value}`")
-    else:
-        print("- `NU_*` signals: none")
     print("- Current process PATH:")
     for entry in context.get("path_entries", []):
         print(f"  - `{entry}`")

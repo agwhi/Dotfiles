@@ -1,20 +1,18 @@
-# Zsh Primary Trial Plan
+# Zsh Primary Adoption Plan
 
 Date: 2026-07-01.
 
-This plan implements a reversible zsh-primary trial. It adds repo-managed zsh
-startup files, points editor terminals at zsh, and keeps Nushell installed and
-repo-managed until Alex explicitly approves any cleanup.
+This plan records the completed zsh-primary adoption. It adds repo-managed zsh
+startup files, points editor terminals at zsh, and removes Nushell from the
+managed development ecosystem.
 
-## Trial Scope
+## Scope
 
 - zsh becomes the default integrated terminal shell for VS Code, Cursor, and
   Ghostty.
-- Nushell remains available through the Nu editor profile, Homebrew, and
-  `system/nushell/config.nu` plus `system/nushell/env.nu`.
-- Existing Nu language/editor settings remain unchanged.
+- Nushell is removed from the Homebrew manifest, editor terminal profiles,
+  symlink setup, backup coverage, Cursor rules, and repo-managed config.
 - No login shell is changed with `chsh`.
-- No Nushell files, packages, symlinks, or install state are removed.
 
 ## Feature Mapping
 
@@ -38,45 +36,37 @@ repo-managed until Alex explicitly approves any cleanup.
 
 <!-- markdownlint-enable MD013 -->
 
-## Nu-Only Non-Goals
+## Nu Removal Boundaries
 
 - Do not port Nushell structured pipelines, table rendering, or typed data
-  exploration into zsh. Nu remains the better optional shell for those jobs.
+  exploration into zsh.
+- Do not keep Nu as a fallback shell or editor profile.
 - Do not make automation depend on zsh aliases or interactive shell startup.
-- Do not migrate .NET to `mise` in this trial.
+- Do not migrate .NET to `mise` in this adoption task.
 - Do not remove Homebrew `node`, Homebrew `pnpm`, Microsoft package .NET,
   Homebrew `dotnet@8`, Pi, opencode, Claude, Codex, APM, or AI asset state.
 
 ## Rollback
 
-1. Change `terminal.integrated.defaultProfile.osx` in
-   `system/vscode/settings.jsonc` and `system/cursor/settings.jsonc` back to
-   `nu`.
-2. Change `system/ghostty/config` back to `command = /opt/homebrew/bin/nu`.
-3. If zsh home symlinks were applied, restore `~/.zshenv`, `~/.zprofile`, and
-   `~/.zshrc` from the latest `backups/<timestamp>/` entry, or rerun the
-   symlink flow after reverting the repo zsh files.
-4. Restart editor terminals.
-
-Nushell does not need reinstalling during rollback because its package and
-repo-managed config are retained.
+Rollback is no longer a local toggle. Reintroducing Nu requires a new ADR,
+restoring package and config ownership, adding editor profiles, and reinstalling
+the package intentionally.
 
 ## Acceptance Criteria
 
-- Nushell remains installed, declared, and symlinked.
 - zsh config is repo-managed under `system/zsh/` and symlink-ready.
+- Nushell is absent from active package manifests, symlink setup, editor
+  defaults, and Cursor rules.
 - `setup_symlinks.sh` creates a stable `~/.dotfiles` shortcut when the repo is
   cloned elsewhere, because global just recipes use that path.
-- Nu and zsh global just aliases preserve the caller's current project
-  directory.
+- zsh global just aliases preserve the caller's current project directory.
 - zsh non-interactive startup does not emit fzf or zle warnings from the
   repo-managed files.
-- VS Code, Cursor, and Ghostty default to zsh for the trial.
-- Current Nu features have zsh equivalents or explicit non-goals.
-- Doctor can observe the zsh trial state without mutating startup files by
+- VS Code, Cursor, and Ghostty default to zsh.
+- Former Nu features have zsh equivalents or explicit non-goals.
+- Doctor can observe the zsh state without mutating startup files by
   default.
-- Rollback to Nu editor terminals is documented and limited to editor defaults
-  plus optional zsh symlink restoration.
+- Reintroducing Nu requires a future ADR rather than local-only rollback.
 
 ## Validation Plan
 
@@ -91,8 +81,7 @@ repo-managed config are retained.
 - `~/.dotfiles/scripts/js_toolchain.sh markdownlint --version`
 - `just doctor --json | python3 -m json.tool >/dev/null`
 - `DOTFILES_DOCTOR_ALLOW_STARTUP_PROBES=1 just doctor --json | python3 -m json.tool >/dev/null`
-- `nu --no-config-file --commands 'nu-check system/nushell/env.nu; nu-check system/nushell/config.nu; print ok'`
-- `./scripts/js_toolchain.sh markdownlint docs/plans/zsh-primary-trial-plan.md docs/adr/0004-optimize-shell-choice-for-ai-native-low-friction-development.md`
+- `./scripts/js_toolchain.sh markdownlint docs/plans/zsh-primary-adoption-plan.md docs/adr/0004-optimize-shell-choice-for-ai-native-low-friction-development.md`
 - `ripsecrets --strict-ignore .`
 - `gitleaks detect --source . --no-git --redact --no-banner`
 
@@ -100,10 +89,6 @@ repo-managed config are retained.
 
 ## Open Followups
 
-- Decide after the trial whether zsh should remain primary.
-- If zsh stays primary, update Cursor rules and README shell language that still
-  describe Nu as the default shell.
-- Design the shared shell-neutral environment source instead of hand-maintained
-  Nu and zsh fragments.
+- Harden zsh non-login, `just`, and AI command execution contexts.
 - Run live command checks inside VS Code and Cursor terminals after restarting
   those apps.

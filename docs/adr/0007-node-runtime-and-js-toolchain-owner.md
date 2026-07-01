@@ -14,7 +14,7 @@ consolidating everything under one generic runtime manager.
 ## Considered Options
 
 - Keep `fnm`: selected because it is already declared, installed, configured in
-  Nushell, and modeled by doctor as the trusted JS scope.
+  zsh, and modeled by doctor as the trusted JS scope.
 - Replace `fnm` with `mise`: rejected because `fnm` is the better specialized
   Tool Fit for Node in this ecosystem. `mise` may own another runtime without
   becoming the Node owner.

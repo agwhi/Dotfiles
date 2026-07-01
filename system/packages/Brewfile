@@ -10,7 +10,6 @@ brew "starship"      # Minimal, fast prompt
 brew "carapace"      # Completion engine for CLIs
 
 # --- Shells & Editors ---
-brew "nushell"       # Modern shell
 brew "neovim"        # Terminal editor
 brew "universal-ctags" # Maintained ctags implementation
 cask "ghostty"       # GPU-accelerated terminal

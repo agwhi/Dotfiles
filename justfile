@@ -107,8 +107,8 @@ setup-aws-cli:
 
 # Setup direnv for environment management
 setup-direnv:
-    echo 'eval "$(direnv hook nushell)"' >> ~/.config/nushell/config.nu
-    echo "✅ direnv configured for nushell"
+    @echo "direnv is configured by system/zsh/.zshrc"
+    @echo "Run 'just link-only' to refresh shell symlinks"
 
 # Setup security tools
 setup-security: setup-direnv
@@ -142,11 +142,11 @@ fix-formatting:
 # Fix common formatting issues using sed
 fix-formatting-comprehensive:
     # Fix trailing whitespace
-    fd -t f -e json -e md -e mdc -e lua -e nu -e sh -e txt -e config -x sed -i '' 's/[[:space:]]*$//' {}
+    fd -t f -e json -e md -e mdc -e lua -e sh -e txt -e config -x sed -i '' 's/[[:space:]]*$//' {}
     # Ensure final newline
-    fd -t f -e json -e md -e mdc -e lua -e nu -e sh -e txt -e config -x sh -c 'if [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {}
+    fd -t f -e json -e md -e mdc -e lua -e sh -e txt -e config -x sh -c 'if [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {}
     # Convert tabs to 4 spaces
-    fd -t f -e json -e md -e mdc -e lua -e nu -e sh -e txt -e config -x sed -i '' 's/\t/    /g' {}
+    fd -t f -e json -e md -e mdc -e lua -e sh -e txt -e config -x sed -i '' 's/\t/    /g' {}
     echo "✅ Comprehensive formatting fixes applied"
 
 readme-lint:

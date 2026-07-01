@@ -101,8 +101,6 @@ create_symlink "$DOTFILES_DIR/system/cursor/extensions.json" "$HOME/.cursor/exte
 # Cursor rules - repository rules stay in repo, no symlink needed
 # The rules are used by Cursor AI directly from the repository
 
-create_symlink "$DOTFILES_DIR/system/nushell/config.nu" "$HOME/Library/Application Support/nushell/config.nu" "Nushell config"
-create_symlink "$DOTFILES_DIR/system/nushell/env.nu" "$HOME/Library/Application Support/nushell/env.nu" "Nushell env"
 create_symlink "$DOTFILES_DIR/system/git/gitconfig" "$HOME/.gitconfig" "Git config"
 create_symlink "$DOTFILES_DIR/system/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config" "Ghostty config"
 create_symlink "$DOTFILES_DIR/system/aws/config" "$HOME/.aws/config" "AWS config"

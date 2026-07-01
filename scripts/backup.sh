@@ -28,8 +28,6 @@ files_to_backup=(
     "$HOME/.config/starship.toml"
     "$HOME/.config/nvim/init.lua"
     "$HOME/.cursor"
-    "$HOME/Library/Application Support/nushell/config.nu"
-    "$HOME/Library/Application Support/nushell/env.nu"
     "$HOME/.gitconfig"
     "$HOME/.gitconfig.local"
     "$HOME/.aws/config"
