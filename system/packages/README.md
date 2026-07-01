@@ -11,6 +11,24 @@ Per ADR-0007, `fnm` owns the Node runtime, and Corepack/pnpm should be reached
 through the selected `fnm` default Node path. Global JavaScript tools belong in
 `system/packages/pnpm-global.txt` and are installed by `just install-node-tools`.
 
+Homebrew `node` and Homebrew `pnpm` are not steady-state owners. If they are
+present locally, treat them as approval-gated cleanup candidates until shell
+parity and global tool paths are verified.
+
+## .NET Toolchain
+
+Per ADR-0006, Homebrew declares `mise` as the strategic .NET SDK manager.
+The SDK installs themselves are a later approved migration step. Existing
+Microsoft pkg .NET and Homebrew `dotnet@8` remain managed exceptions until the
+`mise` SDK root, editor discovery, workloads, and global tools are verified.
+
+## Manual And Approval-Gated State
+
+Use `system/packages/manual-apps.md` for manual tools, managed exceptions,
+intentional exclusions, and removal candidates that need a Reset Approval Gate.
+This keeps installed local state visible without turning cleanup into an
+implicit install or uninstall instruction.
+
 ## Read-only Doctor
 
 Run `just doctor` from the repo root to audit installed tools against these

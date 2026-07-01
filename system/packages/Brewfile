@@ -4,6 +4,7 @@ brew "fd"            # Fast find alternative
 brew "eza"           # Modern ls replacement
 brew "fzf"           # Fuzzy finder
 brew "ripgrep"       # Fast grep alternative
+brew "ast-grep"      # Structural code search, linting, and rewriting
 brew "zoxide"        # Smarter cd
 brew "starship"      # Minimal, fast prompt
 brew "carapace"      # Completion engine for CLIs
@@ -11,6 +12,7 @@ brew "carapace"      # Completion engine for CLIs
 # --- Shells & Editors ---
 brew "nushell"       # Modern shell
 brew "neovim"        # Terminal editor
+brew "universal-ctags" # Maintained ctags implementation
 cask "ghostty"       # GPU-accelerated terminal
 cask "cursor"        # AI-powered code editor
 cask "visual-studio-code" # Main GUI IDE
@@ -19,17 +21,46 @@ cask "visual-studio-code" # Main GUI IDE
 # Homebrew installs fnm only; fnm's default Node owns Node, Corepack, and pnpm.
 brew "fnm"           # Fast Node.js version manager
 
-# --- .NET & AWS Development ---
-brew "dotnet@8"      # .NET 8 SDK
+# --- Language, Runtime & Data Tooling ---
+brew "mise"          # Strategic .NET SDK owner; SDK installs are later-gated
+brew "dotnet@8"      # Managed .NET migration exception until mise is active
+brew "uv"            # Fast Python package installer and resolver
+brew "composer"      # PHP dependency manager
+brew "mysql-client"  # MySQL client tools
+
+# --- AWS & Cloud Development ---
 brew "awscli"        # AWS CLI
 brew "aws-sso-util"  # AWS SSO helper
+cask "session-manager-plugin" # AWS Systems Manager Session Manager plugin
+cask "leapp"         # Cloud credentials manager
+cask "rider"         # .NET IDE
+
+# --- Containers & API Development ---
+brew "colima"        # macOS container runtime manager
+brew "docker"        # Docker CLI
+brew "docker-buildx" # Docker BuildKit CLI plugin
+brew "docker-completion" # Docker shell completions
+brew "docker-compose" # Docker Compose CLI
+cask "postman"       # API development client
 
 # --- Security & DevSecOps ---
 brew "gitleaks"      # Secret scanning
 brew "ripsecrets"    # Fast secret scanner
+brew "semgrep"       # Static analysis and security scanning
 brew "dotenv-linter" # Lint .env files
 brew "editorconfig-checker" # Enforce EditorConfig
 brew "direnv"        # Environment variable manager
+
+# --- Documentation & Media Tooling ---
+brew "graphviz"      # Graph visualization for generated diagrams
+brew "poppler"       # PDF rendering and inspection utilities
+brew "ffmpeg"        # Audio/video conversion utilities
+
+# --- AI Tool Surfaces ---
+brew "ollama"        # Local LLM runner
+cask "chatgpt"       # AI assistant
+cask "chatgpt-atlas" # ChatGPT browser
+cask "codex"         # OpenAI Codex CLI surface
 
 # --- Network Security & Privacy ---
 brew "dnscrypt-proxy" # Encrypted DNS proxy
@@ -44,6 +75,8 @@ brew "git"           # Git version control
 brew "gnupg"         # GPG for signing
 brew "zlib"          # Compression library
 brew "topgrade"      # One command to upgrade everything
+cask "caffeine"      # Prevent sleep during long-running tasks
+cask "maccy"         # Clipboard manager
 
 # --- Fonts & UI ---
 cask "font-fira-code-nerd-font" # Dev font
@@ -51,7 +84,6 @@ cask "arc"           # Browser
 cask "raycast"       # Productivity launcher
 cask "google-chrome" # Browser
 cask "secretive"     # Secure key storage
-cask "chatgpt"       # AI assistant
 cask "slack"         # Messaging
 cask "spotify"       # Music
 
