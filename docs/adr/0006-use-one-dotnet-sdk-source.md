@@ -14,6 +14,18 @@ The target SDK policy is:
 - .NET 8 as a temporary compatibility SDK line until remaining projects
   migrate.
 
+The repo-managed global `mise` policy lives at:
+
+```text
+system/mise/config.toml
+```
+
+`scripts/setup_symlinks.sh` links that file to:
+
+```text
+/Users/alex/.config/mise/config.toml
+```
+
 Supported shells, editor terminals, and recipes should eventually resolve
 `dotnet` through the `mise` shim:
 
@@ -56,6 +68,16 @@ selection, workloads, and global tool command visibility.
 files installed under the SDK source. They should still be declared in a Package
 Manifest and installed or updated through the canonical `mise`-managed
 `dotnet`.
+
+Repo automation should run .NET commands through:
+
+```text
+scripts/dotnet_toolchain.sh
+```
+
+That wrapper requires `mise` and the repo-managed config. It must fail clearly
+when `mise` or the SDKs are absent instead of silently using Microsoft pkg .NET
+or Homebrew `dotnet@8`.
 
 The installer surface for global tools is a separate implementation decision:
 the repo may keep using `dotnet tool install --global` through the

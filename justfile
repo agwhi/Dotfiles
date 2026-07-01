@@ -2,6 +2,7 @@
 set shell := ["sh", "-cu"]
 
 js_toolchain := "./scripts/js_toolchain.sh"
+dotnet_toolchain := "./scripts/dotnet_toolchain.sh"
 
 # Set up all dotfile symlinks safely
 link:
@@ -90,11 +91,10 @@ setup-node: install-node install-node-tools
     echo "✅ Node.js development environment ready"
     echo "💡 Use 'dotfile setup-node' for future Node.js setup in other projects"
 
-# Install global .NET Lambda tools
+# Install global .NET tools through the ADR-0006 mise-managed SDK
 install-dotnet-tools:
-    dotnet tool install -g Amazon.Lambda.Tools || echo "Amazon.Lambda.Tools already installed"
-    dotnet tool install -g Amazon.Lambda.TestTool-8.0 || echo "Amazon.Lambda.TestTool-8.0 already installed"
-    echo "✅ .NET Lambda tools installed"
+    sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; s/[[:space:]]*#.*$//; p' system/packages/dotnet-tools.txt | while IFS= read -r tool; do {{dotnet_toolchain}} dotnet tool install --global "$tool" || {{dotnet_toolchain}} dotnet tool update --global "$tool"; done
+    echo "✅ .NET global tools installed from system/packages/dotnet-tools.txt"
 
 # Setup .NET development environment (use global: dotfile setup-dotnet)
 setup-dotnet: install-dotnet-tools

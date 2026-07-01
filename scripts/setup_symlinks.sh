@@ -92,6 +92,7 @@ create_symlink "$DOTFILES_DIR/system/neovim/init.lua" "$HOME/.config/nvim/init.l
 create_symlink "$DOTFILES_DIR/system/zsh/.zshenv" "$HOME/.zshenv" "zsh env"
 create_symlink "$DOTFILES_DIR/system/zsh/.zprofile" "$HOME/.zprofile" "zsh login config"
 create_symlink "$DOTFILES_DIR/system/zsh/.zshrc" "$HOME/.zshrc" "zsh interactive config"
+create_symlink "$DOTFILES_DIR/system/mise/config.toml" "$HOME/.config/mise/config.toml" "mise config"
 
 # Cursor configuration - link system-wide config files to home directory
 create_symlink "$DOTFILES_DIR/system/cursor/settings.jsonc" "$HOME/.cursor/settings.json" "Cursor settings"

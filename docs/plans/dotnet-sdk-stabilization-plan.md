@@ -58,6 +58,13 @@ Local command evidence collected on 2026-07-01:
 - Homebrew cask metadata reports `dotnet-sdk` as `10.0.301` and
   `dotnet-sdk@8` as `8.0.422`, but neither cask is installed.
 - Homebrew formula metadata reports `mise` as available but not installed.
+- `system/packages/Brewfile` now declares `mise` as the strategic .NET SDK
+  owner and keeps Homebrew `dotnet@8` as a managed migration exception.
+- Repo-managed `mise` policy now lives at `system/mise/config.toml`, is linked
+  to `~/.config/mise/config.toml` by `scripts/setup_symlinks.sh`, and declares
+  .NET 10 plus .NET 8 without declaring Node.
+- `scripts/dotnet_toolchain.sh` is the canonical wrapper for .NET commands; it
+  requires `mise` and does not silently fall back to Homebrew `dotnet@8`.
 - No `.csproj`, `.fsproj`, `.vbproj`, `.sln`, `global.json`, `.props`, or
   `.targets` files exist in this repo.
 - Installed global tools are user-local packages:
@@ -65,9 +72,8 @@ Local command evidence collected on 2026-07-01:
   `deadcsharp`, and `dotnet-ef`.
 - `system/packages/dotnet-tools.txt` declares only `Amazon.Lambda.Tools` and
   `Amazon.Lambda.TestTool-8.0`; `Amazon.Lambda.Tools` is currently absent.
-- Global tool shims exist in `/Users/alex/.dotnet/tools`, but zsh/Codex cannot
-  invoke commands like `dotnet-ef` because its PATH contains the literal entry
-  `~/.dotnet/tools` instead of the expanded path.
+- Global tool shims exist in `/Users/alex/.dotnet/tools`, and the shell/dev
+  environment contract now uses the expanded path rather than a literal tilde.
 
 External source context:
 
@@ -115,7 +121,8 @@ clear .NET runtime-manager boundary:
 
 - Homebrew installs `mise`.
 - `mise` installs .NET SDK lines.
-- `.mise.toml` or equivalent repo policy selects the global default.
+- `system/mise/config.toml` selects the global default once linked to
+  `~/.config/mise/config.toml`.
 - Project-local config or `global.json` can pin .NET 8 where needed.
 - Doctor can verify that active `dotnet`, `DOTNET_ROOT`, SDK list, runtime
   list, and workloads come from the selected owner.
@@ -153,18 +160,17 @@ Target global tool path:
 ```
 
 zsh/Codex:
-Current zsh startup temporarily prepends Homebrew `dotnet@8` and
-`.dotnet/tools`, while some non-login/agent contexts can still inherit a
-different `dotnet`. That is drift under the `mise` target. A later
-implementation should activate `mise`, put the expanded global tool path on
-PATH, and verify plain `dotnet` resolves through `mise`.
+Repo-managed zsh startup and `scripts/dev_env.sh` now prepend the `mise` shims
+directory when it exists and set `DOTNET_ROOT` only when the expected `mise`
+.NET root exists. This is safe before `mise` is installed, but once the shims
+exist they should win over Homebrew `dotnet@8`. Plain `dotnet` still remains
+migration-pending until the SDKs are installed through `mise`.
 
 Just recipes:
-Current recipes call plain `dotnet`, so they inherit whichever shell launched
-`just`. During migration, `.NET` recipes should either run through
-`mise exec dotnet@10 -- dotnet ...` for default work or wait until shell parity
-proves plain `dotnet` is safe. Compatibility projects should pin their SDK
-instead of relying on a global shell default.
+Current recipes route .NET global tool installs through
+`scripts/dotnet_toolchain.sh`, which runs under the ADR-0006 `mise` context.
+Compatibility projects should pin their SDK instead of relying on a global
+shell default.
 
 Editor terminals:
 VS Code, Cursor, and other editor terminals should resolve the same `mise`
@@ -173,8 +179,9 @@ until C# extension discovery, SDK listing, and terminal `dotnet --info` match
 the target owner.
 
 Automation:
-Automation must not assume interactive shell startup has run. Use explicit
-`mise exec` commands or verified zsh/agent parity for automation.
+Automation must not assume interactive shell startup has run. Use
+`scripts/dotnet_toolchain.sh` or explicit `mise exec` commands for .NET
+automation.
 
 ## Global Tool Policy
 
@@ -213,9 +220,10 @@ Before installing or activating `mise` for `.NET`:
 - Capture a Rebuild Snapshot of current `dotnet --info`, `--list-sdks`,
   `--list-runtimes`, `workload list`, `tool list --global`, PATH, and
   `DOTNET_ROOT`.
-- Decide where the repo will declare `mise`: `system/packages/Brewfile` for the
-  Homebrew formula and a separate `mise` config for SDK versions.
-- Decide the exact SDK selectors for .NET 10 default and .NET 8 compatibility.
+- Keep `system/packages/Brewfile` and `system/mise/config.toml` as the
+  repo-managed declarations.
+- Keep `dotnet = ["10", "8"]` as the SDK selector policy unless a later ADR
+  changes the default or compatibility line.
 - Decide how `global.json` should be handled in compatibility projects.
 
 Before making `mise` active in shells:
@@ -254,34 +262,37 @@ Before removing or changing global tools:
 
 ## Implementation Plan
 
-1. Record the `mise` strategic replacement decision in ADR-0006.
+1. Record the `mise` strategic replacement decision in ADR-0006. Done.
 2. Keep the doctor read-only and make `.NET` source, candidate paths, SDKs,
    runtimes, workloads, global tool packages, and global tool command path
-   visibility observable.
-3. In a later approved implementation, add Homebrew `mise` to the package
-   manifest and add a repo-managed `mise` SDK version policy.
-4. Install .NET 10 and .NET 8 through `mise`.
-5. Activate `mise` in zsh/Codex and editor terminals.
-6. Re-run doctor and shell checks from zsh, Codex, VS Code, Cursor, and AI
+   visibility observable. Done for the first readiness slice.
+3. Add Homebrew `mise` to the package manifest and add a repo-managed `mise`
+   SDK version policy. Done.
+4. Add a `.NET` wrapper and recipes that use the `mise` context without
+   mutating the laptop during validation. Done.
+5. Install .NET 10 and .NET 8 through `mise` in a later approved mutation step.
+6. Activate `mise` in zsh/Codex and editor terminals after install.
+7. Re-run doctor and shell checks from zsh, Codex, VS Code, Cursor, and AI
    command surfaces.
-7. Decide whether .NET global tools stay as `dotnet tool --global` installs or
+8. Decide whether .NET global tools stay as `dotnet tool --global` installs or
    move to `mise` `dotnet:ToolName` declarations.
-8. Decide global tool manifest changes for `dotnet-ef`, `csharpier`,
+9. Decide global tool manifest changes for `dotnet-ef`, `csharpier`,
    `deadcsharp`, and the legacy Lambda test tool package.
-9. Only after all gates pass, ask for explicit approval to remove Microsoft pkg
+10. Only after all gates pass, ask for explicit approval to remove Microsoft pkg
    .NET and Homebrew `dotnet@8`.
-10. Remove .NET 8 from `mise` only after all compatibility projects have
+11. Remove .NET 8 from `mise` only after all compatibility projects have
    migrated and a separate approval gate passes.
 
 ## What Not To Do
 
-- Do not install `mise` during this documentation pass.
+- Do not install `mise` during this readiness pass.
 - Do not install, uninstall, relink, unlink, repair, or upgrade any .NET
   SDK/runtime.
 - Do not remove Microsoft pkg files or Homebrew `dotnet@8`.
 - Do not install or uninstall global tools until SDK ownership and PATH parity
-  are stable.
-- Do not treat a literal `~/.dotnet/tools` PATH entry as equivalent to
-  `/Users/alex/.dotnet/tools`.
+  are stable; recipes may declare the intended install command, but validation
+  must use dry-runs only.
+- Keep `/Users/alex/.dotnet/tools` as an expanded path in shell and dev
+  environment contracts.
 - Do not assume non-login or AI command contexts use the same PATH as an
   interactive zsh login shell.

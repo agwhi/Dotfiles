@@ -1,0 +1,10 @@
+[tools]
+dotnet = ["10", "8"]
+
+[settings]
+idiomatic_version_file_enable_tools = ["dotnet"]
+
+[settings.dotnet]
+cli_telemetry_optout = true
+dotnet_root = "~/.local/share/mise/dotnet-root"
+isolated = false

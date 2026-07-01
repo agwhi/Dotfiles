@@ -21,6 +21,34 @@ case "${PNPM_HOME:-}" in
 esac
 export PNPM_HOME
 
+case "${MISE_DATA_DIR:-}" in
+    "")
+        MISE_DATA_DIR="$HOME/.local/share/mise"
+        ;;
+    "~")
+        MISE_DATA_DIR="$HOME"
+        ;;
+    "~/"*)
+        MISE_DATA_DIR="$HOME/${MISE_DATA_DIR#\~/}"
+        ;;
+esac
+MISE_SHIMS_DIR="$MISE_DATA_DIR/shims"
+
+case "${MISE_DOTNET_ROOT:-}" in
+    "")
+        MISE_DOTNET_ROOT="$MISE_DATA_DIR/dotnet-root"
+        ;;
+    "~")
+        MISE_DOTNET_ROOT="$HOME"
+        ;;
+    "~/"*)
+        MISE_DOTNET_ROOT="$HOME/${MISE_DOTNET_ROOT#\~/}"
+        ;;
+esac
+if [ -d "$MISE_DOTNET_ROOT" ]; then
+    export DOTNET_ROOT="$MISE_DOTNET_ROOT"
+fi
+
 path_prepend() {
     entry="$1"
     [ -n "$entry" ] || return 0
@@ -59,6 +87,7 @@ path_prepend "$PNPM_HOME"
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/.local/share/fnm/aliases/default/bin"
 path_prepend "/opt/homebrew/opt/dotnet@8/bin"
+path_prepend "$MISE_SHIMS_DIR"
 export PATH
 
 exec "$@"

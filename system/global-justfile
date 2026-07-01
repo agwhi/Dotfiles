@@ -3,6 +3,8 @@ set shell := ["sh", "-cu"]
 
 dev_env := "$HOME/.dotfiles/scripts/dev_env.sh"
 js_toolchain := "$HOME/.dotfiles/scripts/js_toolchain.sh"
+dotnet_toolchain := "$HOME/.dotfiles/scripts/dotnet_toolchain.sh"
+dotnet_tools_manifest := "$HOME/.dotfiles/system/packages/dotnet-tools.txt"
 
 # Run quality checks (security + formatting)
 quality-check:
@@ -49,11 +51,14 @@ setup-node:
     {{js_toolchain}} corepack prepare pnpm@latest --activate
     echo "✅ Node.js LTS and pnpm ready"
 
+# Install global .NET tools through the ADR-0006 mise-managed SDK
+install-dotnet-tools:
+    sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; s/[[:space:]]*#.*$//; p' {{dotnet_tools_manifest}} | while IFS= read -r tool; do {{dotnet_toolchain}} dotnet tool install --global "$tool" || {{dotnet_toolchain}} dotnet tool update --global "$tool"; done
+    echo "✅ .NET global tools installed from system/packages/dotnet-tools.txt"
+
 # Setup .NET environment
-setup-dotnet:
-    {{dev_env}} dotnet tool install -g Amazon.Lambda.Tools || echo "Amazon.Lambda.Tools already installed"
-    {{dev_env}} dotnet tool install -g Amazon.Lambda.TestTool-8.0 || echo "Amazon.Lambda.TestTool-8.0 already installed"
-    echo "✅ .NET Lambda tools installed"
+setup-dotnet: install-dotnet-tools
+    echo "✅ .NET development environment ready"
 
 # Configure AWS CLI
 setup-aws:

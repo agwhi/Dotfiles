@@ -16,6 +16,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - older system Python fallback
+    tomllib = None  # type: ignore[assignment]
+
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
@@ -27,15 +32,22 @@ PNPM_GLOBAL = ROOT / "system/packages/pnpm-global.txt"
 DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
 DEV_ENV = ROOT / "scripts/dev_env.sh"
+MISE_CONFIG = ROOT / "system/mise/config.toml"
+MISE_USER_CONFIG = HOME / ".config/mise/config.toml"
+MISE_SHIMS = HOME / ".local/share/mise/shims"
+MISE_DOTNET_ROOT = HOME / ".local/share/mise/dotnet-root"
 ZSH_ENV = ROOT / "system/zsh/.zshenv"
 ZSH_PROFILE = ROOT / "system/zsh/.zprofile"
 ZSH_RC = ROOT / "system/zsh/.zshrc"
+DOTNET_POLICY_SDK_LINES = ["10", "8"]
 DOTNET_READ_ONLY_ENV = {
     **os.environ,
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
     "DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE": "1",
     "DOTNET_NOLOGO": "1",
     "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+    "MISE_AUTO_INSTALL": "0",
+    "MISE_PREFER_OFFLINE": "1",
 }
 
 AREA_ORDER = [
@@ -250,6 +262,105 @@ def clean_manifest_lines(path: Path) -> list[str]:
         if line:
             result.append(line)
     return result
+
+
+def load_toml(path: Path) -> dict[str, Any]:
+    if not path.exists() or tomllib is None:
+        return {}
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+
+
+def normalize_mise_tool_versions(value: Any) -> list[str]:
+    versions: list[str] = []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, str):
+                versions.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("version"), str):
+                versions.append(item["version"])
+    elif isinstance(value, dict) and isinstance(value.get("version"), str):
+        versions.append(value["version"])
+    return versions
+
+
+def parse_mise_dotnet_versions_from_text(text: str) -> list[str]:
+    match = re.search(r"(?ms)^\[tools\]\s*(.*?)(?:^\[|\Z)", text)
+    if not match:
+        return []
+    dotnet_match = re.search(r"(?m)^\s*dotnet\s*=\s*(.+?)\s*$", match.group(1))
+    if not dotnet_match:
+        return []
+    raw_value = dotnet_match.group(1)
+    return [
+        left or right
+        for left, right in re.findall(r'"([^"]+)"|\'([^\']+)\'', raw_value)
+        if left or right
+    ]
+
+
+def mise_config_state() -> dict[str, Any]:
+    text = MISE_CONFIG.read_text(encoding="utf-8") if MISE_CONFIG.exists() else ""
+    data = load_toml(MISE_CONFIG)
+    tools = data.get("tools") if isinstance(data.get("tools"), dict) else {}
+    settings = data.get("settings") if isinstance(data.get("settings"), dict) else {}
+    dotnet_settings = (
+        settings.get("dotnet")
+        if isinstance(settings.get("dotnet"), dict)
+        else {}
+    )
+    versions = normalize_mise_tool_versions(tools.get("dotnet")) if tools else []
+    if not versions and text:
+        versions = parse_mise_dotnet_versions_from_text(text)
+
+    user_config: dict[str, Any] = {
+        "path": str(MISE_USER_CONFIG),
+        "exists": MISE_USER_CONFIG.exists(),
+        "is_symlink": MISE_USER_CONFIG.is_symlink(),
+    }
+    if MISE_USER_CONFIG.is_symlink():
+        try:
+            user_config["link_target"] = os.readlink(MISE_USER_CONFIG)
+            user_config["resolved_path"] = str(MISE_USER_CONFIG.resolve())
+            user_config["points_to_repo_config"] = (
+                MISE_USER_CONFIG.resolve() == MISE_CONFIG.resolve()
+            )
+        except OSError:
+            user_config["points_to_repo_config"] = False
+
+    expected_present = all(line in versions for line in DOTNET_POLICY_SDK_LINES)
+    return {
+        "path": str(MISE_CONFIG),
+        "source": str(MISE_CONFIG.relative_to(ROOT)),
+        "exists": MISE_CONFIG.exists(),
+        "dotnet_versions": versions,
+        "expected_dotnet_versions": DOTNET_POLICY_SDK_LINES,
+        "expected_versions_declared": expected_present,
+        "declares_node": "node" in tools if tools else bool(re.search(r"(?m)^\s*node\s*=", text)),
+        "settings": {
+            "idiomatic_version_file_enable_tools": (
+                settings.get("idiomatic_version_file_enable_tools")
+                if isinstance(settings, dict)
+                else None
+            ),
+            "dotnet": dotnet_settings,
+        },
+        "user_config": user_config,
+        "expected_paths": {
+            "user_config": str(MISE_USER_CONFIG),
+            "shims": str(MISE_SHIMS),
+            "dotnet_root": str(MISE_DOTNET_ROOT),
+        },
+    }
+
+
+def mise_config_declares_dotnet_policy() -> bool:
+    state = mise_config_state()
+    return bool(state["exists"] and state["expected_versions_declared"] and not state["declares_node"])
 
 
 def parse_brewfile(path: Path) -> dict[str, set[str]]:
@@ -986,7 +1097,7 @@ def shell_parity_gaps(
 
     dotnet_tools = paths.get("dotnet_tools_expanded", {})
     dotnet_tools_literal = paths.get("dotnet_tools_literal_tilde", {})
-    if any(value is False for value in dotnet_tools.values()) or any(dotnet_tools_literal.values()):
+    if any(value is False for value in dotnet_tools.values()):
         gaps.append(
             {
                 "area": "dotnet",
@@ -1002,6 +1113,7 @@ def shell_parity_gaps(
     dotnet_sources = {
         name: command_path_source(path) for name, path in command_matrix["dotnet"].items()
     }
+    dotnet_migration_pending = mise_config_declares_dotnet_policy()
     if len(differing_values(dotnet_sources)) > 1 or any(
         value is None for value in env_matrix.get("DOTNET_ROOT", {}).values()
     ):
@@ -1013,19 +1125,24 @@ def shell_parity_gaps(
                     f"dotnet sources: {dotnet_sources}; DOTNET_ROOT: "
                     f"{env_matrix.get('DOTNET_ROOT', {})}."
                 ),
-                "recommendation": "Do not remove current SDK sources until ADR-0006 mise parity is proven.",
+                "recommendation": (
+                    "ADR-0006 mise policy is declared; keep current SDK sources as managed exceptions until mise parity is proven."
+                    if dotnet_migration_pending
+                    else "Do not remove current SDK sources until ADR-0006 mise parity is proven."
+                ),
             }
         )
 
     if not any(paths.get("mise_shims", {}).values()):
-        gaps.append(
-            {
-                "area": "mise",
-                "finding": "mise shims are not visible in probed shell contexts.",
-                "impact": "The ADR-0006 .NET target is not active in shell PATH yet.",
-                "recommendation": "Install and activate mise in a later approved implementation step.",
-            }
-        )
+        if not dotnet_migration_pending:
+            gaps.append(
+                {
+                    "area": "mise",
+                    "finding": "mise shims are not visible in probed shell contexts.",
+                    "impact": "The ADR-0006 .NET target is not active in shell PATH yet.",
+                    "recommendation": "Install and activate mise in a later approved implementation step.",
+                }
+            )
 
     ai_commands = ["claude", "opencode", "pi", "apm"]
     ai_visibility = {
@@ -2034,6 +2151,30 @@ def check_runtime_managers(findings: list[dict[str, Any]]) -> None:
         else:
             absent.append(name)
 
+    declared_brew = parse_brewfile(BREWFILE)
+    if "mise" in absent and equivalent_member("mise", declared_brew["brew"]):
+        absent.remove("mise")
+        add_finding(
+            findings,
+            area="runtime_managers",
+            classification="migration_pending",
+            name="runtime_managers.mise",
+            severity="info",
+            source=str(BREWFILE.relative_to(ROOT)),
+            summary=(
+                "mise is declared as the ADR-0006 .NET SDK owner, but no local "
+                "mise command or data directory is visible yet."
+            ),
+            details={
+                "brewfile_declares_mise": True,
+                "repo_mise_config": mise_config_state(),
+            },
+            recommendation=(
+                "Install the declared Homebrew mise formula and .NET SDKs only "
+                "in a later approved mutation step."
+            ),
+        )
+
     if present:
         by_classification: dict[str, list[str]] = {}
         for name, info in present.items():
@@ -2227,21 +2368,69 @@ def dotnet_candidate_paths(active_path: str) -> list[str]:
     return existing
 
 
-def check_dotnet(findings: list[dict[str, Any]]) -> None:
-    add_manifest_presence(findings, "dotnet", DOTNET_TOOLS, ".NET global tool")
-    declared = set(clean_manifest_lines(DOTNET_TOOLS))
-    dotnet_path = shutil.which("dotnet")
-    if not dotnet_path:
+def check_mise_dotnet_config(findings: list[dict[str, Any]]) -> None:
+    state = mise_config_state()
+    if not state["exists"]:
         add_finding(
             findings,
             area="dotnet",
-            classification="unknown",
-            name="dotnet.command",
+            classification="declared_absent",
+            name="dotnet.mise_config",
             severity="medium",
-            summary="dotnet is not on PATH; SDKs and global tools were not audited.",
+            source=str(MISE_CONFIG.relative_to(ROOT)),
+            summary="Repo-managed mise .NET config is missing.",
+            details=state,
+            recommendation=(
+                "Restore system/mise/config.toml with dotnet 10 default and "
+                "dotnet 8 compatibility lines."
+            ),
+        )
+        return
+
+    has_policy = state["expected_versions_declared"] and not state["declares_node"]
+    add_finding(
+        findings,
+        area="dotnet",
+        classification="canonical" if has_policy else "unknown",
+        name="dotnet.mise_config",
+        severity="info" if has_policy else "medium",
+        source=state["source"],
+        summary=(
+            "Repo-managed mise config declares .NET 10 and .NET 8 without taking Node ownership."
+            if has_policy
+            else "Repo-managed mise config does not match the ADR-0006 .NET policy."
+        ),
+        details=state,
+        recommendation=(
+            None
+            if has_policy
+            else "Keep Node under fnm and declare only the ADR-0006 .NET SDK lines in mise."
+        ),
+    )
+
+
+def check_dotnet(findings: list[dict[str, Any]]) -> None:
+    add_manifest_presence(findings, "dotnet", DOTNET_TOOLS, ".NET global tool")
+    check_mise_dotnet_config(findings)
+    declared = set(clean_manifest_lines(DOTNET_TOOLS))
+    dotnet_path = shutil.which("dotnet")
+    if not dotnet_path:
+        config_declared = mise_config_declares_dotnet_policy()
+        add_finding(
+            findings,
+            area="dotnet",
+            classification="migration_pending" if config_declared else "unknown",
+            name="dotnet.command",
+            severity="info" if config_declared else "medium",
+            summary=(
+                "dotnet is not on PATH yet, but ADR-0006 mise .NET policy is declared."
+                if config_declared
+                else "dotnet is not on PATH; SDKs and global tools were not audited."
+            ),
+            details={"repo_mise_config": mise_config_state()},
             recommendation=(
                 "Use the ADR-0006 mise .NET SDK source and dotnet tool manifest "
-                "as desired state."
+                "as desired state; install SDKs only in a later approved mutation step."
             ),
         )
         return
@@ -2253,6 +2442,21 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
     active_source = "mise_dotnet" if source == "mise" else source
     if "dotnet@8" in str(Path(dotnet_path).resolve()):
         active_source = "homebrew-dotnet@8"
+    config_declared = mise_config_declares_dotnet_policy()
+    sdk_major_lines = sorted(
+        {
+            sdk.split()[0].split(".", 1)[0]
+            for sdk in sdk_lines
+            if sdk and sdk[0].isdigit()
+        }
+    )
+    source_classification = (
+        "canonical"
+        if active_source == "mise_dotnet"
+        else "migration_pending"
+        if config_declared
+        else "unknown"
+    )
     candidates = [
         dotnet_inventory(candidate)
         for candidate in dotnet_candidate_paths(dotnet_path)
@@ -2260,14 +2464,23 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
     add_finding(
         findings,
         area="dotnet",
-        classification="canonical" if active_source == "mise_dotnet" else "unknown",
+        classification=source_classification,
         name="dotnet.sdk_source",
         source=dotnet_path,
-        severity="info" if active_source == "mise_dotnet" else "medium",
-        summary=f"dotnet is present from {active_source}.",
+        severity="info" if source_classification == "canonical" else "low",
+        summary=(
+            "dotnet resolves through the ADR-0006 mise SDK owner."
+            if active_source == "mise_dotnet"
+            else f"dotnet is still present from {active_source}; ADR-0006 mise migration is declared but not active."
+            if config_declared
+            else f"dotnet is present from {active_source}."
+        ),
         details={
             "active": active_inventory,
             "candidates": candidates,
+            "expected_sdk_major_lines": DOTNET_POLICY_SDK_LINES,
+            "installed_sdk_major_lines": sdk_major_lines,
+            "repo_mise_config": mise_config_state(),
             "path_matches": [path_provenance(path) for path in which_all("dotnet")],
             "provenance": provenance,
             "runtimes": active_inventory["runtimes"],
@@ -2275,7 +2488,7 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
             "workloads": active_inventory["workloads"],
         },
         recommendation=(
-            "Compare this active SDK source with ADR-0006 before removing any .NET installation."
+            "Keep existing SDK sources as managed exceptions until mise dotnet@10 and dotnet@8 are installed and active."
             if active_source != "mise_dotnet"
             else None
         ),
