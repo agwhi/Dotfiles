@@ -45,6 +45,7 @@ AREA_ORDER = [
     "npm",
     "fnm",
     "runtime_managers",
+    "shell_parity",
     "dotnet",
     "ai_tools",
     "manual_apps",
@@ -73,6 +74,45 @@ DEV_APP_RE = re.compile(
 )
 
 AI_COMMANDS = ["codex", "claude", "opencode", "open-code", "pi", "apm"]
+SHELL_PARITY_COMMANDS = [
+    "node",
+    "npm",
+    "pnpm",
+    "corepack",
+    "fnm",
+    "mise",
+    "dotnet",
+    "codex",
+    "claude",
+    "opencode",
+    "open-code",
+    "pi",
+    "apm",
+    "just",
+    "nu",
+    "zsh",
+    "dotnet-lambda-test-tool-8.0",
+    "dotnet-ef",
+]
+SHELL_PARITY_ENV_KEYS = [
+    "SHELL",
+    "PATH",
+    "PNPM_HOME",
+    "FNM_DIR",
+    "FNM_MULTISHELL_PATH",
+    "FNM_VERSION_FILE_STRATEGY",
+    "FNM_LOGLEVEL",
+    "FNM_COREPACK_ENABLED",
+    "FNM_ARCH",
+    "DOTNET_ROOT",
+    "MISE_SHELL",
+    "MISE_DATA_DIR",
+    "MISE_CONFIG_DIR",
+]
+SHELL_PROBE_ENV_KEY = "DOTFILES_DOCTOR_SHELL_PROBE"
+SHELL_PROBE_ALLOW_STARTUP_KEY = "DOTFILES_DOCTOR_ALLOW_STARTUP_PROBES"
+SHELL_PROBE_START = "__DOTFILES_DOCTOR_SHELL_PROBE_START__"
+SHELL_PROBE_END = "__DOTFILES_DOCTOR_SHELL_PROBE_END__"
 RUNTIME_MANAGERS = {
     "nvm": {
         "commands": ["nvm"],
@@ -560,6 +600,565 @@ def command_visibility(command: str) -> dict[str, Any]:
         ),
         "current_process_is_codex_runtime": is_codex_runtime_path(current),
     }
+
+
+def shell_probe_source() -> str:
+    return f'''
+from __future__ import annotations
+import json
+import os
+import shutil
+from pathlib import Path
+
+commands = {json.dumps(SHELL_PARITY_COMMANDS)}
+env_keys = {json.dumps(SHELL_PARITY_ENV_KEYS)}
+home = str(Path.home())
+path_raw = os.environ.get("PATH", "")
+path_entries = [entry for entry in path_raw.split(os.pathsep) if entry]
+
+
+def which_all(command):
+    seen = set()
+    matches = []
+    for entry in path_entries:
+        candidate = Path(entry).expanduser() / command
+        try:
+            if (
+                candidate.exists()
+                and (candidate.is_file() or candidate.is_symlink())
+                and os.access(candidate, os.X_OK)
+            ):
+                resolved = str(candidate.resolve())
+                key = (str(candidate), resolved)
+                if key not in seen:
+                    seen.add(key)
+                    matches.append({{"path": str(candidate), "resolved_path": resolved}})
+        except OSError:
+            continue
+    return matches
+
+
+payload = {{
+    "env": {{key: os.environ.get(key) for key in env_keys}},
+    "fnm_env": {{
+        key: value
+        for key, value in sorted(os.environ.items())
+        if key.startswith("FNM_")
+    }},
+    "mise_env": {{
+        key: value
+        for key, value in sorted(os.environ.items())
+        if key.startswith("MISE_")
+    }},
+    "nu_env": {{
+        key: value
+        for key, value in sorted(os.environ.items())
+        if key.startswith("NU_")
+    }},
+    "path_contains": {{
+        "codex_runtime": any(
+            "codex" in entry.lower() or "/pkg/env/" in entry
+            for entry in path_entries
+        ),
+        "dotnet_tools_expanded": f"{{home}}/.dotnet/tools" in path_entries,
+        "dotnet_tools_literal_tilde": "~/.dotnet/tools" in path_entries,
+        "fnm_multishell_bin": any(
+            ".local/state/fnm_multishells" in entry for entry in path_entries
+        ),
+        "homebrew_bin": "/opt/homebrew/bin" in path_entries,
+        "homebrew_sbin": "/opt/homebrew/sbin" in path_entries,
+        "mise_shims": f"{{home}}/.local/share/mise/shims" in path_entries,
+        "pnpm_home_expanded": f"{{home}}/Library/pnpm" in path_entries,
+        "usr_local_bin": "/usr/local/bin" in path_entries,
+    }},
+    "path_entries": path_entries,
+    "commands": {{
+        command: {{"which": shutil.which(command), "all": which_all(command)}}
+        for command in commands
+    }},
+}}
+print("{SHELL_PROBE_START}")
+print(json.dumps(payload, sort_keys=True))
+print("{SHELL_PROBE_END}")
+'''.strip()
+
+
+def parse_shell_probe_stdout(stdout: str) -> dict[str, Any] | None:
+    if SHELL_PROBE_START not in stdout or SHELL_PROBE_END not in stdout:
+        return None
+    body = stdout.split(SHELL_PROBE_START, 1)[1].split(SHELL_PROBE_END, 1)[0].strip()
+    try:
+        return json.loads(body)
+    except json.JSONDecodeError:
+        return None
+
+
+def shell_probe_contexts() -> list[dict[str, Any]]:
+    python_command = f'/usr/bin/python3 -c "${SHELL_PROBE_ENV_KEY}"'
+    nu_command = f"^/usr/bin/python3 -c $env.{SHELL_PROBE_ENV_KEY}"
+    return [
+        {
+            "name": "codex_process",
+            "requires": ["/bin/sh", "/usr/bin/python3"],
+            "args": ["/bin/sh", "-c", python_command],
+        },
+        {
+            "name": "zsh_non_login",
+            "requires": ["/bin/zsh", "/usr/bin/python3"],
+            "args": ["/bin/zsh", "-fc", python_command],
+        },
+        {
+            "name": "zsh_login",
+            "startup_probe": True,
+            "requires": ["/bin/zsh", "/usr/bin/python3"],
+            "args": ["/bin/zsh", "-lic", python_command],
+        },
+        {
+            "name": "nushell_commands",
+            "requires": ["nu", "/usr/bin/python3"],
+            "args": ["nu", "--commands", nu_command],
+        },
+        {
+            "name": "nushell_login",
+            "startup_probe": True,
+            "requires": ["nu", "/usr/bin/python3"],
+            "args": ["nu", "--login", "--commands", nu_command],
+        },
+        {
+            "name": "just_default_recipe_shell",
+            "requires": ["just", "/bin/zsh", "/usr/bin/python3"],
+            "args": [
+                "/bin/zsh",
+                "-fc",
+                (
+                    "just --justfile <(printf 'probe:\\n\\t@/usr/bin/python3 "
+                    f"-c \"${SHELL_PROBE_ENV_KEY}\"\\n') probe"
+                ),
+            ],
+        },
+    ]
+
+
+def requirement_available(requirement: str) -> bool:
+    if requirement.startswith("/"):
+        return Path(requirement).exists()
+    return shutil.which(requirement) is not None
+
+
+def run_shell_probe(context: dict[str, Any], probe: str) -> dict[str, Any]:
+    if context.get("startup_probe") and os.environ.get(
+        SHELL_PROBE_ALLOW_STARTUP_KEY
+    ) not in {"1", "true", "yes"}:
+        return {
+            "name": context["name"],
+            "ok": False,
+            "skipped": True,
+            "startup_probe": True,
+            "reason": (
+                f"Set {SHELL_PROBE_ALLOW_STARTUP_KEY}=1 to execute login "
+                "startup probes. They can run user startup hooks."
+            ),
+        }
+
+    missing = [
+        requirement
+        for requirement in context.get("requires", [])
+        if not requirement_available(requirement)
+    ]
+    if missing:
+        return {
+            "name": context["name"],
+            "ok": False,
+            "skipped": True,
+            "missing": missing,
+        }
+
+    env = os.environ.copy()
+    env[SHELL_PROBE_ENV_KEY] = probe
+    result = command_result(context["args"], timeout=35, env=env)
+    payload = parse_shell_probe_stdout(result["stdout"])
+    return {
+        "name": context["name"],
+        "ok": result["ok"] and payload is not None,
+        "returncode": result["returncode"],
+        "timed_out": result["timed_out"],
+        "payload": payload,
+        "stderr": result["stderr"][:1000],
+        "startup_stdout": result["stdout"].split(SHELL_PROBE_START, 1)[0].strip()[:1000],
+    }
+
+
+def compact_command_matrix(
+    probes: list[dict[str, Any]], commands: list[str]
+) -> dict[str, dict[str, str | None]]:
+    matrix: dict[str, dict[str, str | None]] = {}
+    for command in commands:
+        matrix[command] = {}
+        for probe in probes:
+            payload = probe.get("payload") or {}
+            command_info = payload.get("commands", {}).get(command, {})
+            matrix[command][probe["name"]] = command_info.get("which")
+    return matrix
+
+
+def compact_env_matrix(
+    probes: list[dict[str, Any]], keys: list[str]
+) -> dict[str, dict[str, str | None]]:
+    matrix: dict[str, dict[str, str | None]] = {}
+    for key in keys:
+        matrix[key] = {}
+        for probe in probes:
+            payload = probe.get("payload") or {}
+            matrix[key][probe["name"]] = payload.get("env", {}).get(key)
+    return matrix
+
+
+def path_flag_matrix(probes: list[dict[str, Any]]) -> dict[str, dict[str, bool | None]]:
+    flags = [
+        "codex_runtime",
+        "dotnet_tools_expanded",
+        "dotnet_tools_literal_tilde",
+        "fnm_multishell_bin",
+        "mise_shims",
+        "pnpm_home_expanded",
+    ]
+    matrix: dict[str, dict[str, bool | None]] = {}
+    for flag in flags:
+        matrix[flag] = {}
+        for probe in probes:
+            payload = probe.get("payload") or {}
+            matrix[flag][probe["name"]] = payload.get("path_contains", {}).get(flag)
+    return matrix
+
+
+def differing_values(values: dict[str, Any]) -> set[Any]:
+    return {value for value in values.values() if value not in (None, "", [])}
+
+
+def command_path_source(path: str | None) -> str:
+    return str(path_provenance(path).get("source", "absent"))
+
+
+def shell_parity_gaps(
+    command_matrix: dict[str, dict[str, str | None]],
+    env_matrix: dict[str, dict[str, str | None]],
+    paths: dict[str, dict[str, bool | None]],
+    editor_policy: dict[str, Any],
+    alias_policy: dict[str, Any],
+) -> list[dict[str, str]]:
+    gaps: list[dict[str, str]] = []
+
+    pnpm_sources = {
+        name: command_path_source(path) for name, path in command_matrix["pnpm"].items()
+    }
+    if len(differing_values(pnpm_sources)) > 1:
+        gaps.append(
+            {
+                "area": "pnpm",
+                "finding": "pnpm resolves through different sources across shell contexts.",
+                "impact": f"Observed sources: {pnpm_sources}.",
+                "recommendation": "Use the ADR-0007 explicit fnm/default wrapper until PATH parity is enforced.",
+            }
+        )
+
+    corepack_visibility = command_matrix["corepack"]
+    if any(value is None for value in corepack_visibility.values()) and any(
+        corepack_visibility.values()
+    ):
+        gaps.append(
+            {
+                "area": "pnpm",
+                "finding": "Corepack is visible only in fnm-activated contexts.",
+                "impact": f"corepack by context: {corepack_visibility}.",
+                "recommendation": "Run Corepack commands through the ADR-0007 fnm/default wrapper until shell parity is fixed.",
+            }
+        )
+
+    node_sources = {
+        name: command_path_source(path) for name, path in command_matrix["node"].items()
+    }
+    if len(differing_values(node_sources)) > 1:
+        gaps.append(
+            {
+                "area": "fnm",
+                "finding": "Node resolves through fnm only in contexts that load the Nushell login config.",
+                "impact": f"Observed sources: {node_sources}.",
+                "recommendation": "Keep Node automation on `fnm exec --using default` rather than plain node/npm/pnpm.",
+            }
+        )
+
+    fnm_values = env_matrix.get("FNM_DIR", {})
+    if any(value is None for value in fnm_values.values()) and any(fnm_values.values()):
+        gaps.append(
+            {
+                "area": "fnm",
+                "finding": "FNM_* variables are not exported consistently.",
+                "impact": f"FNM_DIR by context: {fnm_values}.",
+                "recommendation": "Generate or share shell environment ownership before relying on plain runtime commands.",
+            }
+        )
+
+    pnpm_home_values = env_matrix.get("PNPM_HOME", {})
+    if len(differing_values(pnpm_home_values)) > 1:
+        gaps.append(
+            {
+                "area": "PATH",
+                "finding": "PNPM_HOME alternates between literal tilde and expanded absolute paths.",
+                "impact": f"PNPM_HOME by context: {pnpm_home_values}.",
+                "recommendation": "Use an expanded shared PATH source for both Nu and zsh.",
+            }
+        )
+
+    dotnet_tools = paths.get("dotnet_tools_expanded", {})
+    dotnet_tools_literal = paths.get("dotnet_tools_literal_tilde", {})
+    if any(value is False for value in dotnet_tools.values()) or any(dotnet_tools_literal.values()):
+        gaps.append(
+            {
+                "area": "dotnet",
+                "finding": ".NET global tool path visibility differs by shell.",
+                "impact": (
+                    f"Expanded path: {dotnet_tools}; literal tilde path: "
+                    f"{dotnet_tools_literal}."
+                ),
+                "recommendation": "Put the expanded ~/.dotnet/tools path in the shared shell environment.",
+            }
+        )
+
+    dotnet_sources = {
+        name: command_path_source(path) for name, path in command_matrix["dotnet"].items()
+    }
+    if len(differing_values(dotnet_sources)) > 1 or any(
+        value is None for value in env_matrix.get("DOTNET_ROOT", {}).values()
+    ):
+        gaps.append(
+            {
+                "area": "dotnet",
+                "finding": "dotnet source and DOTNET_ROOT are not aligned.",
+                "impact": (
+                    f"dotnet sources: {dotnet_sources}; DOTNET_ROOT: "
+                    f"{env_matrix.get('DOTNET_ROOT', {})}."
+                ),
+                "recommendation": "Do not remove current SDK sources until ADR-0006 mise parity is proven.",
+            }
+        )
+
+    if not any(paths.get("mise_shims", {}).values()):
+        gaps.append(
+            {
+                "area": "mise",
+                "finding": "mise shims are not visible in probed shell contexts.",
+                "impact": "The ADR-0006 .NET target is not active in shell PATH yet.",
+                "recommendation": "Install and activate mise in a later approved implementation step.",
+            }
+        )
+
+    ai_commands = ["claude", "opencode", "pi", "apm"]
+    ai_visibility = {
+        command: command_matrix[command]
+        for command in ai_commands
+        if any(value is None for value in command_matrix[command].values())
+        and any(command_matrix[command].values())
+    }
+    if ai_visibility:
+        gaps.append(
+            {
+                "area": "ai_tools",
+                "finding": "AI CLI visibility differs by shell context.",
+                "impact": f"Visibility drift: {ai_visibility}.",
+                "recommendation": "Declare intended AI Tool Surface CLI paths before enforcing shell parity.",
+            }
+        )
+
+    nu_aliases = alias_policy.get("nushell", {}).get("aliases", [])
+    zsh_aliases = alias_policy.get("zsh", {}).get("aliases", [])
+    if nu_aliases and not zsh_aliases:
+        gaps.append(
+            {
+                "area": "aliases",
+                "finding": "Repo-managed aliases are Nushell-only.",
+                "impact": (
+                    f"Nushell defines {len(nu_aliases)} aliases; zsh startup "
+                    "files define no comparable repo-managed aliases."
+                ),
+                "recommendation": "Do not use aliases in bootstrap, just recipes, or AI-generated commands.",
+            }
+        )
+
+    if not justfile_declares_shell():
+        gaps.append(
+            {
+                "area": "just",
+                "finding": "The repo justfile does not declare a recipe shell.",
+                "impact": "`just` recipes use the task runner default shell and inherit the caller environment.",
+                "recommendation": "Treat just bootstrap as POSIX/zsh-compatible automation unless a later ADR changes it.",
+            }
+        )
+
+    editor_shells = {
+        name: policy.get("default_shell")
+        for name, policy in editor_policy.items()
+        if isinstance(policy, dict)
+    }
+    if "nu" in editor_shells.values():
+        gaps.append(
+            {
+                "area": "editor_terminal",
+                "finding": "Repo-managed editor terminals are configured for Nushell.",
+                "impact": f"Editor policy: {editor_shells}.",
+                "recommendation": "Keep editor terminals on Nu only if shared PATH ownership makes Nu and zsh equivalent for tools.",
+            }
+        )
+
+    return gaps
+
+
+def extract_jsonc_string(text: str, key: str) -> str | None:
+    pattern = re.compile(rf'"{re.escape(key)}"\s*:\s*"([^"]+)"')
+    match = pattern.search(text)
+    return match.group(1) if match else None
+
+
+def editor_shell_policy() -> dict[str, Any]:
+    policies: dict[str, Any] = {}
+    for name, path in {
+        "vscode": ROOT / "system/vscode/settings.jsonc",
+        "cursor": ROOT / "system/cursor/settings.jsonc",
+    }.items():
+        if not path.exists():
+            policies[name] = {"configured": False}
+            continue
+        text = path.read_text(encoding="utf-8")
+        default_profile = extract_jsonc_string(text, "terminal.integrated.defaultProfile.osx")
+        policies[name] = {
+            "configured": bool(default_profile),
+            "default_profile_osx": default_profile,
+            "default_shell": default_profile,
+            "nu_path": "/opt/homebrew/bin/nu" if '"/opt/homebrew/bin/nu"' in text else None,
+            "source": str(path.relative_to(ROOT)),
+        }
+
+    ghostty = ROOT / "system/ghostty/config"
+    if ghostty.exists():
+        text = ghostty.read_text(encoding="utf-8")
+        command_match = re.search(r"(?m)^\s*command\s*=\s*(\S+)", text)
+        command = command_match.group(1) if command_match else None
+        policies["ghostty"] = {
+            "configured": bool(command),
+            "command": command,
+            "default_shell": Path(command).name if command else None,
+            "source": str(ghostty.relative_to(ROOT)),
+        }
+    else:
+        policies["ghostty"] = {"configured": False}
+    return policies
+
+
+def shell_alias_policy() -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "nushell": {"aliases": [], "sources": []},
+        "zsh": {"aliases": [], "sources": []},
+    }
+    if NUSHELL_CONFIG.exists():
+        aliases = []
+        for match in re.finditer(
+            r"(?m)^\s*alias\s+([A-Za-z0-9_.-]+)\s*=",
+            NUSHELL_CONFIG.read_text(encoding="utf-8"),
+        ):
+            aliases.append(match.group(1))
+        result["nushell"] = {
+            "aliases": aliases,
+            "sources": [str(NUSHELL_CONFIG.relative_to(ROOT))],
+        }
+
+    zsh_sources = [HOME / ".zshenv", HOME / ".zprofile", HOME / ".zshrc"]
+    zsh_aliases = []
+    for source in zsh_sources:
+        if not source.exists():
+            continue
+        try:
+            text = source.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        zsh_aliases.extend(
+            match.group(1)
+            for match in re.finditer(
+                r"(?m)^\s*alias\s+([A-Za-z0-9_.-]+)=",
+                text,
+            )
+        )
+        result["zsh"]["sources"].append(str(source))
+    result["zsh"]["aliases"] = sorted(set(zsh_aliases))
+    return result
+
+
+def justfile_declares_shell() -> bool:
+    justfile = ROOT / "justfile"
+    if not justfile.exists():
+        return False
+    return re.search(
+        r"(?m)^\s*set\s+(windows-)?shell\s*:=",
+        justfile.read_text(encoding="utf-8"),
+    ) is not None
+
+
+def check_shell_parity(findings: list[dict[str, Any]]) -> None:
+    probe = shell_probe_source()
+    probes = [run_shell_probe(context, probe) for context in shell_probe_contexts()]
+    successful = [item for item in probes if item.get("payload")]
+    command_matrix = compact_command_matrix(successful, SHELL_PARITY_COMMANDS)
+    env_matrix = compact_env_matrix(successful, SHELL_PARITY_ENV_KEYS)
+    paths = path_flag_matrix(successful)
+    editor_policy = editor_shell_policy()
+    alias_policy = shell_alias_policy()
+    gaps = shell_parity_gaps(
+        command_matrix,
+        env_matrix,
+        paths,
+        editor_policy,
+        alias_policy,
+    )
+    skipped = [item for item in probes if item.get("skipped")]
+    failed = [
+        item
+        for item in probes
+        if not item.get("ok") and not item.get("skipped")
+    ]
+
+    add_finding(
+        findings,
+        area="shell_parity",
+        classification="unknown" if gaps or failed or skipped else "canonical",
+        name="shell_parity.contexts",
+        severity="medium" if gaps or failed else "info",
+        summary=(
+            f"Shell parity probes found {len(gaps)} drift areas across "
+            f"{len(successful)} executable contexts."
+        ),
+        details={
+            "probes": probes,
+            "startup_probe_policy": {
+                "enabled": os.environ.get(SHELL_PROBE_ALLOW_STARTUP_KEY)
+                in {"1", "true", "yes"},
+                "env": SHELL_PROBE_ALLOW_STARTUP_KEY,
+                "reason": (
+                    "Login shell probes are opt-in because they execute user "
+                    "startup files and may write caches or run hooks."
+                ),
+            },
+            "command_matrix": command_matrix,
+            "env_matrix": env_matrix,
+            "path_flags": paths,
+            "editor_policy": editor_policy,
+            "alias_policy": alias_policy,
+            "gaps": gaps,
+        },
+        recommendation=(
+            "Keep automation on explicit POSIX-compatible commands and wrappers "
+            "until shared shell PATH ownership is implemented."
+            if gaps or failed
+            else None
+        ),
+    )
 
 
 def check_js_toolchain(findings: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1974,6 +2573,7 @@ def build_payload() -> dict[str, Any]:
     check_npm(findings, set(clean_manifest_lines(PNPM_GLOBAL)), pnpm_installed, js_commands)
     check_fnm(findings, brew_declared)
     check_runtime_managers(findings)
+    check_shell_parity(findings)
     check_dotnet(findings)
     scan_ai_tools(findings)
     check_manual_apps(findings, brew_declared)
