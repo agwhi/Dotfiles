@@ -11,6 +11,8 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   rebuild snapshot when relevant.
 - `manual-local`: installed or exposed outside a package manifest and not yet
   migrated to a canonical installer.
+- `app-runtime-context`: command or helper exposed by an application runtime,
+  not an independently managed package.
 - `intentionally-excluded`: observed local state that is outside the
   Development Ecosystem baseline for now.
 
@@ -39,15 +41,55 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - `/usr/local/share/dotnet/dotnet`: active Microsoft pkg .NET SDK source.
   Managed exception until ADR-0006's `mise` migration is implemented and
   verified.
-- `/usr/local/bin/apm`: manual/pkg CLI. Identify whether this is the intended
-  AI Asset Manager or unrelated legacy state before declaring or removing it.
+- `/usr/local/bin/apm`: manual/pkg CLI resolving to `/usr/local/lib/apm/apm`.
+  ADR-0008 selects APM as the AI Asset Manager, but this binary remains a
+  managed exception until its own installer and update path are declared. Do
+  not self-update, reinstall, prune, or remove it without approval.
 - `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
   Cursor cask. Keep as local app state unless a later editor policy migrates
   it.
-- `~/.local/bin/claude`: manual-local AI CLI. Defer declaration, migration, or
-  removal to the AI Tool Surface task.
+- `~/.local/bin/claude`: manual-local AI CLI resolving to
+  `~/.local/share/claude/versions/2.1.197`. Keep as a managed exception until
+  a later task declares the Claude Code CLI install path.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
-  `codex_chronicle`: app/runtime context, not package-manager drift.
+  `codex_chronicle`: app-runtime-context, not package-manager drift.
+- `~/.local/share/fnm/aliases/default/bin/opencode`: npm-global
+  `opencode-ai` binary observed under the `fnm` default Node path. Keep as a
+  legacy managed exception until the AI Tool Surface policy decides whether
+  opencode is project-local, managed, or removed.
+- `~/Library/pnpm/pi`: pnpm-global Pi command from
+  `@mariozechner/pi-coding-agent`. Not part of the Global AI Baseline. Migrate
+  to APM or remove only behind approval.
+
+## AI Approval-Gated Cleanup
+
+- `~/.codex/skills/grill-with-docs`: target Baseline AI Asset. Do not replace
+  or remove until APM can reproduce the intended baseline.
+- `~/.codex/skills/using-superpowers`: approval-gated-removal. ADR-0003 keeps
+  it out of the Global AI Baseline; remove only in a later cleanup task with a
+  Rebuild Snapshot.
+- Claude cached superpowers plugin versions under `~/.claude/plugins/cache`:
+  approval-gated-removal after APM reproduces the selected baseline.
+- npm global `opencode-ai`: approval-gated-removal or migration candidate after
+  opencode policy is decided.
+- pnpm global `@mariozechner/pi-coding-agent`: approval-gated-removal or
+  project-local migration candidate after Pi policy is decided.
+
+## Sensitive AI Local State
+
+Do not commit, delete, rewrite, or move these without explicit approval and a
+Rebuild Snapshot:
+
+- `~/.codex` auth, history, logs, local databases, trusted-project state,
+  plugin caches, runtime caches, attachments, shell snapshots, and temporary
+  wrappers.
+- `~/.claude`, `~/.claude.json`, and `~/.local/share/claude` permissions,
+  settings, plugin caches, histories, backups, debug files, and installed
+  versions.
+- `~/.local/share/opencode` account/auth files, databases, logs, snapshots,
+  storage, and MCP auth state.
+- `~/.config/opencode` provider configuration, local wrappers, package state,
+  and generated dependencies.
 
 ## Intentional Exclusions
 
