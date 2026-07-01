@@ -35,6 +35,10 @@ README.
 🛑 Keep automation and setup examples POSIX-compatible unless a task explicitly
 needs a zsh-only feature.
 
+✅ Use `scripts/dev_env.sh <command>` when an AI/tool-launched command needs the
+repo's standard non-interactive PATH. Use `scripts/js_toolchain.sh <command>`
+for Node, npm, pnpm, Corepack, and JavaScript global tools.
+
 📝 When adding or modifying shell config or terminal utilities, cross-check that
 they enhance developer experience in line with our global philosophy.
 

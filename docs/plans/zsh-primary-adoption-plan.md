@@ -24,6 +24,7 @@ managed development ecosystem.
 | `show_banner = false` | None | Not needed | zsh has no comparable startup banner in this setup. |
 | Homebrew paths | `brew shellenv` in `system/zsh/.zprofile`, plus Homebrew bin/sbin PATH guards | Recreated | Login-safe and keeps fzf/completion out of `.zprofile`. |
 | `PNPM_HOME` | `PNPM_HOME="$HOME/Library/pnpm"` in `system/zsh/.zshenv` | Improved | Removes the literal `~/Library/pnpm` value from zsh startup. |
+| AI/non-login PATH | `scripts/dev_env.sh` plus safe `.zshenv` entries | Improved | Gives agents and non-login zsh a stable way to see local CLIs without relying on interactive hooks. |
 | Starship | `eval "$(starship init zsh)"` in interactive `.zshrc` | Recreated | Only runs when `starship` is installed. |
 | `fnm` | `eval "$(fnm env --shell zsh --use-on-cd)"` in interactive `.zshrc` | Recreated | Keeps project version switching in interactive zsh. |
 | zoxide | `eval "$(zoxide init zsh)"` in interactive `.zshrc` | Recreated | Loaded late, matching the intended interactive behavior. |
@@ -60,6 +61,8 @@ the package intentionally.
 - `setup_symlinks.sh` creates a stable `~/.dotfiles` shortcut when the repo is
   cloned elsewhere, because global just recipes use that path.
 - zsh global just aliases preserve the caller's current project directory.
+- `scripts/dev_env.sh` provides a POSIX-compatible command wrapper for
+  non-interactive agent/tool launches.
 - zsh non-interactive startup does not emit fzf or zle warnings from the
   repo-managed files.
 - VS Code, Cursor, and Ghostty default to zsh.
@@ -74,6 +77,7 @@ the package intentionally.
 
 - `git diff --check`
 - `bash -n scripts/setup_symlinks.sh scripts/js_toolchain.sh`
+- `sh -n scripts/dev_env.sh`
 - `zsh -n system/zsh/.zshenv system/zsh/.zprofile system/zsh/.zshrc`
 - `/bin/zsh -fc 'source system/zsh/.zshenv 2>/dev/null || true; print -r -- ok'`
 - `/bin/zsh -lic 'echo ok'`

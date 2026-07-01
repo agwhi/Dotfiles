@@ -25,9 +25,11 @@ POSIX-compatible examples. Do not keep Nushell as a first-class shell or
 rollback target.
 
 Automation should continue to use POSIX-compatible command text and explicit
-tool wrappers. Interactive aliases can exist in zsh for daily convenience, but
-scripts, recipes, setup docs, and AI-generated instructions should not depend on
-those aliases.
+tool wrappers. Use `scripts/dev_env.sh` when an AI or non-login command needs
+the repo's standard development PATH, and use `scripts/js_toolchain.sh` for
+Node, npm, pnpm, Corepack, and JavaScript global tools. Interactive aliases can
+exist in zsh for daily convenience, but scripts, recipes, setup docs, and
+AI-generated instructions should not depend on those aliases.
 
 ## Evidence
 
@@ -45,6 +47,7 @@ repo-managed zsh files:
 - `fnm` activation with `--use-on-cd`
 - Starship, zoxide, direnv, carapace, and fzf
 - `.dotnet/tools` plus the temporary Homebrew `dotnet@8` path
+- a non-interactive development PATH wrapper for agent/tool command launches
 - existing daily aliases for interactive use
 
 ## Consequences

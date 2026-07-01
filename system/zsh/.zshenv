@@ -28,7 +28,8 @@ _dotfiles_zsh_path_prepend() {
 
     new_path=("$entry")
     for current in "${path[@]}"; do
-        [[ -n "$current" && "$current" != "$entry" ]] || continue
+        local normalized_current="${current/#\~/$HOME}"
+        [[ -n "$current" && "$current" != "$entry" && "$normalized_current" != "$entry" ]] || continue
         new_path+=("$current")
     done
 
@@ -38,6 +39,8 @@ _dotfiles_zsh_path_prepend() {
 
 _dotfiles_zsh_path_prepend "$HOME/.dotnet/tools"
 _dotfiles_zsh_path_prepend "$PNPM_HOME"
+_dotfiles_zsh_path_prepend "$HOME/.local/bin"
+_dotfiles_zsh_path_prepend "$HOME/.local/share/fnm/aliases/default/bin"
 _dotfiles_zsh_path_prepend "/opt/homebrew/opt/dotnet@8/bin"
 
 unfunction _dotfiles_zsh_path_prepend

@@ -13,7 +13,8 @@ _dotfiles_zsh_path_prepend() {
 
     new_path=("$entry")
     for current in "${path[@]}"; do
-        [[ -n "$current" && "$current" != "$entry" ]] || continue
+        local normalized_current="${current/#\~/$HOME}"
+        [[ -n "$current" && "$current" != "$entry" && "$normalized_current" != "$entry" ]] || continue
         new_path+=("$current")
     done
 

@@ -1,4 +1,6 @@
 # Justfile for dotfiles task automation
+set shell := ["sh", "-cu"]
+
 js_toolchain := "./scripts/js_toolchain.sh"
 
 # Set up all dotfile symlinks safely

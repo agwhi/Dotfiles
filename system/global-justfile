@@ -1,18 +1,21 @@
 # Global Justfile - Available system-wide for all projects
+set shell := ["sh", "-cu"]
+
+dev_env := "$HOME/.dotfiles/scripts/dev_env.sh"
 js_toolchain := "$HOME/.dotfiles/scripts/js_toolchain.sh"
 
 # Run quality checks (security + formatting)
 quality-check:
-    ripsecrets --strict-ignore .
-    gitleaks detect --source . --verbose
-    editorconfig-checker
-    dotenv-linter
+    {{dev_env}} ripsecrets --strict-ignore .
+    {{dev_env}} gitleaks detect --source . --verbose
+    {{dev_env}} editorconfig-checker
+    {{dev_env}} dotenv-linter
     echo "✅ Quality checks complete"
 
 # Run security scans only
 security-scan:
-    ripsecrets --strict-ignore .
-    gitleaks detect --source . --verbose
+    {{dev_env}} ripsecrets --strict-ignore .
+    {{dev_env}} gitleaks detect --source . --verbose
     echo "✅ Security scan complete"
 
 # Lint code with Biome (if biome.json exists)
@@ -29,32 +32,32 @@ docs-lint:
 
 # Fix formatting issues
 fix-formatting:
-    dotenv-linter fix
+    {{dev_env}} dotenv-linter fix
     echo "✅ Formatting fixes applied"
 
 # Upgrade all packages and tools
 upgrade:
-    topgrade
+    {{dev_env}} topgrade
 
 # Setup Node.js environment (if fnm is available)
 setup-node:
-    sh -c 'if ! command -v fnm >/dev/null 2>&1; then echo "⚠️  fnm not found. Install with: brew install fnm"; exit 1; fi'
-    fnm install --lts
-    fnm use lts-latest
-    fnm default lts-latest
+    {{dev_env}} sh -c 'if ! command -v fnm >/dev/null 2>&1; then echo "⚠️  fnm not found. Install with: brew install fnm"; exit 1; fi'
+    {{dev_env}} fnm install --lts
+    {{dev_env}} fnm use lts-latest
+    {{dev_env}} fnm default lts-latest
     {{js_toolchain}} corepack enable
     {{js_toolchain}} corepack prepare pnpm@latest --activate
     echo "✅ Node.js LTS and pnpm ready"
 
 # Setup .NET environment
 setup-dotnet:
-    dotnet tool install -g Amazon.Lambda.Tools || echo "Amazon.Lambda.Tools already installed"
-    dotnet tool install -g Amazon.Lambda.TestTool-8.0 || echo "Amazon.Lambda.TestTool-8.0 already installed"
+    {{dev_env}} dotnet tool install -g Amazon.Lambda.Tools || echo "Amazon.Lambda.Tools already installed"
+    {{dev_env}} dotnet tool install -g Amazon.Lambda.TestTool-8.0 || echo "Amazon.Lambda.TestTool-8.0 already installed"
     echo "✅ .NET Lambda tools installed"
 
 # Configure AWS CLI
 setup-aws:
-    aws configure sso
+    {{dev_env}} aws configure sso
     echo "✅ AWS CLI configured"
 
 # Initialize Biome in current project (if not already exists)
@@ -67,43 +70,43 @@ init-biome:
 
 # Start DNS encryption service
 dns-secure-start:
-    brew services start dnscrypt-proxy
+    {{dev_env}} brew services start dnscrypt-proxy
     echo "✅ DNS encryption started (dnscrypt-proxy)"
 
 # Stop DNS encryption service
 dns-secure-stop:
-    brew services stop dnscrypt-proxy
+    {{dev_env}} brew services stop dnscrypt-proxy
     echo "✅ DNS encryption stopped"
 
 # Connect to VPN
 vpn-secure-on:
-    nordvpn connect
+    {{dev_env}} nordvpn connect
     echo "✅ VPN connected"
 
 # Disconnect VPN
 vpn-secure-off:
-    nordvpn disconnect
+    {{dev_env}} nordvpn disconnect
     echo "✅ VPN disconnected"
 
 # Start both VPN and DNS encryption (use on untrusted networks)
 secure-mode-on:
     # Use this on untrusted networks (cafés, airports, hotels, conferences)
-    just dns-secure-start
+    just --global-justfile dns-secure-start
     sleep 2
-    just vpn-secure-on
+    just --global-justfile vpn-secure-on
     echo "🛡️  Secure mode enabled: DNS encryption + VPN active"
     echo "💡 Use 'just secure-mode-off' to disable"
 
 # Stop both VPN and DNS encryption
 secure-mode-off:
-    just vpn-secure-off
+    just --global-justfile vpn-secure-off
     sleep 2
-    just dns-secure-stop
+    just --global-justfile dns-secure-stop
     echo "✅ Secure mode disabled"
 
 # Test for DNS leaks
 dns-leak-test:
-    open https://dnsleaktest.com
+    {{dev_env}} open https://dnsleaktest.com
     echo "🌐 DNS leak test opened in browser"
     echo "💡 Check that your DNS shows encrypted resolvers (not ISP)"
 

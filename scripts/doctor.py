@@ -26,6 +26,7 @@ CURSOR_EXTENSIONS = ROOT / "system/packages/cursor-extensions.txt"
 PNPM_GLOBAL = ROOT / "system/packages/pnpm-global.txt"
 DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
+DEV_ENV = ROOT / "scripts/dev_env.sh"
 ZSH_ENV = ROOT / "system/zsh/.zshenv"
 ZSH_PROFILE = ROOT / "system/zsh/.zprofile"
 ZSH_RC = ROOT / "system/zsh/.zshrc"
@@ -93,6 +94,20 @@ SHELL_PARITY_COMMANDS = [
     "zsh",
     "dotnet-lambda-test-tool-8.0",
     "dotnet-ef",
+]
+DEV_ENV_EXPECTED_COMMANDS = [
+    "node",
+    "npm",
+    "pnpm",
+    "corepack",
+    "dotnet",
+    "dotnet-lambda-test-tool-8.0",
+    "codex",
+    "claude",
+    "opencode",
+    "pi",
+    "apm",
+    "just",
 ]
 SHELL_PARITY_ENV_KEYS = [
     "SHELL",
@@ -412,6 +427,14 @@ def path_provenance(path: str | None) -> dict[str, Any]:
         f"{home}/.local/share/mise"
     ):
         return with_source("mise")
+    if resolved.startswith(f"{home}/.local/share/fnm") or original.startswith(
+        f"{home}/.local/share/fnm"
+    ):
+        return with_source("fnm")
+    if resolved.startswith(f"{home}/.local/state/fnm_multishells") or original.startswith(
+        f"{home}/.local/state/fnm_multishells"
+    ):
+        return with_source("fnm")
     if resolved.startswith(f"{home}/Library/pnpm") or original.startswith(f"{home}/Library/pnpm"):
         return with_source("pnpm")
     if resolved.startswith("/usr/local/share/dotnet"):
@@ -530,7 +553,11 @@ def expanded_path_entries() -> list[str]:
 def modeled_laptop_js_env() -> dict[str, str]:
     env = os.environ.copy()
     pnpm_home = str(HOME / "Library/pnpm")
-    path_entries = [pnpm_home]
+    path_entries = [
+        str(HOME / ".local/share/fnm/aliases/default/bin"),
+        pnpm_home,
+        str(HOME / ".local/bin"),
+    ]
     for entry in expanded_path_entries():
         if entry not in path_entries:
             path_entries.append(entry)
@@ -654,6 +681,7 @@ payload = {{
         "fnm_multishell_bin": any(
             ".local/state/fnm_multishells" in entry for entry in path_entries
         ),
+        "fnm_default_alias_bin": f"{{home}}/.local/share/fnm/aliases/default/bin" in path_entries,
         "homebrew_bin": "/opt/homebrew/bin" in path_entries,
         "homebrew_sbin": "/opt/homebrew/sbin" in path_entries,
         "mise_shims": f"{{home}}/.local/share/mise/shims" in path_entries,
@@ -693,7 +721,7 @@ def shell_probe_contexts() -> list[dict[str, Any]]:
         {
             "name": "zsh_non_login",
             "requires": ["/bin/zsh", "/usr/bin/python3"],
-            "args": ["/bin/zsh", "-fc", python_command],
+            "args": ["/bin/zsh", "-c", python_command],
         },
         {
             "name": "zsh_login",
@@ -706,7 +734,7 @@ def shell_probe_contexts() -> list[dict[str, Any]]:
             "requires": ["just", "/bin/zsh", "/usr/bin/python3"],
             "args": [
                 "/bin/zsh",
-                "-fc",
+                "-c",
                 (
                     "just --justfile <(printf 'probe:\\n\\t@/usr/bin/python3 "
                     f"-c \"${SHELL_PROBE_ENV_KEY}\"\\n') probe"
@@ -765,6 +793,61 @@ def run_shell_probe(context: dict[str, Any], probe: str) -> dict[str, Any]:
     }
 
 
+def check_dev_env_wrapper(findings: list[dict[str, Any]], probe: str) -> None:
+    if not DEV_ENV.exists():
+        add_finding(
+            findings,
+            area="shell_parity",
+            classification="declared_absent",
+            name="shell_parity.dev_env_wrapper",
+            severity="medium",
+            summary="The non-interactive development environment wrapper is missing.",
+            source=str(DEV_ENV.relative_to(ROOT)),
+            recommendation="Restore scripts/dev_env.sh or update the execution-context contract.",
+        )
+        return
+
+    result = command_result([str(DEV_ENV), "/usr/bin/python3", "-c", probe], timeout=35)
+    payload = parse_shell_probe_stdout(result["stdout"])
+    command_info = (payload or {}).get("commands", {})
+    missing = [
+        command
+        for command in DEV_ENV_EXPECTED_COMMANDS
+        if not command_info.get(command, {}).get("which")
+    ]
+    sources = {
+        command: path_provenance(command_info.get(command, {}).get("which"))
+        for command in DEV_ENV_EXPECTED_COMMANDS
+    }
+
+    add_finding(
+        findings,
+        area="shell_parity",
+        classification="canonical" if result["ok"] and payload and not missing else "unknown",
+        name="shell_parity.dev_env_wrapper",
+        severity="info" if result["ok"] and payload and not missing else "medium",
+        source=str(DEV_ENV.relative_to(ROOT)),
+        summary=(
+            "dev_env wrapper exposes the expected non-interactive command surface."
+            if result["ok"] and payload and not missing
+            else "dev_env wrapper does not expose the full expected command surface."
+        ),
+        details={
+            "commands": sources,
+            "missing": missing,
+            "path_flags": (payload or {}).get("path_contains", {}),
+            "path_prefix": (payload or {}).get("path_entries", [])[:8],
+            "returncode": result["returncode"],
+            "stderr": result["stderr"][:500],
+        },
+        recommendation=(
+            "Use scripts/dev_env.sh for AI/tool-launched commands that need the repo PATH contract."
+            if result["ok"] and payload and not missing
+            else "Fix scripts/dev_env.sh before relying on it from AI/tool-launched commands."
+        ),
+    )
+
+
 def compact_command_matrix(
     probes: list[dict[str, Any]], commands: list[str]
 ) -> dict[str, dict[str, str | None]]:
@@ -795,6 +878,7 @@ def path_flag_matrix(probes: list[dict[str, Any]]) -> dict[str, dict[str, bool |
         "codex_runtime",
         "dotnet_tools_expanded",
         "dotnet_tools_literal_tilde",
+        "fnm_default_alias_bin",
         "fnm_multishell_bin",
         "mise_shims",
         "pnpm_home_expanded",
@@ -865,15 +949,29 @@ def shell_parity_gaps(
         )
 
     fnm_values = env_matrix.get("FNM_DIR", {})
+    npm_sources = {
+        name: command_path_source(path) for name, path in command_matrix["npm"].items()
+    }
+    corepack_sources = {
+        name: command_path_source(path) for name, path in command_matrix["corepack"].items()
+    }
+    runtime_source_values = {
+        source
+        for sources in (node_sources, npm_sources, pnpm_sources, corepack_sources)
+        for source in sources.values()
+        if source != "absent"
+    }
+    runtime_commands_are_fnm = bool(runtime_source_values) and runtime_source_values <= {"fnm"}
     if any(value is None for value in fnm_values.values()) and any(fnm_values.values()):
-        gaps.append(
-            {
-                "area": "fnm",
-                "finding": "FNM_* variables are not exported consistently.",
-                "impact": f"FNM_DIR by context: {fnm_values}.",
-                "recommendation": "Generate or share shell environment ownership before relying on plain runtime commands.",
-            }
-        )
+        if not runtime_commands_are_fnm:
+            gaps.append(
+                {
+                    "area": "fnm",
+                    "finding": "FNM_* variables are not exported consistently.",
+                    "impact": f"FNM_DIR by context: {fnm_values}.",
+                    "recommendation": "Generate or share shell environment ownership before relying on plain runtime commands.",
+                }
+            )
 
     pnpm_home_values = env_matrix.get("PNPM_HOME", {})
     if len(differing_values(pnpm_home_values)) > 1:
@@ -1128,6 +1226,7 @@ def check_shell_parity(findings: list[dict[str, Any]]) -> None:
             else None
         ),
     )
+    check_dev_env_wrapper(findings, probe)
 
 
 def check_js_toolchain(findings: list[dict[str, Any]]) -> dict[str, Any]:
