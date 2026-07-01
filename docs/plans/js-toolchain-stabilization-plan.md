@@ -21,9 +21,10 @@ Do not install Homebrew `corepack` now: local `brew info corepack --json=v2`
 reports that it depends on Homebrew `node` and conflicts with Homebrew `pnpm`,
 which would preserve split ownership.
 
-Treat `mise` as a credible future Consolidating Tool, not as the stabilization
-choice for this task. Revisit it only if Alex decides to consolidate multiple
-runtimes behind one manager, not just because `fnm` has cleanup debt.
+Treat `mise` as a credible runtime manager for other runtimes, not as the Node
+owner for this ecosystem. The repo's general philosophy is to choose the
+best-fit tool for each runtime rather than consolidating under one generic
+manager.
 
 ## Evidence
 
@@ -75,7 +76,7 @@ External primary sources used:
 | Option | Laptop reproducibility | Nushell support | POSIX/zsh/Codex friendliness | Project-local version files | Corepack/pnpm behavior | AI-agent ergonomics | Long-term maintenance risk | Migration cost | Verdict |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Keep `fnm` | Strongest current fit: declared, installed, modeled by doctor, and already configured in repo Nu files. | Good enough in this repo through `fnm env --json`; official shell output lists bash/zsh/fish/powershell, so Nu support is repo-integrated rather than first-class shell output. | Good when commands use `fnm exec --using default`; current Codex/zsh PATH still needs parity work. | Strong: fnm supports `.node-version`, `.nvmrc`, and engines resolution; current Nu hook already runs `fnm use --install-if-missing`. | Good with the `fnm` default Node. Corepack is visible now, but `FNM_COREPACK_ENABLED=false` and Node 25+ needs a caveat. | Strong: explicit `fnm exec --using default` gives Codex a deterministic command prefix independent of runtime PATH. | Medium-low: specialized scope, few moving parts, but Corepack distribution changes after Node 24 must be watched. | Low: no runtime-manager migration; cleanup is mostly removing duplicates later. | Select. |
-| Replace `fnm` with `mise` | Potentially strong if multiple runtimes move under one manager; currently no repo or doctor evidence needs that. | Strong: `mise activate` has an explicit `nu` shell type. | Strong: supports activation and shims across common shells, but would require new parity policy. | Strong but not free: `.nvmrc`, `.node-version`, and `devEngines` support require explicit enabling. | Strong potential: `node.corepack` can install Corepack shims after Node installs. | Good after migration, but agents would need new commands, shims, and docs. | Medium: broader surface area and more settings, useful if consolidation is wanted, extra complexity if only Node needs fixing. | High: replace installed/configured runtime manager, update docs, doctor, Nu, zsh, recipes, manifests, and cleanup old fnm state. | Do not choose for stabilization. Keep as future Stabilizing Replacement candidate. |
+| Replace `fnm` with `mise` | Credible for projects that already standardize on `mise`, but no local evidence shows better Node-specific Tool Fit than `fnm`. | Strong: `mise activate` has an explicit `nu` shell type. | Strong: supports activation and shims across common shells, but would require new parity policy. | Strong but not free: `.nvmrc`, `.node-version`, and `devEngines` support require explicit enabling. | Strong potential: `node.corepack` can install Corepack shims after Node installs. | Good after migration, but agents would need new commands, shims, and docs. | Medium: broader surface area and more settings for a problem already solved by `fnm`. | High: replace installed/configured runtime manager, update docs, doctor, Nu, zsh, recipes, manifests, and cleanup old fnm state. | Reject for this ecosystem unless a later Node-specific ADR proves stronger Tool Fit. |
 | Use Homebrew `node` only | Weak for a living laptop source of truth because it makes the Node version track Homebrew rather than project/runtime policy. | Simple PATH behavior, but no runtime-manager integration in Nu. | Simple in zsh/Codex, but only because it ignores project-local switching. | Weak: no native `.node-version` or `.nvmrc` switching. | Mixed: Homebrew `pnpm` is present, Homebrew `corepack` is absent, and local metadata says Homebrew `corepack` depends on Homebrew `node` and conflicts with `pnpm`. | Weak: current simplicity hides global version drift and encourages current-process assumptions. | Medium-high: Homebrew upgrades can change Node major versions outside project intent. | Medium: would need to discard ADR-0005's modeled direction and migrate fnm-owned state. | Reject. |
 | Other specialized Node manager (`volta`, `nvm`, `nodenv`) | No current repo or doctor evidence supports introducing one. | Unknown to this repo; would require new shell work. | Variable; no candidate beats current `fnm` evidence. | Variable, but not enough to justify churn. | Variable; no stronger Corepack/pnpm story is proven here. | Worse initially: new agent commands and docs without local evidence. | Medium-high because it adds a new owner while solving the same class of problem. | High relative to benefit. | Do not pursue unless a specific blocker appears. |
 
@@ -89,12 +90,10 @@ Specialized Tool, which is a feature here: the problem is not that Alex lacks a
 generic runtime manager, it is that one existing Node manager has not been made
 the only owner yet.
 
-`mise` is a serious Consolidating Tool. Its official docs show Node management,
-explicit `nu` activation, optional idiomatic Node version files, and
-`node.corepack`. That makes it worth remembering, especially if Python, Ruby,
-Go, Java, or more runtimes later need one shared manager. It does not make
-`mise` the right stabilization step today because doctor found no competing
-runtime-manager signals and `fnm` is already the modeled trusted path.
+`mise` is a serious runtime manager, and it may be the right owner for another
+runtime. That does not make it the right Node owner. This ecosystem optimizes
+for Tool Fit over consolidation, and `fnm` is already the specialized, declared,
+installed, and modeled trusted Node path.
 
 Homebrew `node` should not be selected as owner. It is currently present and
 usable, but that is drift, not a policy. Making it canonical would trade away

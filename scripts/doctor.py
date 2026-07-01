@@ -28,6 +28,13 @@ DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
 NUSHELL_CONFIG = ROOT / "system/nushell/config.nu"
 NUSHELL_ENV = ROOT / "system/nushell/env.nu"
+DOTNET_READ_ONLY_ENV = {
+    **os.environ,
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE": "1",
+    "DOTNET_NOLOGO": "1",
+    "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+}
 
 AREA_ORDER = [
     "brew",
@@ -83,7 +90,7 @@ RUNTIME_MANAGERS = {
     "mise": {
         "commands": ["mise"],
         "paths": [HOME / ".local/share/mise", HOME / ".config/mise"],
-        "classification": "unknown",
+        "classification": "canonical",
     },
     "pyenv": {
         "commands": ["pyenv"],
@@ -359,6 +366,10 @@ def path_provenance(path: str | None) -> dict[str, Any]:
         return with_source("homebrew")
     if resolved.startswith("/usr/local/Homebrew/") or "/usr/local/Cellar/" in resolved:
         return with_source("homebrew")
+    if resolved.startswith(f"{home}/.local/share/mise") or original.startswith(
+        f"{home}/.local/share/mise"
+    ):
+        return with_source("mise")
     if resolved.startswith(f"{home}/Library/pnpm") or original.startswith(f"{home}/Library/pnpm"):
         return with_source("pnpm")
     if resolved.startswith("/usr/local/share/dotnet"):
@@ -1412,18 +1423,34 @@ def check_runtime_managers(findings: list[dict[str, Any]]) -> None:
         for name, info in present.items():
             by_classification.setdefault(info["classification"], []).append(name)
         for classification, names in sorted(by_classification.items()):
+            is_canonical = classification == "canonical"
             add_finding(
                 findings,
                 area="runtime_managers",
                 classification=classification,
                 name=f"runtime_managers.{classification}",
-                severity="medium" if classification == "legacy" else "low",
-                summary=f"Competing runtime manager signals detected: {', '.join(sorted(names))}.",
+                severity=(
+                    "info"
+                    if is_canonical
+                    else "medium"
+                    if classification == "legacy"
+                    else "low"
+                ),
+                summary=(
+                    "Canonical runtime manager signals detected: "
+                    if is_canonical
+                    else "Competing runtime manager signals detected: "
+                )
+                + f"{', '.join(sorted(names))}.",
                 details={
                     manager: present[manager]
                     for manager in sorted(names)
                 },
-                recommendation="Decide whether each manager is a Managed Exception or drift before cleanup.",
+                recommendation=(
+                    None
+                    if is_canonical
+                    else "Decide whether each manager is a Managed Exception or drift before cleanup."
+                ),
             )
     else:
         add_finding(
@@ -1445,13 +1472,143 @@ def check_runtime_managers(findings: list[dict[str, Any]]) -> None:
 
 
 def parse_dotnet_tools(stdout: str) -> set[str]:
-    packages: set[str] = set()
+    return {row["package_id"] for row in parse_dotnet_tool_rows(stdout)}
+
+
+def parse_dotnet_tool_rows(stdout: str) -> list[dict[str, Any]]:
+    tools: list[dict[str, Any]] = []
     for raw in stdout.splitlines():
         line = raw.strip()
         if not line or line.lower().startswith("package id") or set(line) <= {"-", " "}:
             continue
-        packages.add(line.split()[0])
-    return packages
+        parts = line.split()
+        if len(parts) < 3:
+            tools.append({"package_id": parts[0], "version": "", "commands": []})
+            continue
+        command_text = " ".join(parts[2:])
+        tools.append(
+            {
+                "package_id": parts[0],
+                "version": parts[1],
+                "commands": [
+                    command.strip().strip(",")
+                    for command in command_text.split(",")
+                    if command.strip()
+                ],
+            }
+        )
+    return tools
+
+
+def dotnet_global_tool_path_state(commands: list[str]) -> dict[str, Any]:
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
+    tool_dir = str(HOME / ".dotnet/tools")
+    literal_tool_dir = "~/.dotnet/tools"
+    command_paths = {command: shutil.which(command) for command in sorted(commands)}
+    return {
+        "command_paths": command_paths,
+        "commands_available": {
+            command: bool(path) for command, path in command_paths.items()
+        },
+        "exact_path_on_path": tool_dir in path_entries,
+        "literal_tilde_path_on_path": literal_tool_dir in path_entries,
+        "path": tool_dir,
+        "path_exists": Path(tool_dir).exists(),
+    }
+
+
+def parse_dotnet_workloads(stdout: str) -> list[dict[str, str]]:
+    workloads: list[dict[str, str]] = []
+    for raw in stdout.splitlines():
+        line = raw.strip()
+        if (
+            not line
+            or line.startswith("Installed Workload Id")
+            or line.startswith("Use `dotnet workload search`")
+            or set(line) <= {"-", " "}
+        ):
+            continue
+        parts = line.split()
+        if len(parts) >= 3:
+            workloads.append(
+                {
+                    "id": parts[0],
+                    "manifest_version": parts[1],
+                    "installation_source": " ".join(parts[2:]),
+                }
+            )
+        else:
+            workloads.append({"raw": line})
+    return workloads
+
+
+def summarize_command(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "ok": result["ok"],
+        "returncode": result["returncode"],
+        "stderr": result["stderr"],
+        "timed_out": result["timed_out"],
+    }
+
+
+def dotnet_inventory(dotnet_path: str) -> dict[str, Any]:
+    sdk_result = command_result(
+        [dotnet_path, "--list-sdks"],
+        timeout=20,
+        env=DOTNET_READ_ONLY_ENV,
+    )
+    runtime_result = command_result(
+        [dotnet_path, "--list-runtimes"],
+        timeout=20,
+        env=DOTNET_READ_ONLY_ENV,
+    )
+    workload_result = command_result(
+        [dotnet_path, "workload", "list"],
+        timeout=30,
+        env=DOTNET_READ_ONLY_ENV,
+    )
+    return {
+        "path": dotnet_path,
+        "provenance": path_provenance(dotnet_path),
+        "sdks": lines(sdk_result["stdout"]),
+        "runtimes": lines(runtime_result["stdout"]),
+        "workloads": parse_dotnet_workloads(workload_result["stdout"]),
+        "commands": {
+            "list_sdks": summarize_command(sdk_result),
+            "list_runtimes": summarize_command(runtime_result),
+            "workload_list": summarize_command(workload_result),
+        },
+    }
+
+
+def dotnet_candidate_paths(active_path: str) -> list[str]:
+    candidates = [
+        *which_all("dotnet"),
+        str(HOME / ".local/share/mise/shims/dotnet"),
+        str(HOME / ".local/share/mise/dotnet-root/dotnet"),
+        "/opt/homebrew/opt/dotnet@8/bin/dotnet",
+        "/opt/homebrew/opt/dotnet/bin/dotnet",
+        "/usr/local/opt/dotnet@8/bin/dotnet",
+        "/usr/local/opt/dotnet/bin/dotnet",
+        "/usr/local/share/dotnet/dotnet",
+        active_path,
+    ]
+    seen: set[str] = set()
+    existing: list[str] = []
+    for candidate in candidates:
+        path = Path(candidate).expanduser()
+        try:
+            if not path.exists() or not os.access(path, os.X_OK):
+                continue
+            resolved = str(path.resolve())
+        except OSError:
+            continue
+        key = f"{path}:{resolved}"
+        if key in seen:
+            continue
+        seen.add(key)
+        existing.append(str(path))
+    return existing
 
 
 def check_dotnet(findings: list[dict[str, Any]]) -> None:
@@ -1466,33 +1623,63 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
             name="dotnet.command",
             severity="medium",
             summary="dotnet is not on PATH; SDKs and global tools were not audited.",
-            recommendation="Use the declared Homebrew dotnet@8 and dotnet tool manifest as desired state.",
+            recommendation=(
+                "Use the ADR-0006 mise .NET SDK source and dotnet tool manifest "
+                "as desired state."
+            ),
         )
         return
 
     provenance = path_provenance(dotnet_path)
     source = provenance["source"]
-    sdk_result = command_result(["dotnet", "--list-sdks"], timeout=20)
-    sdk_lines = lines(sdk_result["stdout"])
-    active_source = "homebrew-dotnet@8" if "dotnet@8" in str(Path(dotnet_path).resolve()) else source
+    active_inventory = dotnet_inventory(dotnet_path)
+    sdk_lines = active_inventory["sdks"]
+    active_source = "mise_dotnet" if source == "mise" else source
+    if "dotnet@8" in str(Path(dotnet_path).resolve()):
+        active_source = "homebrew-dotnet@8"
+    candidates = [
+        dotnet_inventory(candidate)
+        for candidate in dotnet_candidate_paths(dotnet_path)
+    ]
     add_finding(
         findings,
         area="dotnet",
-        classification="canonical" if active_source == "homebrew-dotnet@8" else "unknown",
+        classification="canonical" if active_source == "mise_dotnet" else "unknown",
         name="dotnet.sdk_source",
         source=dotnet_path,
-        severity="info" if active_source == "homebrew-dotnet@8" else "medium",
+        severity="info" if active_source == "mise_dotnet" else "medium",
         summary=f"dotnet is present from {active_source}.",
-        details={"provenance": provenance, "sdks": sdk_lines},
+        details={
+            "active": active_inventory,
+            "candidates": candidates,
+            "path_matches": [path_provenance(path) for path in which_all("dotnet")],
+            "provenance": provenance,
+            "runtimes": active_inventory["runtimes"],
+            "sdks": sdk_lines,
+            "workloads": active_inventory["workloads"],
+        },
         recommendation=(
             "Compare this active SDK source with ADR-0006 before removing any .NET installation."
-            if active_source != "homebrew-dotnet@8"
+            if active_source != "mise_dotnet"
             else None
         ),
     )
 
-    tool_result = command_result(["dotnet", "tool", "list", "--global"], timeout=20)
-    installed = parse_dotnet_tools(tool_result["stdout"]) if tool_result["stdout"] else set()
+    tool_result = command_result(
+        ["dotnet", "tool", "list", "--global"],
+        timeout=20,
+        env=DOTNET_READ_ONLY_ENV,
+    )
+    tool_rows = parse_dotnet_tool_rows(tool_result["stdout"]) if tool_result["stdout"] else []
+    installed = {row["package_id"] for row in tool_rows}
+    tool_commands = sorted(
+        {
+            command
+            for row in tool_rows
+            for command in row.get("commands", [])
+        }
+    )
+    tool_path_state = dotnet_global_tool_path_state(tool_commands)
     declared_lc = {value.lower(): value for value in declared}
     installed_lc = {value.lower(): value for value in installed}
     missing = sorted(declared_lc[key] for key in declared_lc.keys() - installed_lc.keys())
@@ -1505,13 +1692,54 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
         severity="info" if not missing else "medium",
         source=str(DOTNET_TOOLS.relative_to(ROOT)),
         summary=f"{len(declared) - len(missing)}/{len(declared)} declared .NET global tools appear installed.",
-        details={"installed": sorted(installed), "missing": missing},
+        details={
+            "installed": sorted(installed),
+            "missing": missing,
+            "tool_path": tool_path_state,
+            "tools": tool_rows,
+        },
         recommendation=(
             "A later install task can install missing declared .NET tools."
             if missing
             else None
         ),
     )
+    unavailable_commands = sorted(
+        command
+        for command, available in tool_path_state["commands_available"].items()
+        if not available
+    )
+    if installed and unavailable_commands:
+        add_finding(
+            findings,
+            area="dotnet",
+            classification="unknown",
+            name="dotnet.global_tools.path",
+            severity="medium",
+            source=tool_path_state["path"],
+            summary=(
+                f"{len(unavailable_commands)} installed .NET global tool commands "
+                "are not directly visible on PATH."
+            ),
+            details={
+                "tool_path": tool_path_state,
+                "unavailable_commands": unavailable_commands,
+            },
+            recommendation=(
+                "Put the expanded ~/.dotnet/tools directory on PATH for every "
+                "supported shell, not a literal tilde entry."
+            ),
+        )
+    elif installed:
+        add_finding(
+            findings,
+            area="dotnet",
+            classification="canonical",
+            name="dotnet.global_tools.path",
+            source=tool_path_state["path"],
+            summary=".NET global tool commands are directly visible on PATH.",
+            details={"tool_path": tool_path_state},
+        )
     if undeclared:
         add_finding(
             findings,

@@ -7,13 +7,17 @@ Homebrew `node`, Homebrew `pnpm`, and Homebrew `corepack` are not steady-state
 owners. Corepack should come from the selected `fnm` default Node while that
 default is a Node version that still distributes Corepack.
 
+This decision remains in force even if `mise` is selected for another runtime
+such as `.NET`. The ecosystem prefers the best-fit tool for each runtime over
+consolidating everything under one generic runtime manager.
+
 ## Considered Options
 
 - Keep `fnm`: selected because it is already declared, installed, configured in
   Nushell, and modeled by doctor as the trusted JS scope.
-- Replace `fnm` with `mise`: rejected for now because `mise` is a credible
-  Consolidating Tool but would be churn unless Alex chooses to consolidate
-  multiple runtimes behind one manager.
+- Replace `fnm` with `mise`: rejected because `fnm` is the better specialized
+  Tool Fit for Node in this ecosystem. `mise` may own another runtime without
+  becoming the Node owner.
 - Use Homebrew `node`: rejected because it gives up project-local Node runtime
   ownership and lets Homebrew upgrades drive the active Node major version.
 - Use another specialized Node manager: rejected because no local evidence
