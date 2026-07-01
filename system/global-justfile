@@ -3,6 +3,7 @@ set shell := ["sh", "-cu"]
 
 dev_env := "$HOME/.dotfiles/scripts/dev_env.sh"
 js_toolchain := "$HOME/.dotfiles/scripts/js_toolchain.sh"
+dotnet_snapshot := "$HOME/.dotfiles/scripts/dotnet_snapshot.sh"
 dotnet_sdk_install := "$HOME/.dotfiles/scripts/dotnet_sdk_install.sh"
 dotnet_toolchain := "$HOME/.dotfiles/scripts/dotnet_toolchain.sh"
 dotnet_tools_manifest := "$HOME/.dotfiles/system/packages/dotnet-tools.txt"
@@ -52,8 +53,12 @@ setup-node:
     {{js_toolchain}} corepack prepare pnpm@latest --activate
     echo "✅ Node.js LTS and pnpm ready"
 
+# Capture the current .NET state before any SDK source migration
+dotnet-snapshot:
+    {{dotnet_snapshot}}
+
 # Install ADR-0006 .NET SDK lines through mise
-install-dotnet-sdks:
+install-dotnet-sdks: dotnet-snapshot
     {{dotnet_sdk_install}}
     echo "✅ ADR-0006 .NET SDK lines installed through mise"
 

@@ -2,6 +2,7 @@
 set shell := ["sh", "-cu"]
 
 js_toolchain := "./scripts/js_toolchain.sh"
+dotnet_snapshot := "./scripts/dotnet_snapshot.sh"
 dotnet_sdk_install := "./scripts/dotnet_sdk_install.sh"
 dotnet_toolchain := "./scripts/dotnet_toolchain.sh"
 
@@ -92,8 +93,12 @@ setup-node: install-node install-node-tools
     echo "✅ Node.js development environment ready"
     echo "💡 Use 'dotfile setup-node' for future Node.js setup in other projects"
 
+# Capture the current .NET state before any SDK source migration
+dotnet-snapshot:
+    {{dotnet_snapshot}}
+
 # Install ADR-0006 .NET SDK lines through mise
-install-dotnet-sdks:
+install-dotnet-sdks: dotnet-snapshot
     {{dotnet_sdk_install}}
     echo "✅ ADR-0006 .NET SDK lines installed through mise"
 

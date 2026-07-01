@@ -6,6 +6,9 @@ backups/
 symlink-backups.txt
 backup-log.txt
 
+# Local migration snapshots and command reports
+reports/
+
 # Python validation/cache artifacts
 __pycache__/
 *.py[cod]
