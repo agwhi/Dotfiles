@@ -55,11 +55,11 @@ unless a task explicitly documents how it is produced from this repo.
 Read-only commands to prefer before any install:
 
 - `apm targets --json`
+- `apm view mattpocock/skills/skills/engineering/grill-with-docs versions`
 - `apm audit --ci`
 
-Do not run `apm lock` or `apm compile --dry-run --target codex` until a later
-task explicitly approves creating or rewriting `system/ai/apm/apm.lock.yaml`
-or previewing generated Codex placement.
+Do not run `apm lock` until a later task explicitly approves creating or
+rewriting `system/ai/apm/apm.lock.yaml`.
 
 ## Schema Findings
 
@@ -82,6 +82,26 @@ inspection resolved tag `v1.0.1` to commit
 `2454c95dc305c158b21a0cdafeb728879dd0359a`. Do not point the baseline at
 `/Users/alex/.codex/skills/grill-with-docs`; that path is machine-local AI
 tool state and not reproducible from this repo.
+
+## Non-Deploying Codex Gate
+
+On 2026-07-02, the first approved non-deploying Codex gate ran from
+`system/ai/apm`:
+
+- `apm targets --json`
+- `apm view mattpocock/skills/skills/engineering/grill-with-docs versions`
+- `apm compile --dry-run --target codex`
+
+The read-only remote view resolved tag `v1.0.1` for the public package, but
+the dry-run compile did not produce Codex files because no APM package content
+has been installed or locked into this repo yet. The dry-run reported the
+generic Codex placement set as `AGENTS.md`, `.agents/skills/`,
+`.codex/agents/`, and `.codex/hooks.json`, then stopped with no proposed
+asset files. No `using-superpowers` asset was proposed.
+
+The next approval gate should materialize package content in a non-live path
+or approve lockfile creation, then repeat the Codex dry-run before any target
+deployment.
 
 ## What APM Should Not Manage Yet
 

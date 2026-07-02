@@ -227,13 +227,21 @@ APM schema findings from read-only inspection:
   such as `owner/repo/path#ref`, and object forms with fields such as `git`
   and `ref`
 - `apm compile --dry-run --target codex` is the preferred placement preview,
-  but it still requires the next explicit approval gate
+  and was approved once for the 2026-07-02 non-deploying Codex gate
 - `apm install --dry-run` exists but is still blocked here because all
   `apm install` variants require later approval
 
 Read-only APM evidence resolves `grill-with-docs` as the public package
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. The tag
 resolves to commit `2454c95dc305c158b21a0cdafeb728879dd0359a`.
+
+The 2026-07-02 Codex dry-run confirmed that APM can see the pinned public tag
+through `apm view`, and that `apm compile --dry-run --target codex` does not
+write target files. It did not preview concrete `grill-with-docs` files
+because no package content has been materialized by an approved lock or install
+gate. The generic Codex placement set was `AGENTS.md`, `.agents/skills/`,
+`.codex/agents/`, and `.codex/hooks.json`; no `using-superpowers` asset was
+proposed.
 
 ## Shared Assets, Prompts, And Commands
 
@@ -378,9 +386,10 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 1. Keep `system/ai/apm/apm.yml` pinned to
    `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` with the
    only active target as Codex.
-2. Decide whether `apm.lock.yaml` creation is approved for the next pass.
-3. Decide whether `apm compile --dry-run --target codex` is approved for the
-   next placement-preview pass.
+2. Decide whether `apm.lock.yaml` creation is approved for the next pass, or
+   whether a scratch-root materialization gate is safer first.
+3. Repeat `apm compile --dry-run --target codex` after package content is
+   materialized by an approved non-live gate.
 4. Use `apm targets --json` and non-deploying checks before any install or
    compile step.
 5. Update doctor to recognize ADR-0008, the APM manifest, and target baseline
@@ -408,6 +417,6 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 ## Recommended Next Implementation Task
 
 Approve the next APM gate: either create `system/ai/apm/apm.lock.yaml` with
-`apm lock`, or preview Codex placement with
-`apm compile --dry-run --target codex`. Do not run install, update, prune, or
-deploy commands in that task.
+`apm lock`, or materialize package content in an explicitly non-live scratch
+path, then repeat `apm compile --dry-run --target codex`. Do not run update,
+prune, or target deployment commands in that task.
