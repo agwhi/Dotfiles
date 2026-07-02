@@ -1,6 +1,6 @@
 # .NET SDK Stabilization Plan
 
-Date: 2026-07-01.
+Date: 2026-07-01. Updated: 2026-07-02.
 
 This plan is non-mutating. It does not install, uninstall, relink, unlink,
 upgrade, repair, or remove any .NET SDK, runtime, workload, global tool, or
@@ -25,21 +25,23 @@ pkg install, but it matches the desired future: a repo-managed runtime owner
 that can expose .NET 10 by default, keep .NET 8 side-by-side, and later remove
 the compatibility SDK when projects migrate.
 
+`mise` is now active for the shell/Codex path and lists both target SDK lines.
 The current Microsoft pkg install and Homebrew `dotnet@8` formula remain
-Managed Exceptions and approval-gated cleanup candidates. They must not be
-removed until the `mise` SDK root, shell activation, editor discovery, workloads,
-global tools, and project-level SDK selection are verified.
+Managed Exceptions, but they are now cleanup candidates rather than fallback
+sources for normal repo-managed `.NET` work. Do not remove them without a fresh
+snapshot and explicit approval.
 
 ## Evidence
 
 Local command evidence collected on 2026-07-01:
 
-- `which -a dotnet` in the zsh/Codex context returns only
+- Before migration, `which -a dotnet` in the zsh/Codex context returned only
   `/usr/local/share/dotnet/dotnet`.
-- Active Microsoft pkg SDK: `8.0.412` at `/usr/local/share/dotnet/sdk`.
-- Active Microsoft pkg runtimes: `Microsoft.AspNetCore.App 8.0.18` and
-  `Microsoft.NETCore.App 8.0.18`.
-- Active Microsoft pkg workloads: none.
+- Before migration, the active Microsoft pkg SDK was `8.0.412` at
+  `/usr/local/share/dotnet/sdk`.
+- Before migration, active Microsoft pkg runtimes were
+  `Microsoft.AspNetCore.App 8.0.18` and `Microsoft.NETCore.App 8.0.18`.
+- Before migration, active Microsoft pkg workloads were none.
 - Microsoft pkg receipts include
   `com.microsoft.dotnet.dev.8.0.412.component.osx.arm64` and runtime receipts
   under `usr/local/share/dotnet`.
@@ -57,7 +59,8 @@ Local command evidence collected on 2026-07-01:
   `dotnet@10`, but it is not installed.
 - Homebrew cask metadata reports `dotnet-sdk` as `10.0.301` and
   `dotnet-sdk@8` as `8.0.422`, but neither cask is installed.
-- Homebrew formula metadata reports `mise` as available but not installed.
+- Homebrew formula metadata reported `mise` as available before the migration,
+  and `brew list --versions mise` now reports `mise 2026.6.14`.
 - `system/packages/Brewfile` now declares `mise` as the strategic .NET SDK
   owner and keeps Homebrew `dotnet@8` as a managed migration exception.
 - Repo-managed `mise` policy now lives at `system/mise/config.toml`, is linked
@@ -75,11 +78,16 @@ Local command evidence collected on 2026-07-01:
   recipe before running the mutating SDK installer.
 - No `.csproj`, `.fsproj`, `.vbproj`, `.sln`, `global.json`, `.props`, or
   `.targets` files exist in this repo.
-- Installed global tools are user-local packages:
-  `amazon.lambda.testtool`, `amazon.lambda.testtool-8.0`, `csharpier`,
-  `deadcsharp`, and `dotnet-ef`.
+- Local command evidence collected on 2026-07-02 shows `dotnet` resolving
+  through `/Users/alex/.local/share/mise/shims/dotnet`, followed by the old
+  Microsoft pkg path and Homebrew `dotnet@8` path.
+- `dotnet --list-sdks` now reports `8.0.422` and `10.0.301` from
+  `/Users/alex/.local/share/mise/dotnet-root/sdk`.
 - `system/packages/dotnet-tools.txt` declares only `Amazon.Lambda.Tools` and
-  `Amazon.Lambda.TestTool-8.0`; `Amazon.Lambda.Tools` is currently absent.
+  `Amazon.Lambda.TestTool-8.0`; both declared tools are installed as
+  `amazon.lambda.tools 7.0.0` and `amazon.lambda.testtool-8.0 0.18.0`.
+- Remaining installed undeclared global tools are `amazon.lambda.testtool`,
+  `csharpier`, `deadcsharp`, and `dotnet-ef`.
 - Global tool shims exist in `/Users/alex/.dotnet/tools`, and the shell/dev
   environment contract now uses the expanded path rather than a literal tilde.
 
@@ -138,13 +146,20 @@ clear .NET runtime-manager boundary:
 This does not change the Node decision. `fnm` remains the best-fit specialized
 Node owner unless a later Node-specific decision proves otherwise.
 
-The current Microsoft pkg install should stay in place until `mise` proves:
+The current Microsoft pkg install and Homebrew `dotnet@8` should stay in place
+until a separate cleanup task is approved, even though the core `mise` checks
+now pass:
 
-- .NET 10 is available as the default SDK.
+- `dotnet` resolves through the `mise` shim in the current shell/Codex context.
+- .NET 10 is available as the default SDK line.
 - .NET 8 is available for compatibility projects.
-- .NET 8 projects can build/test without relying on `/usr/local/share/dotnet`.
+- Declared global tools are installed and visible.
+
+Removal confidence still needs project/editor-specific confirmation where
+relevant:
+
+- .NET 8 projects build/test without relying on `/usr/local/share/dotnet`.
 - Workloads such as Aspire remain visible where needed.
-- Global tools are invokable from every supported shell.
 - Editors discover the intended SDK root.
 
 ## Shell And Path Policy
@@ -170,20 +185,20 @@ Target global tool path:
 zsh/Codex:
 Repo-managed zsh startup and `scripts/dev_env.sh` now prepend the `mise` shims
 directory when it exists and set `DOTNET_ROOT` only when the expected `mise`
-.NET root exists. This is safe before `mise` is installed, but once the shims
-exist they should win over Homebrew `dotnet@8`. Plain `dotnet` still remains
-migration-pending until the SDKs are installed through `mise`.
+.NET root exists. In the current zsh/Codex context, plain `dotnet` resolves to
+`/Users/alex/.local/share/mise/shims/dotnet`, and the `mise` root exposes SDKs
+`8.0.422` and `10.0.301`.
 
 Just recipes:
 Current recipes route .NET global tool installs through
 `scripts/dotnet_toolchain.sh`, which runs under the ADR-0006 `mise` context.
-Migration order is explicit: `dotnet-snapshot` captures the current local
-state, Homebrew installs `mise`, symlink setup links the repo-managed
-`system/mise/config.toml`, `install-dotnet-sdks` installs the declared SDK
-lines through `mise`, `setup-dotnet` installs approved global tools through
-that SDK context, and then doctor plus editor-terminal checks verify parity.
-Use `scripts/dotnet_sdk_install.sh --dry-run` to print the exact `mise install`
-command without installing SDKs.
+The migration order has completed for the repo-managed SDK and declared tool
+baseline: snapshot reports were written locally, Homebrew installed `mise`,
+symlink setup linked the repo-managed `system/mise/config.toml`,
+`install-dotnet-sdks` installed the declared SDK lines through `mise`, and
+`setup-dotnet` installed approved global tools through that SDK context. Future
+SDK repair or reinstall work should still use
+`scripts/dotnet_sdk_install.sh --dry-run` before running the mutating install.
 Compatibility projects should pin their SDK instead of relying on a global
 shell default.
 
@@ -222,45 +237,55 @@ global tools. Future installs or updates should run through the canonical
 `mise`-managed .NET SDK after shell parity is fixed.
 
 `setup-dotnet` depends on `install-dotnet-sdks` before `install-dotnet-tools`.
-That makes the bootstrap path clear, but validation of this readiness work must
-use `just --dry-run` only unless the mutation is explicitly approved.
+That keeps future bootstrap and repair order clear. Any additional mutation to
+SDKs or global tools still needs explicit approval.
 
 Current decisions:
 
 - Keep `Amazon.Lambda.TestTool-8.0` declared while .NET 8 projects remain.
-- Keep `Amazon.Lambda.Tools` declared, but install it only after SDK ownership
-  is stable.
-- Treat `dotnet-ef` as approval-gated for removal unless Alex confirms EF Core
-  tooling is part of the baseline.
-- Treat `amazon.lambda.testtool`, `csharpier`, and `deadcsharp` the same way:
-  declare them if they are intentional baseline tools, otherwise remove them
-  only after explicit approval.
-- Fix global tool command visibility before using tool presence as proof that a
-  workflow is healthy.
+- Keep `Amazon.Lambda.Tools` declared; it is now installed through the
+  `mise`-managed SDK context.
+- Keep `system/packages/dotnet-tools.txt` unchanged until repo evidence proves
+  another tool belongs in the global baseline.
+- Keep installed undeclared tools in place until a later explicit cleanup task.
+
+Remaining installed undeclared global tool classification:
+
+<!-- markdownlint-disable MD013 -->
+
+| Tool | Classification | Decision |
+| --- | --- | --- |
+| `amazon.lambda.testtool` | approval-gated removal candidate | Legacy Lambda test tool variant duplicates the declared `Amazon.Lambda.TestTool-8.0` baseline. Do not declare unless Alex confirms a workflow still needs the non-8.0 package. |
+| `csharpier` | project-local | Formatter version should be pinned by consuming C# projects if needed. Do not declare globally from this repo without project evidence. |
+| `deadcsharp` | approval-gated removal candidate | Analysis tool is installed locally but has no baseline evidence in this repo. Remove only after explicit approval. |
+| `dotnet-ef` | project-local | EF Core CLI version should track the consuming project's EF package line. Do not declare globally from this repo without project evidence. |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Cleanup Gates
 
-Before installing or activating `mise` for `.NET`:
+Completed migration gates:
 
-- Run `just dotnet-snapshot` to capture a Rebuild Snapshot of current
-  `dotnet --info`, `--list-sdks`, `--list-runtimes`, `workload list`,
-  `tool list --global`, relevant PATH entries, `DOTNET_ROOT`, pkg receipts,
-  Homebrew formula state, and managed path presence.
+- `just dotnet-snapshot` wrote local reports under `reports/` before the SDK
+  source migration.
 - Keep `system/packages/Brewfile` and `system/mise/config.toml` as the
   repo-managed declarations.
 - Keep `dotnet = ["10", "8"]` as the SDK selector policy unless a later ADR
   changes the default or compatibility line.
+- Prove `dotnet` resolves through `/Users/alex/.local/share/mise/shims/dotnet`
+  in the current zsh/Codex context. Done.
+- Prove `dotnet --list-sdks` sees .NET 10 and .NET 8 from the `mise` root.
+  Done.
+- Prove declared global tools are installed. Done.
+
+Remaining parity gates before SDK-source removal:
+
 - Decide how `global.json` should be handled in compatibility projects.
-
-Before making `mise` active in shells:
-
-- Prove `mise` installs and lists the target .NET 10 and .NET 8 SDKs.
-- Prove `DOTNET_ROOT` points to the `mise` .NET root.
-- Prove `dotnet --list-sdks` sees both SDK lines from the `mise` root.
-- Prove zsh login, zsh non-login, Codex, VS Code terminal, Cursor terminal, and
-  AI command surfaces resolve the `mise` `dotnet`.
-- Prove editor C# tooling discovers the `mise` SDK root.
-- Prove global tool commands are invokable from supported shells.
+- Prove VS Code terminal, Cursor terminal, and AI command surfaces resolve the
+  `mise` `dotnet` if they are in scope for the cleanup task.
+- Prove editor C# tooling discovers the `mise` SDK root if editor cleanup
+  confidence is required.
+- Prove workloads remain visible where needed.
 
 Before removing the Microsoft pkg install:
 
@@ -300,32 +325,31 @@ Before removing or changing global tools:
    lines through `mise` only when deliberately run. Done.
 6. Add a read-only `dotnet-snapshot` recipe before the SDK install recipe and
    keep generated snapshot reports local-only. Done.
-7. Next approved order: run `dotnet-snapshot`, install and link `mise`, install
-   SDKs, run `setup-dotnet`, then verify doctor plus editor terminals.
-8. Install .NET 10 and .NET 8 through `mise` in a later approved mutation step
-   by running `install-dotnet-sdks` after Homebrew installs `mise`.
-9. Activate `mise` in zsh/Codex and editor terminals after install.
-10. Re-run doctor and shell checks from zsh, Codex, VS Code, Cursor, and AI
-   command surfaces.
-11. Decide whether .NET global tools stay as `dotnet tool --global` installs or
-   move to `mise` `dotnet:ToolName` declarations.
-12. Decide global tool manifest changes for `dotnet-ef`, `csharpier`,
-   `deadcsharp`, and the legacy Lambda test tool package.
-13. Only after all gates pass, ask for explicit approval to remove Microsoft pkg
-   .NET and Homebrew `dotnet@8`.
-14. Remove .NET 8 from `mise` only after all compatibility projects have
+7. Run `dotnet-snapshot`, install and link `mise`, install SDKs, run
+   `setup-dotnet`, then verify doctor. Done for the current zsh/Codex context.
+8. Install .NET 10 and .NET 8 through `mise` by running `install-dotnet-sdks`
+   after Homebrew installs `mise`. Done.
+9. Activate `mise` in zsh/Codex. Done.
+10. Install declared global tools through the `mise`-managed SDK. Done.
+11. Keep .NET global tools as `dotnet tool --global` installs for now; migrate
+   to `mise` `dotnet:ToolName` declarations only if a later decision finds
+   better reproducibility.
+12. Classify `dotnet-ef`, `csharpier`, `deadcsharp`, and the legacy Lambda test
+   tool package. Done.
+13. Re-run editor-terminal checks from VS Code and Cursor before SDK-source
+   cleanup if those editors are in scope for the removal task.
+14. Only after cleanup gates pass, ask for explicit approval to remove
+   Microsoft pkg .NET and Homebrew `dotnet@8`.
+15. Remove .NET 8 from `mise` only after all compatibility projects have
    migrated and a separate approval gate passes.
 
 ## What Not To Do
 
-- Do not install `mise` during this readiness pass.
-- Do not install, uninstall, relink, unlink, repair, or upgrade any .NET
-  SDK/runtime during this readiness pass; `install-dotnet-sdks` is repo wiring
-  and must be validated with dry-runs only until an approved mutation step.
+- Do not reinstall, uninstall, relink, unlink, repair, or upgrade any .NET
+  SDK/runtime during this cleanup-planning pass.
 - Do not remove Microsoft pkg files or Homebrew `dotnet@8`.
-- Do not install or uninstall global tools until SDK ownership and PATH parity
-  are stable; recipes may declare the intended install command, but validation
-  must use dry-runs only.
+- Do not install, update, or uninstall additional global tools during this
+  cleanup-planning pass.
 - Keep `/Users/alex/.dotnet/tools` as an expanded path in shell and dev
   environment contracts.
 - Do not assume non-login or AI command contexts use the same PATH as an

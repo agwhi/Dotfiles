@@ -24,10 +24,12 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - `pnpm` (Homebrew formula): duplicate package-manager owner. ADR-0007 keeps
   Corepack/pnpm under the selected `fnm` default Node; remove the Homebrew
   formula only after shell parity and global tool paths are verified.
-- `dotnet@8` (Homebrew formula): declared managed exception. ADR-0006 selects
-  `mise` as the strategic .NET SDK owner, but this formula remains installed
-  until the repo-managed `mise` config, SDK root, editor discovery, workloads,
-  and global tools are proven with installed SDKs.
+- `dotnet@8` (Homebrew formula): declared managed exception and
+  approval-gated cleanup candidate. ADR-0006 selects `mise` as the strategic
+  .NET SDK owner, and the `mise` SDK root now exposes the declared .NET 10 and
+  .NET 8 SDK lines. Keep this formula installed until a separate cleanup task
+  confirms no project, editor, workload, recipe, or shell path still depends on
+  `/opt/homebrew/opt/dotnet@8`.
 - `unbound` (Homebrew formula/service): installed leaf with network-service
   behavior and no current Brewfile declaration. Keep approval-gated until DNS
   ownership between macOS, `dnscrypt-proxy`, and any local resolver workflow is
@@ -38,10 +40,11 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 
 ## Manual Or Local Tool State
 
-- `/usr/local/share/dotnet/dotnet`: active Microsoft pkg .NET SDK source.
-  Managed exception until ADR-0006's repo-managed `mise` config is backed by
-  installed SDKs and verified across shells, editors, workloads, and global
-  tools.
+- `/usr/local/share/dotnet/dotnet`: Microsoft pkg .NET SDK source still
+  present after the `mise` migration. It is no longer the canonical source when
+  PATH resolves through `/Users/alex/.local/share/mise/shims/dotnet`; keep it
+  as an approval-gated cleanup candidate until a separate task confirms no
+  project, editor, workload, or Lambda workflow depends on the pkg root.
 - `/usr/local/bin/apm`: manual/pkg CLI resolving to `/usr/local/lib/apm/apm`.
   ADR-0008 selects APM as the AI Asset Manager, but this binary remains a
   managed exception until its own installer and update path are declared. Do

@@ -22,17 +22,22 @@ Per ADR-0006, Homebrew declares `mise` as the strategic .NET SDK manager.
 as the compatibility line, and `scripts/setup_symlinks.sh` links it to
 `~/.config/mise/config.toml`.
 
-Bootstrap order is Homebrew installs `mise`, `install-dotnet-sdks` installs the
-declared SDK lines through `scripts/dotnet_sdk_install.sh`, and then
-`install-dotnet-tools` installs global tools through
-`scripts/dotnet_toolchain.sh`. The SDK installer is explicitly mutating when
-run, requires the repo-managed `system/mise/config.toml`, and does not fall
-back to Microsoft pkg .NET or Homebrew `dotnet@8`.
+Current steady state is `dotnet` resolving through
+`/Users/alex/.local/share/mise/shims/dotnet`, with SDKs `8.0.422` and
+`10.0.301` visible from `/Users/alex/.local/share/mise/dotnet-root/sdk`.
+Declared global tools from `system/packages/dotnet-tools.txt` are installed.
 
-The SDK install recipe should run only as a later approved migration step.
-Existing Microsoft pkg .NET and Homebrew `dotnet@8` remain managed exceptions
-until the `mise` SDK root, editor discovery, workloads, and global tools are
-verified.
+Bootstrap and rebuild order remains: Homebrew installs `mise`,
+`install-dotnet-sdks` installs the declared SDK lines through
+`scripts/dotnet_sdk_install.sh`, and then `install-dotnet-tools` installs
+global tools through `scripts/dotnet_toolchain.sh`. The SDK installer is
+explicitly mutating when run, requires the repo-managed
+`system/mise/config.toml`, and does not fall back to Microsoft pkg .NET or
+Homebrew `dotnet@8`.
+
+Existing Microsoft pkg .NET and Homebrew `dotnet@8` are cleanup candidates
+after the successful `mise` verification. They remain approval-gated local
+state; do not remove them without a fresh snapshot and explicit approval.
 
 ## Manual And Approval-Gated State
 
