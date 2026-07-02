@@ -3,6 +3,20 @@
 
 set -eu
 
+PLAN_MODE=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --dry-run | --print-plan)
+            PLAN_MODE=1
+            ;;
+        *)
+            echo "usage: $0 [--dry-run|--print-plan]" >&2
+            exit 64
+            ;;
+    esac
+    shift
+done
+
 DOTFILES_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)"
 MISE_CONFIG_FILE="$DOTFILES_DIR/system/mise/config.toml"
 
@@ -41,12 +55,25 @@ fi
 
 DOTNET_VERSIONS="$(
     awk '
-        /^[[:space:]]*dotnet[[:space:]]*=/ {
+        /^[[:space:]]*\[/ {
+            in_tools = ($0 ~ /^[[:space:]]*\[tools\][[:space:]]*(#.*)?$/)
+            next
+        }
+        in_tools {
             line = $0
             sub(/[[:space:]]*#.*/, "", line)
-            sub(/^[^=]*=/, "", line)
-            gsub(/[\[\]",]/, " ", line)
-            for (i = 1; i <= NF; i++) print $i
+            if (line !~ /^[[:space:]]*dotnet[[:space:]]*=/) {
+                next
+            }
+            sub(/^[[:space:]]*dotnet[[:space:]]*=[[:space:]]*/, "", line)
+            gsub(/[][]/, " ", line)
+            gsub(/[",]/, " ", line)
+            count = split(line, versions, /[[:space:]]+/)
+            for (i = 1; i <= count; i++) {
+                if (versions[i] != "") {
+                    print versions[i]
+                }
+            }
         }
     ' "$MISE_CONFIG_FILE"
 )"
@@ -66,6 +93,15 @@ for version in $DOTNET_VERSIONS; do
     esac
     set -- "$@" "dotnet@$version"
 done
+
+if [ "$PLAN_MODE" -eq 1 ]; then
+    printf 'mise install'
+    for arg in "$@"; do
+        printf ' %s' "$arg"
+    done
+    printf '\n'
+    exit 0
+fi
 
 export MISE_GLOBAL_CONFIG_FILE="$MISE_CONFIG_FILE"
 export DOTNET_CLI_TELEMETRY_OPTOUT="${DOTNET_CLI_TELEMETRY_OPTOUT:-1}"

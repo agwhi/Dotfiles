@@ -182,6 +182,8 @@ state, Homebrew installs `mise`, symlink setup links the repo-managed
 `system/mise/config.toml`, `install-dotnet-sdks` installs the declared SDK
 lines through `mise`, `setup-dotnet` installs approved global tools through
 that SDK context, and then doctor plus editor-terminal checks verify parity.
+Use `scripts/dotnet_sdk_install.sh --dry-run` to print the exact `mise install`
+command without installing SDKs.
 Compatibility projects should pin their SDK instead of relying on a global
 shell default.
 
