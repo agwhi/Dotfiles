@@ -9,6 +9,13 @@ backup-log.txt
 # Local migration snapshots and command reports
 reports/
 
+# APM generated dependency and target output
+system/ai/apm/apm_modules/
+system/ai/apm/.agents/
+system/ai/apm/.codex/
+system/ai/apm/AGENTS.md
+system/ai/apm/CLAUDE.md
+
 # Python validation/cache artifacts
 __pycache__/
 *.py[cod]

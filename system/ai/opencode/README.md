@@ -6,13 +6,13 @@ declared global baseline tool.
 Current local state:
 
 - Package: npm global `opencode-ai`
-- Version observed: `1.16.2`
+- Version observed: `1.17.13`
 - Binary observed: `~/.local/share/fnm/aliases/default/bin/opencode`
 - State root: `~/.local/share/opencode`
 - Config root: `~/.config/opencode`
 
-The current Codex process PATH did not expose `opencode` or `open-code`, but the
-binary exists under the `fnm` default Node alias path.
+The current zsh/Codex-compatible PATH exposes `opencode`. `open-code` is not
+on PATH.
 
 ## Classification
 

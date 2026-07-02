@@ -1,3 +1,5 @@
+tap "microsoft/apm"
+
 # --- Core CLI Tools (Rust-based, fast replacements) ---
 brew "bat"           # Syntax-highlighted cat
 brew "fd"            # Fast find alternative
@@ -56,6 +58,7 @@ brew "poppler"       # PDF rendering and inspection utilities
 brew "ffmpeg"        # Audio/video conversion utilities
 
 # --- AI Tool Surfaces ---
+brew "microsoft/apm/apm" # AI Asset Manager
 brew "ollama"        # Local LLM runner
 cask "chatgpt"       # AI assistant
 cask "chatgpt-atlas" # ChatGPT browser

@@ -13,6 +13,12 @@ The only target Baseline AI Asset is:
 
 - `grill-with-docs`
 
+Current source status: `system/ai/apm/apm.yml` and `apm.lock.yaml` pin the
+public package
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. Scratch preview
+showed that package is a wrapper over `/grilling` and `/domain-modeling`, so it
+is not yet equivalent to the current self-contained live Codex skill.
+
 The following are intentionally not baseline assets:
 
 - `using-superpowers`
@@ -28,6 +34,9 @@ The following are intentionally not baseline assets:
 Keep an asset project-local unless it has repeated cross-project value. When an
 asset is promoted, declare its source through APM and map each target surface
 explicitly.
+
+Before live deployment, resolve whether the baseline should include the public
+package's supporting skills or move to a self-contained package source.
 
 ## Source Versus Adapter
 

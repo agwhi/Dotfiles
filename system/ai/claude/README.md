@@ -5,10 +5,11 @@ Claude Code is currently a manual-local AI Tool Surface.
 Current local state:
 
 - Binary: `~/.local/bin/claude`
-- Resolved binary: `~/.local/share/claude/versions/2.1.197`
-- Version observed: `2.1.197`
+- Resolved binary: `~/.local/share/claude/versions/2.1.198`
+- Version observed: `2.1.198`
 - Config and cache roots: `~/.claude`, `~/.claude.json`,
   `~/.local/share/claude`
+- Older local versions observed: `2.1.187`, `2.1.196`, and `2.1.197`
 
 ## Classification
 
@@ -24,7 +25,8 @@ through APM and generate or install the Claude target from there.
 
 Target state:
 
-- Consume `grill-with-docs` from the APM-managed baseline if Claude needs it.
+- Consume `grill-with-docs` from the APM-managed baseline only after the Codex
+  baseline source mismatch is resolved.
 - Do not include `using-superpowers` in the global baseline.
 - Keep project-specific commands, agents, and rules in the project repos that
   need them.

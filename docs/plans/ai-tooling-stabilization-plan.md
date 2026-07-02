@@ -1,11 +1,12 @@
 # AI Tooling Stabilization Plan
 
-Date: 2026-07-02.
+Date: 2026-07-03.
 
-This plan documents the current AI Tool Surface and AI Asset state without
-installing, uninstalling, updating, pruning, deleting, moving, relinking, or
-rewriting any AI tool, asset, config tree, cache, history, or auth-adjacent
-state.
+This plan documents the current AI Tool Surface and AI Asset state. The
+original discovery pass was non-mutating. A later approved gate created the
+repo APM lockfile and ran scratch-only APM installs with redirected HOME/XDG
+state. No live AI tool home, auth state, history, cache, or unrelated target
+asset was modified.
 
 It is the current machine-state plan for the next implementation pass. It does
 not make any tool reproducibility claim unless this repo already declares the
@@ -13,7 +14,7 @@ tool or asset owner.
 
 ## Evidence
 
-Read-only evidence gathered for this pass:
+Evidence gathered for this pass:
 
 - `command -v`, `which -a`, and `type -a` for `codex`, `claude`,
   `opencode`, `open-code`, `pi`, and `apm`.
@@ -23,6 +24,8 @@ Read-only evidence gathered for this pass:
 - `fnm exec --using default npm ls -g --depth=0 --json`.
 - `fnm exec --using default pnpm list -g --depth 0 --json`.
 - Read-only APM help and `apm targets --json`.
+- `apm lock --target codex` for the approved repo lockfile gate.
+- Scratch-only frozen APM installs under ignored `reports/apm-scratch/`.
 - Name-only and metadata-only listings of AI asset directories.
 
 No GUI or computer-use inspection was needed.
@@ -66,9 +69,9 @@ surfaces. Tool-specific files are adapters, not the source of truth.
 | Codex app runtime | `/Applications/Codex.app/Contents/Resources/codex` | same runtime family as Codex app | app runtime | Indirect only | App runtime context | Doctor sees this alongside Homebrew Codex. Do not classify app runtime helpers as package-manager drift. |
 | Codex runtime helpers | `codex-execve-wrapper`, `codex_chronicle` | not versioned separately | app runtime | No | App runtime context | Surfaced by doctor as Codex-provided helpers. They are not standalone tools to declare. |
 | Claude Code | `/Users/alex/.local/bin/claude` -> `/Users/alex/.local/share/claude/versions/2.1.198` | `2.1.198 (Claude Code)` | manual/local | No | Managed exception | Older local versions `2.1.187`, `2.1.196`, and `2.1.197` are also present under the local Claude versions tree. |
-| opencode | `/Users/alex/.local/share/fnm/aliases/default/bin/opencode` | `1.16.2` | npm global under fnm default Node, package `opencode-ai` | No | Legacy managed exception | `open-code` is not on PATH. Decide later whether opencode is project-local, managed, or removed behind approval. |
+| opencode | `/Users/alex/.local/share/fnm/aliases/default/bin/opencode` | `1.17.13` | npm global under fnm default Node, package `opencode-ai` | No | Legacy managed exception | `open-code` is not on PATH. Decide later whether opencode is project-local, managed, or removed behind approval. |
 | Pi | `/Users/alex/Library/pnpm/pi` | `0.73.0` | pnpm global, package `@mariozechner/pi-coding-agent` | No | Approval-gated project-local or removal candidate | Not declared in `system/packages/pnpm-global.txt`; do not add it to the baseline by accident. |
-| APM | `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` | `0.23.1 (d1d926d)` | manual/pkg | Role only, binary no | Selected AI Asset Manager, binary managed exception | ADR-0008 selects APM for AI Assets, but this install path is not yet declared. Do not self-update or mutate with APM. |
+| APM | `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` | `0.23.1 (d1d926d)` | manual/pkg | Desired state now declared as `brew "microsoft/apm/apm"` | Selected AI Asset Manager, manual binary managed exception | ADR-0008 selects APM for AI Assets. Official docs list a Homebrew tap formula; the current manual binary remains a cleanup candidate until Homebrew install/PATH verification. Do not self-update or mutate with APM. |
 | ChatGPT | Homebrew cask app | `1.2026.160,1781312926` | Homebrew cask | Yes, `cask "chatgpt"` | Canonical app surface | App state is local and out of repo. No shared asset policy is needed yet. |
 | ChatGPT Atlas | Homebrew cask app | `1.2026.98.2,20260416164957000` | Homebrew cask | Yes, `cask "chatgpt-atlas"` | Canonical app surface | App state is local and out of repo. |
 | Ollama | Homebrew formula | `0.30.11` | Homebrew formula | Yes, `brew "ollama"` | Canonical app surface | Model downloads and local server state are local state, not repo assets. |
@@ -95,9 +98,11 @@ Repo paths inspected:
 
 Classification: repo-managed documentation and sensitive-safe policy.
 
-There is a non-deploying draft `system/ai/apm/apm.yml` and no
-`system/ai/apm/apm.lock.yaml` yet. The Global AI Baseline is therefore
-declared as intent but not reproducible through APM yet.
+There is now a repo-owned `system/ai/apm/apm.yml` and
+`system/ai/apm/apm.lock.yaml`. The lockfile pins the public
+`grill-with-docs` package, but live Codex deployment is blocked because the
+materialized public package is a thin wrapper over additional skills that are
+not in the current one-asset baseline.
 
 ### Codex
 
@@ -123,8 +128,9 @@ Observed Codex plugin cache roots:
 - `openai-primary-runtime`
 
 Classification: mixed manual/local, vendor, plugin cache, and app runtime
-state. Only `grill-with-docs` is target baseline policy. It is declared in the
-draft APM manifest but not yet APM-locked by this repo.
+state. Only `grill-with-docs` is target baseline policy. It is declared and
+locked by the repo, but the locked public package does not yet reproduce the
+richer local Codex skill content.
 
 Excluded as Sensitive Local State: Codex auth, histories, sessions, logs,
 local databases, memory stores, trusted-project state, plugin caches,
@@ -216,7 +222,7 @@ Run project-scoped APM checks from `system/ai/apm` until a repo wrapper exists.
 Excluded as Sensitive Local State: `~/.apm/config.json`, future global APM
 manifests under `~/.apm`, caches, credentials, and generated target output.
 
-APM schema findings from read-only inspection:
+APM schema findings from read-only inspection and the approved lockfile gate:
 
 - project manifest filename: `apm.yml`
 - project lockfile filename: `apm.lock.yaml`
@@ -226,10 +232,13 @@ APM schema findings from read-only inspection:
   packed bundles, marketplace refs, registry refs, per-primitive path refs
   such as `owner/repo/path#ref`, and object forms with fields such as `git`
   and `ref`
-- `apm compile --dry-run --target codex` is the preferred placement preview,
-  and was approved once for the 2026-07-02 non-deploying Codex gate
-- `apm install --dry-run` exists but is still blocked here because all
-  `apm install` variants require later approval
+- `apm lock --target codex` creates `apm.lock.yaml` and may materialize an
+  `apm_modules/` cache; the lockfile is source, while `apm_modules/` is
+  generated and ignored
+- `apm install --frozen --target codex --legacy-skill-paths --root <dir>`
+  previews Codex's legacy `skills/` layout in an ignored scratch root
+- `apm compile --global --dry-run` does not consume the repo manifest; global
+  mode looks under `~/.apm`
 
 Read-only APM evidence resolves `grill-with-docs` as the public package
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. The tag
@@ -251,11 +260,31 @@ state. It wrote only ignored scratch files, including scratch
 scratch-local APM/Git cache state. The repo lockfile remained absent, and
 `using-superpowers` was not present in the scratch root.
 
-`apm compile --dry-run --target codex --root <scratch>` still did not preview
-concrete package files from `system/ai/apm`; APM reported no content found to
-compile. Running the same command from the scratch root failed because the
-scratch root is not an APM project and has no `apm.yml`. Resolve that
-compile-source limitation before any live target deployment.
+On 2026-07-03, `apm lock --target codex` created the repo lockfile. A frozen
+scratch install from copied `apm.yml` and `apm.lock.yaml` materialized only
+`grill-with-docs`, and `using-superpowers` was absent. Default Codex target
+output went to `.agents/skills/grill-with-docs/SKILL.md`; with
+`--legacy-skill-paths`, output went to `.codex/skills/grill-with-docs/SKILL.md`.
+
+That preview also found the current blocker: the locked public package's
+`SKILL.md` is only a wrapper that says to run `/grilling` using
+`/domain-modeling`. The current live Codex skill under `~/.codex/skills` is
+self-contained and includes the detailed workflow plus format references. Do
+not deploy the public package over the live skill until either the dependent
+skills are deliberately added to the baseline or a self-contained
+`grill-with-docs` package source is chosen.
+
+Global APM mode was tested with redirected `HOME` and XDG paths. It does not
+consume the repo manifest directly; `apm install --global` expects
+`~/.apm/apm.yml`. Therefore `~/.apm` must remain generated/local state, not the
+source of truth. Any future live deployment should be driven by an explicit
+repo wrapper that reads `system/ai/apm/apm.yml` and `apm.lock.yaml`, snapshots
+current Codex skill names, writes only reviewed target paths, and refuses to
+touch auth, history, cache, or unrelated skills.
+
+`apm audit --ci` currently reports expected APM drift because generated target
+output is intentionally absent from `system/ai/apm`. Do not make the audit pass
+by committing `.agents/` output until the baseline source mismatch is resolved.
 
 ## Shared Assets, Prompts, And Commands
 
@@ -280,12 +309,15 @@ Initial target baseline:
 - Generate or install adapters only for approved target surfaces.
 - Do not include `using-superpowers` in the baseline.
 
-The baseline source is the public APM package
+The current baseline source is the public APM package
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. The
 machine-local path `/Users/alex/.codex/skills/grill-with-docs` is useful
-evidence for current content, but it must not be the baseline source because
-it is live AI tool state and not portable. A future companion repo is reserved
-for Alex's custom AI assets.
+evidence for current behavior, but it must not be copied into this repo as
+source because it is live AI tool state. The source choice now needs one more
+decision: either accept the public package plus its `/grilling` and
+`/domain-modeling` dependencies, or publish/consume a self-contained
+`grill-with-docs` package. A future companion repo is reserved for Alex's
+custom AI assets.
 
 ## APM Role And Open Questions
 
@@ -298,16 +330,17 @@ APM should eventually own:
 - audit and policy checks for installed AI Assets
 - generated or installed adapters that contain no secrets
 
-Open questions before implementation:
+Open questions before live deployment:
 
-1. Which generated Codex target paths are safe after dry-run review?
-2. How should APM itself be installed and updated reproducibly?
+1. Should the public `grill-with-docs` wrapper bring `grilling` and
+   `domain-modeling` into the baseline, or should the baseline use a
+   self-contained package?
+2. Should live Codex output use APM's default `.agents/skills` path, or the
+   legacy `.codex/skills` path that matches current Codex desktop discovery?
 3. Should opencode and Pi remain local experiments, become declared AI Tool
    Surfaces, or be removed behind approval?
-4. How should doctor distinguish APM-selected policy from the current
-   undeclared APM binary install path?
-5. Should APM target detection be pinned so `.cursor/` does not pull editor
-   rules into an AI-only stabilization pass?
+4. When should the manual `/usr/local/bin/apm` binary be replaced by the
+   declared Homebrew formula?
 
 ## Repo Versus Companion Repo
 
@@ -367,8 +400,7 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 - Run `apm install`, `apm update`, `apm prune`, `apm uninstall`,
   `apm self-update`, or any APM command that writes target files.
-- Run `apm lock` in a repo state where the user has not approved creating or
-  rewriting `apm.lock.yaml`.
+- Rewrite `apm.lock.yaml` without approval.
 - Add an APM manifest and deploy generated adapters into Codex, Claude Code,
   opencode, Pi, or Cursor target directories.
 - Remove or replace `/Users/alex/.codex/skills/grill-with-docs`.
@@ -390,9 +422,10 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 ### P0: Freeze Current Policy
 
 1. Keep this plan as the current machine-state handoff.
-2. Accept ADR-0008 as the APM role decision while keeping the APM binary as a
-   managed exception.
-3. Do not run APM mutation commands.
+2. Accept ADR-0008 as the APM role decision while keeping the current manual
+   APM binary as a managed exception.
+3. Keep the Brewfile-declared Homebrew APM formula as desired state; do not
+   install or remove binaries until a separate cleanup task.
 4. Do not broaden the Global AI Baseline beyond `grill-with-docs`.
 
 ### P1: Declare The Baseline Without Deploying
@@ -400,22 +433,24 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 1. Keep `system/ai/apm/apm.yml` pinned to
    `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` with the
    only active target as Codex.
-2. Treat scratch-root materialization as proven for `grill-with-docs`, with
+2. Treat repo `apm.lock.yaml` creation as approved and complete for the
+   current public package.
+3. Treat scratch-root materialization as proven for `grill-with-docs`, with
    output confined to ignored local state.
-3. Decide whether repo `apm.lock.yaml` creation is approved, or define an
-   APM-supported scratch project/wrapper so compile can read scratch content.
-4. Use `apm targets --json` and non-deploying checks before any install or
-   compile step.
-5. Update doctor to recognize ADR-0008, the APM manifest, and target baseline
-   checks.
+4. Keep live deployment blocked until the public wrapper dependency issue is
+   resolved.
+5. Update doctor to recognize ADR-0008, the APM manifest, the lockfile, and
+   target baseline checks.
 
 ### P2: Reproduce Shared Skills
 
-1. Generate or install the `grill-with-docs` adapter into the first approved
+1. Decide whether the public package dependencies are part of the baseline or
+   whether a self-contained package source is required.
+2. Generate or install the `grill-with-docs` adapter into the first approved
    target surface.
-2. Verify tool discovery for that target.
-3. Compare generated output with the current local `grill-with-docs` intent.
-4. Expand to Claude Code, opencode, or Pi only after target behavior is
+3. Verify tool discovery for that target.
+4. Compare generated output with the current local `grill-with-docs` intent.
+5. Expand to Claude Code, opencode, or Pi only after target behavior is
    understood.
 
 ### P3: Cleanup Behind Approval
@@ -430,8 +465,9 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ## Recommended Next Implementation Task
 
-Approve the next APM gate: either create `system/ai/apm/apm.lock.yaml`
-intentionally, or build an APM-supported scratch project/wrapper that lets
-`apm compile --dry-run --target codex` read materialized package content
-without live target deployment. Do not run update, prune, or live target
-deployment commands in that task.
+Resolve the `grill-with-docs` source mismatch before live deployment. The
+specific decision is whether to add the public package's `/grilling` and
+`/domain-modeling` dependencies to the Global AI Baseline, or to create a
+self-contained package source for the richer skill behavior currently present
+in Codex. Do not run update, prune, or live target deployment commands before
+that decision.

@@ -11,12 +11,17 @@ global baseline.
 
 ## Consequences
 
-The current `/usr/local/bin/apm` install is a managed exception until its own
-installer provenance is declared. No APM install, update, prune, uninstall, or
-self-update command should run without an explicit Reset Approval Gate.
+The current `/usr/local/bin/apm` install is a managed exception. Official APM
+documentation includes a Homebrew tap formula, so this repo declares
+`microsoft/apm/apm` in the Brewfile as the intended binary installer. The
+manual binary stays in place until a separate task installs/verifies the
+Homebrew formula and confirms PATH precedence. No APM update, prune, uninstall,
+or self-update command should run without an explicit Reset Approval Gate.
 
-The repo should not invent an APM manifest until the canonical
-`grill-with-docs` package source and target surfaces are chosen. The expected
-future source-of-truth files are `system/ai/apm/apm.yml` and
-`system/ai/apm/apm.lock.yaml`, with read-only or non-deploying APM checks run
-before any target files are written.
+The source-of-truth files are `system/ai/apm/apm.yml` and
+`system/ai/apm/apm.lock.yaml`. The first lockfile pins the public
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` package, but a
+scratch preview showed that package is only a thin wrapper over `/grilling` and
+`/domain-modeling`. Do not overwrite the current live Codex skill until the
+baseline source is made self-contained or the dependent assets are deliberately
+promoted.

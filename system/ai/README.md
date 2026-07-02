@@ -18,6 +18,11 @@ The Global AI Baseline is intentionally small:
 
 - `grill-with-docs`
 
+The current APM lockfile pins the public `grill-with-docs` package, but live
+deployment is blocked until the package source is made equivalent to the
+current self-contained Codex skill or its supporting skills are deliberately
+added to the baseline.
+
 Do not include `using-superpowers`, Pi, opencode, broad language/framework
 skills, or project-specific prompts in the global baseline unless a later ADR
 promotes them.

@@ -46,21 +46,26 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   as an approval-gated cleanup candidate until a separate task confirms no
   project, editor, workload, or Lambda workflow depends on the pkg root.
 - `/usr/local/bin/apm`: manual/pkg CLI resolving to `/usr/local/lib/apm/apm`.
-  ADR-0008 selects APM as the AI Asset Manager, but this binary remains a
-  managed exception until its own installer and update path are declared. Do
-  not self-update, reinstall, prune, or remove it without approval.
+  ADR-0008 selects APM as the AI Asset Manager, and
+  `system/packages/Brewfile` now declares the official Homebrew tap formula
+  `microsoft/apm/apm` as the intended installer. Keep this manual binary as a
+  managed exception and cleanup candidate until a later task installs/verifies
+  the Homebrew formula and confirms PATH precedence. Do not self-update,
+  reinstall, prune, or remove it without approval.
 - `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
   Cursor cask. Keep as local app state unless a later editor policy migrates
   it.
 - `~/.local/bin/claude`: manual-local AI CLI resolving to
-  `~/.local/share/claude/versions/2.1.197`. Keep as a managed exception until
-  a later task declares the Claude Code CLI install path.
+  `~/.local/share/claude/versions/2.1.198`. Keep as a managed exception until
+  a later task declares the Claude Code CLI install path. Older local versions
+  `2.1.187`, `2.1.196`, and `2.1.197` are approval-gated cleanup candidates.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
   `codex_chronicle`: app-runtime-context, not package-manager drift.
 - `~/.local/share/fnm/aliases/default/bin/opencode`: npm-global
-  `opencode-ai` binary observed under the `fnm` default Node path. Keep as a
-  legacy managed exception until the AI Tool Surface policy decides whether
-  opencode is project-local, managed, or removed.
+  `opencode-ai` binary observed under the `fnm` default Node path. Current
+  observed version is `1.17.13`. Keep as a legacy managed exception until the
+  AI Tool Surface policy decides whether opencode is project-local, managed,
+  or removed.
 - `~/Library/pnpm/pi`: pnpm-global Pi command from
   `@mariozechner/pi-coding-agent`. Not part of the Global AI Baseline. Migrate
   to APM or remove only behind approval.

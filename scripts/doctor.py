@@ -31,6 +31,8 @@ CURSOR_EXTENSIONS = ROOT / "system/packages/cursor-extensions.txt"
 PNPM_GLOBAL = ROOT / "system/packages/pnpm-global.txt"
 DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
+APM_MANIFEST = ROOT / "system/ai/apm/apm.yml"
+APM_LOCKFILE = ROOT / "system/ai/apm/apm.lock.yaml"
 DEV_ENV = ROOT / "scripts/dev_env.sh"
 MISE_CONFIG = ROOT / "system/mise/config.toml"
 MISE_USER_CONFIG = HOME / ".config/mise/config.toml"
@@ -88,6 +90,10 @@ DEV_APP_RE = re.compile(
 )
 
 AI_COMMANDS = ["codex", "claude", "opencode", "open-code", "pi", "apm"]
+BASELINE_AI_ASSETS = {"grill-with-docs"}
+EXCLUDED_AI_ASSETS = {"using-superpowers"}
+GRILL_WITH_DOCS_REF = "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1"
+GRILL_WITH_DOCS_COMMIT = "2454c95dc305c158b21a0cdafeb728879dd0359a"
 SHELL_PARITY_COMMANDS = [
     "node",
     "npm",
@@ -2602,6 +2608,224 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
         )
 
 
+def apm_manifest_state() -> dict[str, Any]:
+    state: dict[str, Any] = {
+        "path": str(APM_MANIFEST),
+        "exists": APM_MANIFEST.exists(),
+        "targets_codex": False,
+        "declares_grill_with_docs": False,
+        "declares_using_superpowers": False,
+    }
+    if not APM_MANIFEST.exists():
+        return state
+
+    text = APM_MANIFEST.read_text(encoding="utf-8")
+    uncommented = "\n".join(
+        line for line in text.splitlines() if not line.strip().startswith("#")
+    )
+    state["targets_codex"] = bool(re.search(r"(?m)^\s*-\s*codex\s*$", uncommented))
+    state["declares_grill_with_docs"] = GRILL_WITH_DOCS_REF in uncommented
+    state["declares_using_superpowers"] = "using-superpowers" in uncommented
+    return state
+
+
+def apm_lockfile_state() -> dict[str, Any]:
+    state: dict[str, Any] = {
+        "path": str(APM_LOCKFILE),
+        "exists": APM_LOCKFILE.exists(),
+        "pins_grill_with_docs": False,
+        "resolved_commit": None,
+        "resolved_ref": None,
+        "package_type": None,
+        "mentions_using_superpowers": False,
+    }
+    if not APM_LOCKFILE.exists():
+        return state
+
+    text = APM_LOCKFILE.read_text(encoding="utf-8")
+    state["pins_grill_with_docs"] = (
+        "repo_url: mattpocock/skills" in text
+        and "virtual_path: skills/engineering/grill-with-docs" in text
+    )
+    state["mentions_using_superpowers"] = "using-superpowers" in text
+
+    commit = re.search(r"(?m)^\s*resolved_commit:\s*([0-9a-f]+)\s*$", text)
+    if commit:
+        state["resolved_commit"] = commit.group(1)
+
+    ref = re.search(r"(?m)^\s*resolved_ref:\s*(\S+)\s*$", text)
+    if ref:
+        state["resolved_ref"] = ref.group(1)
+
+    package_type = re.search(r"(?m)^\s*package_type:\s*(\S+)\s*$", text)
+    if package_type:
+        state["package_type"] = package_type.group(1)
+
+    return state
+
+
+def codex_skill_names() -> dict[str, Any]:
+    skills_dir = HOME / ".codex/skills"
+    state: dict[str, Any] = {
+        "path": str(skills_dir),
+        "exists": skills_dir.is_dir(),
+        "names": [],
+        "baseline_present": [],
+        "baseline_missing": sorted(BASELINE_AI_ASSETS),
+        "excluded_present": [],
+    }
+    if not skills_dir.is_dir():
+        return state
+
+    names: list[str] = []
+    try:
+        for item in skills_dir.iterdir():
+            if item.name.startswith("."):
+                continue
+            if item.is_dir():
+                names.append(item.name)
+    except OSError:
+        return state
+
+    names = sorted(set(names))
+    state["names"] = names
+    present = sorted(BASELINE_AI_ASSETS.intersection(names))
+    state["baseline_present"] = present
+    state["baseline_missing"] = sorted(BASELINE_AI_ASSETS.difference(names))
+    state["excluded_present"] = sorted(EXCLUDED_AI_ASSETS.intersection(names))
+    return state
+
+
+def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
+    manifest = apm_manifest_state()
+    lockfile = apm_lockfile_state()
+    codex_skills = codex_skill_names()
+
+    if not manifest["exists"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="missing",
+            name="ai_tools.apm_manifest",
+            severity="high",
+            summary="APM is selected, but the repo APM manifest is missing.",
+            details=manifest,
+            recommendation="Restore system/ai/apm/apm.yml with the approved Global AI Baseline.",
+        )
+    elif manifest["targets_codex"] and manifest["declares_grill_with_docs"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="ai_tools.apm_manifest",
+            summary="APM manifest declares the Codex-first grill-with-docs baseline.",
+            details=manifest,
+        )
+    else:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="drift",
+            name="ai_tools.apm_manifest",
+            severity="high",
+            summary="APM manifest does not match the approved Codex-first grill-with-docs baseline.",
+            details=manifest,
+            recommendation="Keep targets pinned to codex and declare only the approved baseline asset.",
+        )
+
+    if manifest["declares_using_superpowers"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="drift",
+            name="ai_tools.apm_manifest.excluded_assets",
+            severity="medium",
+            summary="APM manifest declares using-superpowers, which is intentionally excluded from the baseline.",
+            details=manifest,
+            recommendation="Remove using-superpowers from the APM baseline unless ADR-0003 is changed.",
+        )
+
+    if not lockfile["exists"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="missing",
+            name="ai_tools.apm_lockfile",
+            severity="medium",
+            summary="APM manifest exists, but apm.lock.yaml is missing.",
+            details=lockfile,
+            recommendation="Create the lockfile only through an approved APM lock gate.",
+        )
+    elif (
+        lockfile["pins_grill_with_docs"]
+        and lockfile["resolved_commit"] == GRILL_WITH_DOCS_COMMIT
+        and not lockfile["mentions_using_superpowers"]
+    ):
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="ai_tools.apm_lockfile",
+            summary="APM lockfile pins only the approved public grill-with-docs package.",
+            details=lockfile,
+        )
+    else:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="drift",
+            name="ai_tools.apm_lockfile",
+            severity="high",
+            summary="APM lockfile does not match the approved grill-with-docs baseline.",
+            details=lockfile,
+            recommendation="Review apm.lock.yaml before any install or deploy command.",
+        )
+
+    if codex_skills["baseline_missing"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="missing",
+            name="ai_tools.codex_baseline",
+            severity="medium",
+            summary="Codex is missing baseline AI skills.",
+            details=codex_skills,
+            recommendation="Deploy baseline assets only after APM preview and approval.",
+        )
+    else:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="ai_tools.codex_baseline",
+            severity="low",
+            summary=(
+                "Codex has the baseline skill by name, but it has not been "
+                "verified as APM-managed output."
+            ),
+            details=codex_skills,
+            recommendation=(
+                "Resolve the grill-with-docs package-source mismatch before "
+                "replacing the live Codex skill."
+            ),
+        )
+
+    if codex_skills["excluded_present"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="intentionally_excluded",
+            name="ai_tools.codex_excluded_assets",
+            severity="low",
+            summary="Codex has local skills that are intentionally excluded from the Global AI Baseline.",
+            details={
+                "path": codex_skills["path"],
+                "excluded_present": codex_skills["excluded_present"],
+            },
+            recommendation="Remove excluded local skills only in a later approved cleanup task.",
+        )
+
+
 def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
     detected: dict[str, list[str]] = {}
     for command in AI_COMMANDS:
@@ -2636,12 +2860,15 @@ def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
         add_finding(
             findings,
             area="ai_tools",
-            classification="present_undeclared",
+            classification="managed_exception",
             name="ai_tools.path",
             severity="low",
-            summary="AI/dev CLI commands were found on PATH, but no canonical AI package source is declared yet.",
+            summary="AI Tool Surface commands were found on PATH.",
             details={"commands": detected_details},
-            recommendation="When the AI Asset Manager is selected, declare intentional AI Tool Surface CLIs and assets.",
+            recommendation=(
+                "Keep binaries separate from APM-managed assets; declare or "
+                "clean up each manual CLI through its own tool-surface policy."
+            ),
         )
     else:
         add_finding(
@@ -2657,12 +2884,12 @@ def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
         add_finding(
             findings,
             area="ai_tools",
-            classification="unknown",
+            classification="managed_exception",
             name="apm.command",
             severity="low",
-            summary="apm is present, but the canonical AI Asset Manager has not been selected.",
+            summary="apm is present and selected as the AI Asset Manager; the current binary is a managed exception.",
             details={"paths": [path_provenance(path) for path in apm_paths]},
-            recommendation="Document whether this apm is the intended AI Asset Manager or an unrelated legacy tool.",
+            recommendation="Install and verify the declared Homebrew APM formula before removing the manual binary.",
         )
     else:
         add_finding(
@@ -2672,6 +2899,8 @@ def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
             name="apm.command",
             summary="apm is not on PATH.",
         )
+
+    scan_ai_baseline(findings)
 
 
 def scan_applications(paths: list[Path]) -> list[dict[str, str]]:

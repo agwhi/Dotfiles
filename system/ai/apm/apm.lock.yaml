@@ -1,0 +1,14 @@
+lockfile_version: '1'
+generated_at: '2026-07-02T23:25:04.181862+00:00'
+apm_version: 0.23.1
+dependencies:
+- repo_url: mattpocock/skills
+  name: skills
+  host: github.com
+  resolved_commit: 2454c95dc305c158b21a0cdafeb728879dd0359a
+  resolved_ref: v1.0.1
+  version: unknown
+  virtual_path: skills/engineering/grill-with-docs
+  is_virtual: true
+  package_type: claude_skill
+  content_hash: sha256:e7ef25bbee50cda2eb7b3a8ef541db0a0396dad7d369f7d14fb610671dd1864b
