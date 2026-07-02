@@ -103,6 +103,49 @@ The next approval gate should materialize package content in a non-live path
 or approve lockfile creation, then repeat the Codex dry-run before any target
 deployment.
 
+## Scratch-Root Materialization Gate
+
+On 2026-07-02 UTC, the first scratch-root materialization gate ran from
+`system/ai/apm` with:
+
+```sh
+SCRATCH=/Users/alex/Dev/dotfiles/reports/apm-scratch/20260702T221350Z
+env HOME="$SCRATCH/home" \
+  XDG_CACHE_HOME="$SCRATCH/xdg-cache" \
+  XDG_CONFIG_HOME="$SCRATCH/xdg-config" \
+  XDG_DATA_HOME="$SCRATCH/xdg-data" \
+  apm install --root "$SCRATCH"
+env HOME="$SCRATCH/home" \
+  XDG_CACHE_HOME="$SCRATCH/xdg-cache" \
+  XDG_CONFIG_HOME="$SCRATCH/xdg-config" \
+  XDG_DATA_HOME="$SCRATCH/xdg-data" \
+  apm compile --dry-run --target codex --root "$SCRATCH"
+```
+
+`apm install --root` resolved
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` to commit
+`2454c95dc305c158b21a0cdafeb728879dd0359a` and wrote only under the ignored
+scratch root. The high-level scratch outputs were:
+
+- `apm.lock.yaml`
+- `apm_modules/mattpocock/skills/skills/engineering/grill-with-docs/`
+- `.agents/skills/grill-with-docs/SKILL.md`
+- `.codex/`
+- redirected `home/` and `xdg-cache/` APM/Git state
+
+The materialized skill is `grill-with-docs`. `using-superpowers` was not
+present in the scratch root. The generated `.codex/` directory was empty.
+
+`apm compile --dry-run --target codex --root "$SCRATCH"` still did not preview
+concrete package files when run from `system/ai/apm`; APM reported no content
+found to compile. Running the same dry-run from the scratch root failed because
+the scratch root is not an APM project and has no `apm.yml`. Treat this as a
+compile-source limitation to resolve before any live deploy.
+
+The next approval gate should either create the repo lockfile intentionally or
+define an APM-supported scratch project/wrapper that lets `compile --dry-run`
+read materialized scratch content before target deployment.
+
 ## What APM Should Not Manage Yet
 
 APM should not be used yet to change:

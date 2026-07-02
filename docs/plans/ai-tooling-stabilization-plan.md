@@ -243,6 +243,20 @@ gate. The generic Codex placement set was `AGENTS.md`, `.agents/skills/`,
 `.codex/agents/`, and `.codex/hooks.json`; no `using-superpowers` asset was
 proposed.
 
+The 2026-07-02 UTC scratch-root gate materialized the public dependency under
+`reports/apm-scratch/20260702T221350Z` with redirected HOME and XDG cache
+state. It wrote only ignored scratch files, including scratch
+`apm.lock.yaml`, `apm_modules/`,
+`.agents/skills/grill-with-docs/SKILL.md`, an empty `.codex/` directory, and
+scratch-local APM/Git cache state. The repo lockfile remained absent, and
+`using-superpowers` was not present in the scratch root.
+
+`apm compile --dry-run --target codex --root <scratch>` still did not preview
+concrete package files from `system/ai/apm`; APM reported no content found to
+compile. Running the same command from the scratch root failed because the
+scratch root is not an APM project and has no `apm.yml`. Resolve that
+compile-source limitation before any live target deployment.
+
 ## Shared Assets, Prompts, And Commands
 
 The shared source should be an AI Package Source consumed by APM, not copied
@@ -386,10 +400,10 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 1. Keep `system/ai/apm/apm.yml` pinned to
    `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` with the
    only active target as Codex.
-2. Decide whether `apm.lock.yaml` creation is approved for the next pass, or
-   whether a scratch-root materialization gate is safer first.
-3. Repeat `apm compile --dry-run --target codex` after package content is
-   materialized by an approved non-live gate.
+2. Treat scratch-root materialization as proven for `grill-with-docs`, with
+   output confined to ignored local state.
+3. Decide whether repo `apm.lock.yaml` creation is approved, or define an
+   APM-supported scratch project/wrapper so compile can read scratch content.
 4. Use `apm targets --json` and non-deploying checks before any install or
    compile step.
 5. Update doctor to recognize ADR-0008, the APM manifest, and target baseline
@@ -416,7 +430,8 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ## Recommended Next Implementation Task
 
-Approve the next APM gate: either create `system/ai/apm/apm.lock.yaml` with
-`apm lock`, or materialize package content in an explicitly non-live scratch
-path, then repeat `apm compile --dry-run --target codex`. Do not run update,
-prune, or target deployment commands in that task.
+Approve the next APM gate: either create `system/ai/apm/apm.lock.yaml`
+intentionally, or build an APM-supported scratch project/wrapper that lets
+`apm compile --dry-run --target codex` read materialized package content
+without live target deployment. Do not run update, prune, or live target
+deployment commands in that task.
