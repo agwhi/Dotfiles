@@ -54,6 +54,7 @@ Do not promote these into the Global AI Baseline yet:
 Shared AI Assets should be authored once and consumed through APM-generated or
 APM-installed adapters for Codex, Claude Code, opencode, Pi, or future
 surfaces. Tool-specific files are adapters, not the source of truth.
+`grill-with-docs` is already a public APM skill, not a companion-repo asset.
 
 ## Tool Provenance
 
@@ -122,8 +123,8 @@ Observed Codex plugin cache roots:
 - `openai-primary-runtime`
 
 Classification: mixed manual/local, vendor, plugin cache, and app runtime
-state. Only `grill-with-docs` is target baseline policy. It is not yet
-APM-declared or APM-locked by this repo.
+state. Only `grill-with-docs` is target baseline policy. It is declared in the
+draft APM manifest but not yet APM-locked by this repo.
 
 Excluded as Sensitive Local State: Codex auth, histories, sessions, logs,
 local databases, memory stores, trusted-project state, plugin caches,
@@ -225,9 +226,14 @@ APM schema findings from read-only inspection:
   packed bundles, marketplace refs, registry refs, per-primitive path refs
   such as `owner/repo/path#ref`, and object forms with fields such as `git`
   and `ref`
-- `apm compile --dry-run --target codex` is the preferred placement preview;
-  `apm install --dry-run` exists but is still blocked here because all
+- `apm compile --dry-run --target codex` is the preferred placement preview,
+  but it still requires the next explicit approval gate
+- `apm install --dry-run` exists but is still blocked here because all
   `apm install` variants require later approval
+
+Read-only APM evidence resolves `grill-with-docs` as the public package
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. The tag
+resolves to commit `2454c95dc305c158b21a0cdafeb728879dd0359a`.
 
 ## Shared Assets, Prompts, And Commands
 
@@ -248,17 +254,16 @@ Source policy:
 
 Initial target baseline:
 
-- Declare only `grill-with-docs` after its canonical package source is chosen.
+- Declare only `grill-with-docs`.
 - Generate or install adapters only for approved target surfaces.
 - Do not include `using-superpowers` in the baseline.
 
-The first source strategy is a companion Git package pinned by tag or commit
-SHA. If the companion repo contains only this baseline asset, reference the
-package as `owner/repo#ref`; if it contains multiple assets, reference the
-individual primitive as `owner/repo/skills/grill-with-docs#ref`. The
+The baseline source is the public APM package
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. The
 machine-local path `/Users/alex/.codex/skills/grill-with-docs` is useful
 evidence for current content, but it must not be the baseline source because
-it is live AI tool state and not portable.
+it is live AI tool state and not portable. A future companion repo is reserved
+for Alex's custom AI assets.
 
 ## APM Role And Open Questions
 
@@ -273,15 +278,13 @@ APM should eventually own:
 
 Open questions before implementation:
 
-1. Which companion Git repository owns canonical `grill-with-docs`?
-2. Which tag or commit SHA should pin the first `grill-with-docs` baseline?
-3. Which generated Codex target paths are safe after dry-run review?
-4. How should APM itself be installed and updated reproducibly?
-5. Should opencode and Pi remain local experiments, become declared AI Tool
+1. Which generated Codex target paths are safe after dry-run review?
+2. How should APM itself be installed and updated reproducibly?
+3. Should opencode and Pi remain local experiments, become declared AI Tool
    Surfaces, or be removed behind approval?
-6. How should doctor distinguish APM-selected policy from the current
+4. How should doctor distinguish APM-selected policy from the current
    undeclared APM binary install path?
-7. Should APM target detection be pinned so `.cursor/` does not pull editor
+5. Should APM target detection be pinned so `.cursor/` does not pull editor
    rules into an AI-only stabilization pass?
 
 ## Repo Versus Companion Repo
@@ -294,7 +297,7 @@ This Orchestrator Repo should own:
 - doctor checks that verify declared tools and declared baseline assets.
 - reset gates and rebuild procedures.
 
-A future Custom AI Companion Repo may own:
+A future Custom AI Companion Repo may own Alex's custom AI assets:
 
 - user-authored skills
 - reusable prompts
@@ -372,12 +375,14 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ### P1: Declare The Baseline Without Deploying
 
-1. Choose the canonical companion Git source for `grill-with-docs`.
-2. Replace the placeholder in `system/ai/apm/apm.yml` with the pinned source
-   and keep the only active target as Codex.
-3. Decide whether `apm.lock.yaml` creation is approved for the next pass.
-4. Use `apm targets --json`, `apm compile --dry-run --target codex`, and
-   non-deploying checks before any install or compile step.
+1. Keep `system/ai/apm/apm.yml` pinned to
+   `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` with the
+   only active target as Codex.
+2. Decide whether `apm.lock.yaml` creation is approved for the next pass.
+3. Decide whether `apm compile --dry-run --target codex` is approved for the
+   next placement-preview pass.
+4. Use `apm targets --json` and non-deploying checks before any install or
+   compile step.
 5. Update doctor to recognize ADR-0008, the APM manifest, and target baseline
    checks.
 
@@ -402,6 +407,7 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ## Recommended Next Implementation Task
 
-Create or choose the companion Git package for canonical `grill-with-docs`,
-pin it in `system/ai/apm/apm.yml`, then approve a non-deploying lockfile pass.
-Do not run install, update, prune, or deploy commands in that task.
+Approve the next APM gate: either create `system/ai/apm/apm.lock.yaml` with
+`apm lock`, or preview Codex placement with
+`apm compile --dry-run --target codex`. Do not run install, update, prune, or
+deploy commands in that task.

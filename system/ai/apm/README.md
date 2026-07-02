@@ -29,6 +29,10 @@ The initial baseline should contain only:
 
 - `grill-with-docs`
 
+`grill-with-docs` is a public APM skill from
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. It is not part
+of a future custom companion repo.
+
 ## Draft Repo Files
 
 The repo now carries a non-deploying draft manifest:
@@ -48,14 +52,14 @@ Future source-of-truth files for this repo are:
 If global APM mode is later needed, `~/.apm/apm.yml` is local generated state
 unless a task explicitly documents how it is produced from this repo.
 
-Read-only or non-deploying commands to prefer before any install:
+Read-only commands to prefer before any install:
 
 - `apm targets --json`
-- `apm compile --dry-run --target codex`
 - `apm audit --ci`
 
-Do not run `apm lock` until a later task explicitly approves creating or
-rewriting `system/ai/apm/apm.lock.yaml`.
+Do not run `apm lock` or `apm compile --dry-run --target codex` until a later
+task explicitly approves creating or rewriting `system/ai/apm/apm.lock.yaml`
+or previewing generated Codex placement.
 
 ## Schema Findings
 
@@ -72,13 +76,12 @@ Read-only APM inspection identified these `0.23.1` conventions:
   such as `owner/repo/path#ref`, and object forms with fields such as `git`
   and `ref`
 
-The first canonical source for `grill-with-docs` should be a companion Git
-package pinned by tag or commit SHA. If the companion repo contains only this
-baseline asset, reference the package as `owner/repo#ref`; if it contains
-multiple assets, reference the individual primitive as
-`owner/repo/skills/grill-with-docs#ref`. Do not point the baseline at
-`/Users/alex/.codex/skills/grill-with-docs`; that path is machine-local
-AI tool state and not reproducible from this repo.
+The canonical source for `grill-with-docs` is the public APM package
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. Read-only APM
+inspection resolved tag `v1.0.1` to commit
+`2454c95dc305c158b21a0cdafeb728879dd0359a`. Do not point the baseline at
+`/Users/alex/.codex/skills/grill-with-docs`; that path is machine-local AI
+tool state and not reproducible from this repo.
 
 ## What APM Should Not Manage Yet
 
@@ -109,8 +112,7 @@ Read-only APM inspection commands are acceptable when a task allows them.
 
 ## Unresolved
 
-- The source package or repository for canonical `grill-with-docs`.
-- The exact pinned Git ref for canonical `grill-with-docs`.
 - Whether APM itself should be installed through Homebrew, a package installer,
   a bootstrap script, or another declared source.
 - Which generated target paths are safe for Codex after dry-run review.
+- Which custom AI assets Alex will later place in a companion repo.
