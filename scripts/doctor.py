@@ -510,6 +510,7 @@ def path_provenance(path: str | None) -> dict[str, Any]:
         resolved = original
 
     home = str(HOME)
+    mise_data_dir = f"{home}/.local/share/mise"
     details: dict[str, Any] = {
         "path": original,
         "resolved_path": resolved,
@@ -530,13 +531,13 @@ def path_provenance(path: str | None) -> dict[str, Any]:
         return with_source("codex_runtime")
     if resolved.startswith("/pkg/env/"):
         return with_source("codex_runtime")
+    if original == mise_data_dir or original.startswith(f"{mise_data_dir}/"):
+        return with_source("mise")
     if resolved.startswith("/opt/homebrew/") or "/opt/homebrew/Cellar/" in resolved:
         return with_source("homebrew")
     if resolved.startswith("/usr/local/Homebrew/") or "/usr/local/Cellar/" in resolved:
         return with_source("homebrew")
-    if resolved.startswith(f"{home}/.local/share/mise") or original.startswith(
-        f"{home}/.local/share/mise"
-    ):
+    if resolved.startswith(f"{mise_data_dir}/") or resolved == mise_data_dir:
         return with_source("mise")
     if resolved.startswith(f"{home}/.local/share/fnm") or original.startswith(
         f"{home}/.local/share/fnm"
@@ -2450,9 +2451,13 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
             if sdk and sdk[0].isdigit()
         }
     )
+    missing_sdk_major_lines = [
+        line for line in DOTNET_POLICY_SDK_LINES if line not in sdk_major_lines
+    ]
+    expected_sdk_major_lines_visible = not missing_sdk_major_lines
     source_classification = (
         "canonical"
-        if active_source == "mise_dotnet"
+        if active_source == "mise_dotnet" and expected_sdk_major_lines_visible
         else "migration_pending"
         if config_declared
         else "unknown"
@@ -2469,7 +2474,9 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
         source=dotnet_path,
         severity="info" if source_classification == "canonical" else "low",
         summary=(
-            "dotnet resolves through the ADR-0006 mise SDK owner."
+            "dotnet resolves through the ADR-0006 mise SDK owner with the expected SDK major lines."
+            if active_source == "mise_dotnet" and expected_sdk_major_lines_visible
+            else "dotnet resolves through the ADR-0006 mise SDK owner, but expected SDK major lines are not all visible."
             if active_source == "mise_dotnet"
             else f"dotnet is still present from {active_source}; ADR-0006 mise migration is declared but not active."
             if config_declared
@@ -2480,6 +2487,7 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
             "candidates": candidates,
             "expected_sdk_major_lines": DOTNET_POLICY_SDK_LINES,
             "installed_sdk_major_lines": sdk_major_lines,
+            "missing_expected_sdk_major_lines": missing_sdk_major_lines,
             "repo_mise_config": mise_config_state(),
             "path_matches": [path_provenance(path) for path in which_all("dotnet")],
             "provenance": provenance,
@@ -2490,6 +2498,8 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
         recommendation=(
             "Keep existing SDK sources as managed exceptions until mise dotnet@10 and dotnet@8 are installed and active."
             if active_source != "mise_dotnet"
+            else "Repair missing ADR-0006 mise SDK lines in a later approved mutation step."
+            if not expected_sdk_major_lines_visible
             else None
         ),
     )
