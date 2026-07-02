@@ -94,8 +94,9 @@ Repo paths inspected:
 
 Classification: repo-managed documentation and sensitive-safe policy.
 
-There is no `system/ai/apm/apm.yml` and no `system/ai/apm/apm.lock.yaml` yet.
-The Global AI Baseline is therefore not reproducible through APM yet.
+There is a non-deploying draft `system/ai/apm/apm.yml` and no
+`system/ai/apm/apm.lock.yaml` yet. The Global AI Baseline is therefore
+declared as intent but not reproducible through APM yet.
 
 ### Codex
 
@@ -207,11 +208,26 @@ exception. `~/.apm/config.json` is local state and was not read.
 `apm targets --json` currently reports only the repo's `.cursor/` target as
 active. Codex, Claude, opencode, and other AI targets are inactive because the
 repo does not yet contain target files such as `.codex/`, `.opencode/`, or
-`CLAUDE.md`. The next pass should pin intended APM targets explicitly before
-any APM command is allowed to write files.
+`CLAUDE.md`. The draft `system/ai/apm/apm.yml` pins `targets: [codex]` so
+APM target auto-detection is not used for the first AI-only baseline pass.
+Run project-scoped APM checks from `system/ai/apm` until a repo wrapper exists.
 
 Excluded as Sensitive Local State: `~/.apm/config.json`, future global APM
 manifests under `~/.apm`, caches, credentials, and generated target output.
+
+APM schema findings from read-only inspection:
+
+- project manifest filename: `apm.yml`
+- project lockfile filename: `apm.lock.yaml`
+- APM dependencies live under `dependencies.apm`
+- target mappings can be pinned with top-level `targets`
+- package sources include shorthand Git refs, full Git URLs, local paths,
+  packed bundles, marketplace refs, registry refs, per-primitive path refs
+  such as `owner/repo/path#ref`, and object forms with fields such as `git`
+  and `ref`
+- `apm compile --dry-run --target codex` is the preferred placement preview;
+  `apm install --dry-run` exists but is still blocked here because all
+  `apm install` variants require later approval
 
 ## Shared Assets, Prompts, And Commands
 
@@ -236,6 +252,14 @@ Initial target baseline:
 - Generate or install adapters only for approved target surfaces.
 - Do not include `using-superpowers` in the baseline.
 
+The first source strategy is a companion Git package pinned by tag or commit
+SHA. If the companion repo contains only this baseline asset, reference the
+package as `owner/repo#ref`; if it contains multiple assets, reference the
+individual primitive as `owner/repo/skills/grill-with-docs#ref`. The
+machine-local path `/Users/alex/.codex/skills/grill-with-docs` is useful
+evidence for current content, but it must not be the baseline source because
+it is live AI tool state and not portable.
+
 ## APM Role And Open Questions
 
 APM should eventually own:
@@ -249,11 +273,9 @@ APM should eventually own:
 
 Open questions before implementation:
 
-1. Which package source owns canonical `grill-with-docs`?
-2. Should the source be a future Custom AI Companion Repo, a local bundle, a
-   public package, or another Git source?
-3. Which target surfaces should receive the first generated baseline:
-   Codex only, Codex plus Claude Code, or a broader set?
+1. Which companion Git repository owns canonical `grill-with-docs`?
+2. Which tag or commit SHA should pin the first `grill-with-docs` baseline?
+3. Which generated Codex target paths are safe after dry-run review?
 4. How should APM itself be installed and updated reproducibly?
 5. Should opencode and Pi remain local experiments, become declared AI Tool
    Surfaces, or be removed behind approval?
@@ -350,12 +372,12 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ### P1: Declare The Baseline Without Deploying
 
-1. Choose the canonical `grill-with-docs` AI Package Source.
-2. Define `system/ai/apm/apm.yml` with explicit targets and only the baseline
-   asset.
+1. Choose the canonical companion Git source for `grill-with-docs`.
+2. Replace the placeholder in `system/ai/apm/apm.yml` with the pinned source
+   and keep the only active target as Codex.
 3. Decide whether `apm.lock.yaml` creation is approved for the next pass.
-4. Use `apm targets --json`, `apm preview`, and non-deploying checks before
-   any install or compile step.
+4. Use `apm targets --json`, `apm compile --dry-run --target codex`, and
+   non-deploying checks before any install or compile step.
 5. Update doctor to recognize ADR-0008, the APM manifest, and target baseline
    checks.
 
@@ -380,7 +402,6 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ## Recommended Next Implementation Task
 
-Review the APM schema and choose the canonical `grill-with-docs` package
-source, then draft `system/ai/apm/apm.yml` with explicit non-deploying target
-mapping for Codex first. Do not run install, update, prune, or deploy commands
-in that task.
+Create or choose the companion Git package for canonical `grill-with-docs`,
+pin it in `system/ai/apm/apm.yml`, then approve a non-deploying lockfile pass.
+Do not run install, update, prune, or deploy commands in that task.
