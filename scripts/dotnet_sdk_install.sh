@@ -25,6 +25,45 @@ if [ ! -f "$MISE_CONFIG_FILE" ]; then
     exit 78
 fi
 
+DOTNET_ROOT_VALUE="$(
+    awk '
+        /^[[:space:]]*\[/ {
+            in_dotnet_settings = ($0 ~ /^[[:space:]]*\[settings\.dotnet\][[:space:]]*(#.*)?$/)
+            next
+        }
+        in_dotnet_settings {
+            line = $0
+            sub(/[[:space:]]*#.*/, "", line)
+            if (line !~ /^[[:space:]]*dotnet_root[[:space:]]*=/) {
+                next
+            }
+            sub(/^[[:space:]]*dotnet_root[[:space:]]*=[[:space:]]*/, "", line)
+            sub(/^[[:space:]]+/, "", line)
+            sub(/[[:space:]]+$/, "", line)
+            print line
+            exit
+        }
+    ' "$MISE_CONFIG_FILE"
+)"
+case "$DOTNET_ROOT_VALUE" in
+    \"*)
+        DOTNET_ROOT_VALUE_CHECK="${DOTNET_ROOT_VALUE#\"}"
+        ;;
+    \'*)
+        DOTNET_ROOT_VALUE_CHECK="${DOTNET_ROOT_VALUE#\'}"
+        ;;
+    *)
+        DOTNET_ROOT_VALUE_CHECK="$DOTNET_ROOT_VALUE"
+        ;;
+esac
+case "$DOTNET_ROOT_VALUE_CHECK" in
+    "~"*)
+        echo "unsupported literal-tilde dotnet_root '$DOTNET_ROOT_VALUE' in $MISE_CONFIG_FILE." >&2
+        echo "Use an absolute dotnet_root path before installing SDKs." >&2
+        exit 78
+        ;;
+esac
+
 MISE_BIN="${MISE_BIN:-}"
 if [ -n "$MISE_BIN" ]; then
     if [ -x "$MISE_BIN" ]; then
