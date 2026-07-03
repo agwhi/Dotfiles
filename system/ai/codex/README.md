@@ -28,19 +28,20 @@ assets, generated files, and current local skills.
 
 Current global skills include:
 
+- `.system`
+- `codex-primary-runtime`
+- `domain-modeling`
 - `grill-with-docs`
-- `using-superpowers`
-- Codex system skills
-- Codex runtime/plugin skills
+- `grilling`
 
 Target state:
 
-- Keep `grill-with-docs` as the only Baseline AI Asset.
-- Receive baseline assets from APM after the corrected public source is
-  approved for target writes.
-- Treat `using-superpowers` as approval-gated cleanup, not as baseline.
-- Treat system, runtime, and plugin-provided skills as vendor or app state
-  unless intentionally declared.
+- Keep the APM-managed public `grill-with-docs` workflow as the only Baseline
+  AI Asset, materialized as the split Codex skills `grill-with-docs`,
+  `grilling`, and `domain-modeling`.
+- Keep `using-superpowers` absent.
+- Treat `.system`, `codex-primary-runtime`, and plugin-provided skills as
+  vendor or app state unless intentionally declared.
 
 ## APM Status
 
@@ -52,9 +53,8 @@ Target state:
 - `mattpocock/skills/skills/engineering/domain-modeling#v1.0.1`
 
 Scratch preview showed that `grill-with-docs` is a thin wrapper that invokes
-`/grilling` and `/domain-modeling`, while the current live Codex skill is
-self-contained and includes the detailed workflow plus format references. The
-2026-07-03 source investigation found that `grilling` lives under
+`/grilling` and `/domain-modeling`. The 2026-07-03 source investigation found
+that `grilling` lives under
 `skills/productivity/grilling`, not `skills/engineering/grilling`, and a frozen
 scratch install generated all three public skills without `using-superpowers`.
 
@@ -62,9 +62,11 @@ APM's default Codex skill output is `.agents/skills/`. Codex desktop currently
 discovers the live global skill from `~/.codex/skills`, and the scratch preview
 confirmed APM can produce that layout with `--legacy-skill-paths`.
 
-Do not run live Codex deployment yet. After a later deployment gate approves
-target writes and reviews the generated split-skill layout, APM should
-materialize the Codex target output.
+After the approved APM deployment, the live canonical Codex baseline is the
+split output under `~/.codex/skills`: `grill-with-docs/SKILL.md`,
+`grilling/SKILL.md`, and the `domain-modeling` skill plus its format
+references. Old format references under `grill-with-docs/` and
+`using-superpowers` should remain absent.
 
 ## Repo Ownership
 

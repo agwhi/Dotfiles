@@ -25,7 +25,7 @@ APM should eventually support:
 - lockfiles for baseline AI Asset sources
 - third-party AI Asset packages
 - Custom AI Assets from normal AI Package Sources
-- generated modules and target output after target-write approval
+- generated modules and target output through approved target-write gates
 - audit and policy checks for installed assets
 
 The initial baseline should contain only:
@@ -98,11 +98,10 @@ The APM lock evidence for `grill-with-docs` is the public package plus the
 public dependency skills above. Read-only APM inspection resolved tag `v1.0.1`
 to commit `2454c95dc305c158b21a0cdafeb728879dd0359a`.
 
-The first scratch preview found that the `grill-with-docs` package alone is
-not equivalent to the currently installed live Codex skill. The package
-contains a thin `SKILL.md` wrapper that invokes `/grilling` and
-`/domain-modeling`; the live Codex skill is self-contained and includes the
-detailed workflow plus format references.
+The first scratch preview found that the `grill-with-docs` package alone was
+not equivalent to the then-installed live Codex skill. The package contains a
+thin `SKILL.md` wrapper that invokes `/grilling` and `/domain-modeling`; the
+missing dependencies were resolved before the approved split-skill deployment.
 
 The 2026-07-03 source investigation found the missing public dependency:
 `grilling` exists at
@@ -110,7 +109,7 @@ The 2026-07-03 source investigation found the missing public dependency:
 `skills/engineering/grilling`. A scratch lock and frozen scratch install
 validated the three public package entries above. Do not replace this with a
 repo-owned Codex skill tree. Let APM materialize generated modules and target
-output only after a later deployment gate approves live target writes.
+output only through approved target-write gates.
 
 The public AI Hero `grill-with-docs` page recommends installing from
 `mattpocock/skills` with `--skill=grill-with-docs` and links the source to
@@ -221,12 +220,10 @@ redirected HOME/XDG state and `--root` under `reports/apm-scratch/` produced:
 - `.codex/skills/grill-with-docs/SKILL.md`
 - `.codex/skills/grilling/SKILL.md`
 
-No `using-superpowers` output was generated. The live Codex
-`ADR-FORMAT.md` and `CONTEXT-FORMAT.md` files match the public
-`domain-modeling` reference files. The live self-contained
-`grill-with-docs/SKILL.md` differs from the public split form, so live Codex
-deployment still needs a later approval gate and review of the generated target
-layout.
+No `using-superpowers` output was generated. The later approved deployment
+materialized this split layout under `~/.codex/skills`; old
+`grill-with-docs/` format references and `using-superpowers` should remain
+absent.
 
 `apm audit --ci` currently reports expected drift because it wants the
 project-scoped deployed file `.agents/skills/grill-with-docs/SKILL.md` to exist
@@ -246,8 +243,8 @@ Preferred model:
 - link those files to `~/.apm/apm.yml` and `~/.apm/apm.lock.yaml` through the
   normal dotfiles symlink setup
 - keep the corrected public package source in the APM manifest and lockfile
-- let APM materialize generated modules and target output after target writes
-  are approved
+- let APM materialize generated modules and target output through approved
+  target-write gates
 - treat `~/.apm`, `apm_modules/`, and generated target output as local state
 
 Do not satisfy APM audit drift by writing live Codex state or committing
@@ -284,5 +281,4 @@ Read-only APM inspection commands are acceptable when a task allows them.
 
 - When the current manual `/usr/local/bin/apm` binary should be replaced by
   the declared Homebrew `microsoft/apm/apm` formula.
-- Which generated target paths are safe for Codex after dry-run review.
 - Which custom AI assets Alex will later place in a companion repo.

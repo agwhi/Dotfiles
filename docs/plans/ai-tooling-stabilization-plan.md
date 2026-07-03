@@ -41,9 +41,12 @@ Homebrew remains the canonical installer for AI application surfaces already
 declared in `system/packages/Brewfile`, including Codex, ChatGPT,
 ChatGPT Atlas, and Ollama.
 
-The Global AI Baseline stays intentionally small:
+The Global AI Baseline stays intentionally small. The approved Codex baseline
+is the public `grill-with-docs` workflow materialized as split skills:
 
 - `grill-with-docs`
+- `grilling`
+- `domain-modeling`
 
 Do not promote these into the Global AI Baseline yet:
 
@@ -118,8 +121,9 @@ Observed global skills:
 
 - `.system`
 - `codex-primary-runtime`
+- `domain-modeling`
 - `grill-with-docs`
-- `using-superpowers`
+- `grilling`
 
 Observed Codex plugin cache roots:
 
@@ -129,9 +133,9 @@ Observed Codex plugin cache roots:
 - `openai-primary-runtime`
 
 Classification: mixed manual/local, vendor, plugin cache, and app runtime
-state. Only `grill-with-docs` is target baseline policy. It is declared and
-locked as APM package evidence, but live Codex is not yet known to be generated
-by the corrected APM baseline.
+state. Only the APM-managed split `grill-with-docs` workflow is target
+baseline policy. The approved deployment materialized that split baseline and
+removed `using-superpowers`.
 
 Excluded as Sensitive Local State: Codex auth, histories, sessions, logs,
 local databases, memory stores, trusted-project state, plugin caches,
@@ -277,11 +281,11 @@ scratch install from copied `apm.yml` and `apm.lock.yaml` materialized only
 output went to `.agents/skills/grill-with-docs/SKILL.md`; with
 `--legacy-skill-paths`, output went to `.codex/skills/grill-with-docs/SKILL.md`.
 
-That preview also found the current blocker: the locked public package's
-`SKILL.md` is only a wrapper that says to run `/grilling` using
-`/domain-modeling`. The current live Codex skill under `~/.codex/skills` is
-self-contained and includes the detailed workflow plus format references. Do
-not deploy the public package over the live skill.
+That preview also found the blocker for deploying the package by itself: the
+locked public package's `SKILL.md` is only a wrapper that says to run
+`/grilling` using `/domain-modeling`. The fix was to materialize the single
+public workflow as the split Codex skills `grill-with-docs`, `grilling`, and
+`domain-modeling`.
 
 The 2026-07-03 follow-up compared the pinned public package with the live
 Codex skill and tested expanded scratch manifests. `domain-modeling` exists at
@@ -306,8 +310,8 @@ this public dependency set:
 
 The generated scratch Codex output contained `grill-with-docs`, `grilling`, and
 `domain-modeling`; it did not contain `using-superpowers`. Do not work around
-this with a repo-owned Codex skill tree. Let APM materialize target output only
-after a later live deployment gate.
+this with a repo-owned Codex skill tree. The later approved deployment
+materialized this split target output under `~/.codex/skills`.
 
 Global APM mode was tested with redirected `HOME` and XDG paths. It does not
 consume the repo manifest directly; `apm install --global` expects
@@ -338,7 +342,7 @@ Source policy:
 
 Initial target baseline:
 
-- Declare only `grill-with-docs`.
+- Declare only the public split `grill-with-docs` workflow.
 - Generate or install adapters only for approved target surfaces.
 - Do not include `using-superpowers` in the baseline.
 
@@ -357,7 +361,7 @@ APM should eventually support:
 - Global AI Baseline package evidence
 - target mappings for Codex, Claude Code, opencode, Pi, and future surfaces
 - audit and policy checks for installed AI Assets
-- generated modules and target output after target-write approval
+- generated modules and target output through approved target-write gates
 
 Open questions before live deployment:
 
@@ -425,10 +429,11 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 - Run `apm install`, `apm update`, `apm prune`, `apm uninstall`,
   `apm self-update`, or any APM command that writes target files.
 - Rewrite `apm.lock.yaml` without approval.
-- Add an APM manifest and deploy generated adapters into Codex, Claude Code,
-  opencode, Pi, or Cursor target directories.
-- Remove or replace `/Users/alex/.codex/skills/grill-with-docs`.
-- Remove `/Users/alex/.codex/skills/using-superpowers`.
+- Add another APM manifest or deploy generated adapters into Codex, Claude
+  Code, opencode, Pi, or Cursor target directories.
+- Remove or replace the APM-managed split Codex skills under
+  `/Users/alex/.codex/skills`.
+- Remove any reintroduced `/Users/alex/.codex/skills/using-superpowers`.
 - Remove or rewrite Claude plugin cache state.
 - Remove or migrate `~/.local/bin/claude` or
   `~/.local/share/claude`.
@@ -452,9 +457,10 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
    and lockfile symlinked into `~/.apm`.
 4. Keep the Brewfile-declared Homebrew APM formula as desired state; do not
    install or remove binaries until a separate cleanup task.
-5. Do not broaden the Global AI Baseline beyond `grill-with-docs`.
+5. Do not broaden the Global AI Baseline beyond the split `grill-with-docs`
+   workflow.
 
-### P1: Declare The Baseline Without Deploying
+### P1: Declare And Verify The Baseline
 
 1. Keep `system/ai/apm/apm.yml` pinned to the public `grill-with-docs`
    wrapper plus its `grilling` and `domain-modeling` dependency skills, with
@@ -463,18 +469,16 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
    correction as approved and complete for the public baseline source.
 3. Treat scratch-root materialization as proven for the corrected dependency
    set, with output confined to ignored local state.
-4. Link `~/.apm/apm.yml` and `~/.apm/apm.lock.yaml` to the repo source files
-   through normal setup.
-5. Keep live Codex deployment blocked until a target-write gate is approved.
-6. Update doctor to report repo APM validity, live APM symlink state, and live
-   Codex migration state separately.
+4. Treat `~/.apm/apm.yml` and `~/.apm/apm.lock.yaml` symlink state as
+   canonical when they point to the repo source files.
+5. Update doctor to report repo APM validity, live APM symlink state, and the
+   live split Codex baseline separately.
 
-### P2: Deploy The Corrected Source Through APM
+### P2: Keep The Corrected Deployment Canonical
 
-1. Capture a Rebuild Snapshot before writing live Codex target output.
-2. Review the generated split-skill Codex layout from a scratch install.
-3. Let APM materialize the approved Codex target output.
-4. Keep `using-superpowers` intentionally excluded unless a later ADR changes
+1. Keep the approved split-skill Codex layout canonical in doctor.
+2. Keep old `grill-with-docs/` format references absent.
+3. Keep `using-superpowers` intentionally excluded unless a later ADR changes
    the Global AI Baseline.
 
 ### P3: Cleanup Behind Approval
@@ -489,9 +493,7 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ## Recommended Next Implementation Task
 
-Run an approved Codex target-write gate for the corrected public
-`grill-with-docs` dependency set. The repo source of truth is
-`system/ai/apm/apm.yml` plus `system/ai/apm/apm.lock.yaml`, consumed by
-`~/.apm` symlinks. Do not run APM update, prune, global install, or target
-deployment commands until that gate captures a snapshot and approves the
-generated split-skill layout.
+Keep doctor aligned with the deployed split Codex baseline. The repo source of
+truth remains `system/ai/apm/apm.yml` plus `system/ai/apm/apm.lock.yaml`,
+consumed by `~/.apm` symlinks. Do not run APM update, prune, global install, or
+target deployment commands without a new explicit gate.

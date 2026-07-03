@@ -40,7 +40,7 @@ APM_MANIFEST = ROOT / "system/ai/apm/apm.yml"
 APM_LOCKFILE = ROOT / "system/ai/apm/apm.lock.yaml"
 APM_USER_MANIFEST = HOME / ".apm/apm.yml"
 APM_USER_LOCKFILE = HOME / ".apm/apm.lock.yaml"
-CODEX_GRILL_WITH_DOCS_LIVE = HOME / ".codex/skills/grill-with-docs"
+CODEX_SKILLS_DIR = HOME / ".codex/skills"
 DEV_ENV = ROOT / "scripts/dev_env.sh"
 MISE_CONFIG = ROOT / "system/mise/config.toml"
 MISE_USER_CONFIG = HOME / ".config/mise/config.toml"
@@ -98,7 +98,19 @@ DEV_APP_RE = re.compile(
 )
 
 AI_COMMANDS = ["codex", "claude", "opencode", "open-code", "pi", "apm"]
-BASELINE_AI_ASSETS = {"grill-with-docs"}
+CODEX_BASELINE_SKILLS = ["grill-with-docs", "grilling", "domain-modeling"]
+CODEX_SPLIT_BASELINE_FILES = [
+    "grill-with-docs/SKILL.md",
+    "grilling/SKILL.md",
+    "domain-modeling/SKILL.md",
+    "domain-modeling/ADR-FORMAT.md",
+    "domain-modeling/CONTEXT-FORMAT.md",
+]
+CODEX_STALE_BASELINE_FILES = [
+    "grill-with-docs/ADR-FORMAT.md",
+    "grill-with-docs/CONTEXT-FORMAT.md",
+]
+CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS = [".system", "codex-primary-runtime"]
 EXCLUDED_AI_ASSETS = {"using-superpowers"}
 APM_BASELINE_TARGETS = ["codex"]
 GRILL_WITH_DOCS_REF = "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1"
@@ -3135,42 +3147,135 @@ def apm_lockfile_state() -> dict[str, Any]:
     return state
 
 
-def codex_skill_names() -> dict[str, Any]:
-    skills_dir = HOME / ".codex/skills"
+def path_exists_or_symlink(path: Path) -> bool:
+    return path.exists() or path.is_symlink()
+
+
+def codex_split_baseline_state() -> dict[str, Any]:
+    baseline_skill_set = set(CODEX_BASELINE_SKILLS)
+    allowed_vendor_runtime_set = set(CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS)
     state: dict[str, Any] = {
-        "path": str(skills_dir),
-        "exists": skills_dir.is_dir(),
-        "names": [],
-        "baseline_present": [],
-        "baseline_missing": sorted(BASELINE_AI_ASSETS),
+        "path": str(CODEX_SKILLS_DIR),
+        "exists": CODEX_SKILLS_DIR.is_dir(),
+        "skill_names": [],
+        "baseline_skill_roots": CODEX_BASELINE_SKILLS,
+        "allowed_vendor_runtime_skills": CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS,
+        "present_allowed_vendor_runtime_skills": [],
+        "expected_files": CODEX_SPLIT_BASELINE_FILES,
+        "present_files": [],
+        "missing_files": CODEX_SPLIT_BASELINE_FILES,
+        "expected_stale_absent_files": CODEX_STALE_BASELINE_FILES,
+        "stale_files": [],
+        "observed_baseline_files": [],
+        "unexpected_baseline_files": [],
+        "extra_non_vendor_skills": [],
+        "excluded_skills": sorted(EXCLUDED_AI_ASSETS),
         "excluded_present": [],
+        "scan_errors": [],
+        "canonical": False,
     }
-    if not skills_dir.is_dir():
+    if not CODEX_SKILLS_DIR.is_dir():
         return state
 
     names: list[str] = []
     try:
-        for item in skills_dir.iterdir():
-            if item.name.startswith("."):
-                continue
+        for item in CODEX_SKILLS_DIR.iterdir():
             if item.is_dir():
                 names.append(item.name)
-    except OSError:
+    except OSError as exc:
+        state["scan_errors"].append(f"{type(exc).__name__}: {exc}")
         return state
 
     names = sorted(set(names))
-    state["names"] = names
-    present = sorted(BASELINE_AI_ASSETS.intersection(names))
-    state["baseline_present"] = present
-    state["baseline_missing"] = sorted(BASELINE_AI_ASSETS.difference(names))
+    name_set = set(names)
+    state["skill_names"] = names
+    state["present_allowed_vendor_runtime_skills"] = [
+        name for name in CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS if name in name_set
+    ]
+    state["extra_non_vendor_skills"] = sorted(
+        name
+        for name in name_set
+        if name not in baseline_skill_set
+        and name not in allowed_vendor_runtime_set
+        and name not in EXCLUDED_AI_ASSETS
+    )
     state["excluded_present"] = sorted(EXCLUDED_AI_ASSETS.intersection(names))
+
+    present_files: list[str] = []
+    missing_files: list[str] = []
+    for relative_path in CODEX_SPLIT_BASELINE_FILES:
+        path = CODEX_SKILLS_DIR / relative_path
+        if path.is_file():
+            present_files.append(relative_path)
+        else:
+            missing_files.append(relative_path)
+
+    stale_files = [
+        relative_path
+        for relative_path in CODEX_STALE_BASELINE_FILES
+        if path_exists_or_symlink(CODEX_SKILLS_DIR / relative_path)
+    ]
+
+    observed_baseline_files: set[str] = set()
+    for skill_name in CODEX_BASELINE_SKILLS:
+        skill_dir = CODEX_SKILLS_DIR / skill_name
+        if not skill_dir.is_dir():
+            continue
+        try:
+            for item in skill_dir.rglob("*"):
+                if item.is_file() or item.is_symlink():
+                    observed_baseline_files.add(str(item.relative_to(CODEX_SKILLS_DIR)))
+        except OSError as exc:
+            state["scan_errors"].append(
+                f"{skill_name}: {type(exc).__name__}: {exc}"
+            )
+
+    expected_or_stale = set(CODEX_SPLIT_BASELINE_FILES).union(
+        CODEX_STALE_BASELINE_FILES
+    )
+    state["present_files"] = present_files
+    state["missing_files"] = missing_files
+    state["stale_files"] = stale_files
+    state["observed_baseline_files"] = sorted(observed_baseline_files)
+    state["unexpected_baseline_files"] = sorted(
+        path for path in observed_baseline_files if path not in expected_or_stale
+    )
+    state["canonical"] = bool(
+        not state["scan_errors"]
+        and not missing_files
+        and not stale_files
+        and not state["excluded_present"]
+        and not state["unexpected_baseline_files"]
+    )
     return state
+
+
+def apm_user_project_state() -> dict[str, Any]:
+    files = {
+        "apm.yml": symlink_file_state(APM_USER_MANIFEST, APM_MANIFEST),
+        "apm.lock.yaml": symlink_file_state(APM_USER_LOCKFILE, APM_LOCKFILE),
+    }
+    missing = sorted(
+        name for name, info in files.items() if not info["path_present"]
+    )
+    noncanonical = sorted(
+        name
+        for name, info in files.items()
+        if info["path_present"] and not info["canonical"]
+    )
+    return {
+        "path": str(HOME / ".apm"),
+        "files": files,
+        "missing": missing,
+        "noncanonical": noncanonical,
+        "canonical": not missing and not noncanonical,
+    }
 
 
 def symlink_file_state(path: Path, expected_target: Path) -> dict[str, Any]:
     state: dict[str, Any] = {
         "path": str(path),
-        "path_present": path.exists() or path.is_symlink(),
+        "path_present": path_exists_or_symlink(path),
         "exists": path.exists(),
         "is_file": path.is_file(),
         "is_symlink": path.is_symlink(),
@@ -3200,60 +3305,11 @@ def symlink_file_state(path: Path, expected_target: Path) -> dict[str, Any]:
     return state
 
 
-def apm_user_project_state() -> dict[str, Any]:
-    files = {
-        "apm.yml": symlink_file_state(APM_USER_MANIFEST, APM_MANIFEST),
-        "apm.lock.yaml": symlink_file_state(APM_USER_LOCKFILE, APM_LOCKFILE),
-    }
-    missing = sorted(
-        name for name, info in files.items() if not info["path_present"]
-    )
-    noncanonical = sorted(
-        name
-        for name, info in files.items()
-        if info["path_present"] and not info["canonical"]
-    )
-    return {
-        "path": str(HOME / ".apm"),
-        "files": files,
-        "missing": missing,
-        "noncanonical": noncanonical,
-        "canonical": not missing and not noncanonical,
-    }
-
-
-def codex_live_skill_state() -> dict[str, Any]:
-    state: dict[str, Any] = {
-        "path": str(CODEX_GRILL_WITH_DOCS_LIVE),
-        "path_present": CODEX_GRILL_WITH_DOCS_LIVE.exists()
-        or CODEX_GRILL_WITH_DOCS_LIVE.is_symlink(),
-        "exists": CODEX_GRILL_WITH_DOCS_LIVE.exists(),
-        "is_dir": CODEX_GRILL_WITH_DOCS_LIVE.is_dir(),
-        "is_symlink": CODEX_GRILL_WITH_DOCS_LIVE.is_symlink(),
-        "link_target": None,
-        "resolved_path": None,
-        "known_generated_by_corrected_apm_baseline": False,
-    }
-    if CODEX_GRILL_WITH_DOCS_LIVE.is_symlink():
-        try:
-            state["link_target"] = os.readlink(CODEX_GRILL_WITH_DOCS_LIVE)
-        except OSError:
-            pass
-        try:
-            state["resolved_path"] = str(
-                CODEX_GRILL_WITH_DOCS_LIVE.resolve(strict=False)
-            )
-        except OSError:
-            pass
-    return state
-
-
 def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
     manifest = apm_manifest_state()
     lockfile = apm_lockfile_state()
     apm_user_project = apm_user_project_state()
-    codex_skills = codex_skill_names()
-    live_skill = codex_live_skill_state()
+    codex_baseline = codex_split_baseline_state()
 
     if not manifest["exists"]:
         add_finding(
@@ -3369,51 +3425,84 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             ),
         )
 
-    if codex_skills["baseline_missing"] or not live_skill["path_present"]:
+    if not codex_baseline["exists"]:
         add_finding(
             findings,
             area="ai_tools",
             classification="missing",
             name="ai_tools.codex_baseline",
             severity="medium",
-            summary="Codex is missing the live baseline grill-with-docs skill.",
-            details={"skills": codex_skills, "live_skill": live_skill},
+            summary="Codex global skills directory is missing.",
+            details=codex_baseline,
             recommendation=(
-                "Keep live Codex deployment blocked until target-write approval is "
-                "granted and the generated split-skill output has been reviewed."
+                "Restore the approved APM-managed Codex split baseline through a "
+                "separate target-write gate."
             ),
         )
-    else:
+    elif codex_baseline["canonical"]:
         add_finding(
             findings,
             area="ai_tools",
-            classification="migration_pending",
+            classification="canonical",
             name="ai_tools.codex_baseline",
-            severity="low",
-            summary=(
-                "Codex has the live baseline skill, but it is not known to be "
-                "generated by the corrected APM baseline."
-            ),
-            details={"skills": codex_skills, "live_skill": live_skill},
+            summary="Codex has the approved APM-managed split skill baseline.",
+            details=codex_baseline,
+        )
+    else:
+        classification = "missing" if codex_baseline["missing_files"] else "drift"
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification=classification,
+            name="ai_tools.codex_baseline",
+            severity="medium",
+            summary="Codex live skills do not match the approved split baseline.",
+            details=codex_baseline,
             recommendation=(
-                "Keep live Codex deployment blocked until target-write approval is "
-                "granted and the generated split-skill output has been reviewed."
+                "Review the live Codex target output against the APM manifest and "
+                "use a separate approved deployment or cleanup gate for changes."
             ),
         )
 
-    if codex_skills["excluded_present"]:
+    if codex_baseline["extra_non_vendor_skills"]:
         add_finding(
             findings,
             area="ai_tools",
-            classification="intentionally_excluded",
-            name="ai_tools.codex_excluded_assets",
-            severity="low",
-            summary="Codex has local skills that are intentionally excluded from the Global AI Baseline.",
+            classification="drift",
+            name="ai_tools.codex_extra_skills",
+            severity="medium",
+            summary="Codex has non-vendor skills outside the approved APM baseline.",
             details={
-                "path": codex_skills["path"],
-                "excluded_present": codex_skills["excluded_present"],
+                "path": codex_baseline["path"],
+                "baseline_skill_roots": codex_baseline["baseline_skill_roots"],
+                "allowed_vendor_runtime_skills": codex_baseline[
+                    "allowed_vendor_runtime_skills"
+                ],
+                "extra_non_vendor_skills": codex_baseline[
+                    "extra_non_vendor_skills"
+                ],
             },
-            recommendation="Remove excluded local skills only in a later approved cleanup task.",
+            recommendation=(
+                "Declare intentional shared skills through APM or remove undeclared "
+                "local skills through a separate cleanup gate."
+            ),
+        )
+
+    if codex_baseline["excluded_present"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="drift",
+            name="ai_tools.codex_excluded_assets",
+            severity="medium",
+            summary="Codex has skills that are explicitly excluded from the Global AI Baseline.",
+            details={
+                "path": codex_baseline["path"],
+                "excluded_present": codex_baseline["excluded_present"],
+            },
+            recommendation=(
+                "Remove excluded local skills only through a separate approved cleanup task."
+            ),
         )
 
 
