@@ -46,7 +46,8 @@ Read-only commands used:
 
 Current local facts:
 
-- Homebrew declares `ollama`, `chatgpt`, `chatgpt-atlas`, and `codex`.
+- Homebrew declares `ollama`, `chatgpt`, `chatgpt-atlas`, `codex`,
+  `claude`, and `claude-code`.
 - Codex is installed as Homebrew cask `codex` version `0.142.4`; Homebrew
   metadata reports available cask version `0.142.5`. This task does not upgrade
   it.
@@ -61,7 +62,12 @@ Current local facts:
   `apm update`, `apm prune`, `apm uninstall`, and `apm self-update` mutate
   local state.
 - Claude Code is present at `~/.local/bin/claude`, resolves to
-  `~/.local/share/claude/versions/2.1.197`, and reports `2.1.197`.
+  `~/.local/share/claude/versions/2.1.198`, and reports
+  `2.1.198 (Claude Code)`. The repo now declares `cask "claude-code"` as the
+  target stable installer, so the live manual CLI is migration-pending.
+- Claude Desktop is present at `/Applications/Claude.app` version `1.18286.0`.
+  The repo now declares `cask "claude"` as the target installer, so the live
+  manual app is migration-pending.
 - opencode is installed as npm global `opencode-ai` version `1.16.2` under the
   `fnm` default Node, with a binary under the `fnm` default alias path. It is
   not visible as `opencode` on the current Codex process PATH.
@@ -88,7 +94,7 @@ Current local facts:
 | Codex CLI | `/opt/homebrew/bin/codex`; app resource binary in `/Applications/Codex.app` | `~/.codex` plus app/runtime cache paths | Homebrew cask plus app runtime | canonical install surface | Keep Codex declared through Homebrew. Keep `~/.codex` as Sensitive Local State; mutate baseline skills only through approved APM target-write gates. |
 | Codex runtime helpers | `codex-execve-wrapper`, `codex_chronicle` in Codex app/runtime paths | Codex app runtime directories and temporary command wrappers | app_runtime | managed context | Do not classify these as package-manager drift. They are execution context from the Codex app. |
 | Codex skills | APM-managed split baseline under `~/.codex/skills`: `grill-with-docs`, `grilling`, and `domain-modeling`; system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | APM target output plus app/runtime | canonical baseline plus vendor state | Keep the split `grill-with-docs` workflow as the only target baseline. Keep `using-superpowers` absent. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |
-| Claude Code | `~/.local/bin/claude` -> `~/.local/share/claude/versions/2.1.197` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | manual/local | managed exception | Keep documented as manual-local until APM or a declared installer owns cross-surface assets. Do not remove or migrate existing Claude state without a snapshot and approval. |
+| Claude Code and Desktop | CLI: `~/.local/bin/claude` -> `~/.local/share/claude/versions/2.1.198`; Desktop: `/Applications/Claude.app` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | manual/local now; target Homebrew casks `claude-code` and `claude` | migration pending | Migrate both harness surfaces to Homebrew in a separate approved reinstall task. Do not remove or migrate existing Claude state without a snapshot and approval. |
 | Claude plugins and commands | plugin cache under `~/.claude/plugins` | `~/.claude/plugins/cache`, `~/.claude/plugins/marketplaces`, install manifests | Claude-managed local cache | manual local / approval-gated cleanup | Do not commit cache contents. Reinstall selected shared assets through APM later, then remove old cache copies only behind approval. |
 | opencode | `opencode-ai` npm global binary under the `fnm` default alias path | `~/.local/share/opencode`, `~/.config/opencode` | npm global plus local config | legacy managed exception | Do not add to the Global AI Baseline now. Decide later whether opencode is a project-local tool, declared AI Tool Surface, or removal candidate. |
 | Pi | `~/Library/pnpm/pi` | pnpm global package `@mariozechner/pi-coding-agent` | pnpm global | project-local / approval-gated removal | Do not add to `system/packages/pnpm-global.txt` as a canonical baseline. Migrate to APM or remove only after approval. |
@@ -198,8 +204,8 @@ name exactly which files or directories are in scope.
 
 ## Open Questions
 
-1. Should Claude Code itself remain manually installed, or should a later task
-   find a declared installer for the CLI binary separately from assets?
+1. When should the approved reinstall task migrate Claude Code and Claude
+   Desktop from manual-local installs to the declared Homebrew casks?
 2. Should opencode remain available as a project-local experiment, or should it
    be removed after APM/Codex/Claude coverage is stable?
 3. Should Pi be intentionally excluded, or is there a specific project that

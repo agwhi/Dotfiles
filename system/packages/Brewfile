@@ -62,6 +62,8 @@ brew "microsoft/apm/apm" # AI Asset Manager
 brew "ollama"        # Local LLM runner
 cask "chatgpt"       # AI assistant
 cask "chatgpt-atlas" # ChatGPT browser
+cask "claude"        # Claude Desktop GUI surface
+cask "claude-code"   # Claude Code stable CLI surface
 cask "codex"         # OpenAI Codex CLI surface
 
 # --- Network Security & Privacy ---

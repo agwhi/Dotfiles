@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import plistlib
 import re
 import shutil
 import subprocess
@@ -43,6 +44,7 @@ APM_USER_LOCKFILE = HOME / ".apm/apm.lock.yaml"
 CODEX_SKILLS_DIR = HOME / ".codex/skills"
 CLAUDE_COMMAND = HOME / ".local/bin/claude"
 CLAUDE_VERSIONS_DIR = HOME / ".local/share/claude/versions"
+CLAUDE_DESKTOP_APP = Path("/Applications/Claude.app")
 DEV_ENV = ROOT / "scripts/dev_env.sh"
 MISE_CONFIG = ROOT / "system/mise/config.toml"
 MISE_USER_CONFIG = HOME / ".config/mise/config.toml"
@@ -3256,14 +3258,46 @@ def claude_code_state() -> dict[str, Any]:
     paths = which_all("claude")
     primary_path = paths[0] if paths else None
     primary_provenance = path_provenance(primary_path)
+    declared = parse_brewfile(BREWFILE)
+    declared_casks = declared["cask"]
+    installed_casks: set[str] = set()
+    cask_result = command_result(["brew", "list", "--cask"]) if shutil.which("brew") else None
+    if cask_result and cask_result["ok"]:
+        installed_casks = set(lines(cask_result["stdout"]))
+    claude_code_declared = "claude-code" in declared_casks
+    claude_code_latest_declared = "claude-code@latest" in declared_casks
+    claude_desktop_declared = "claude" in declared_casks
+    claude_code_cask_installed = equivalent_member("claude-code", installed_casks)
+    claude_code_latest_cask_installed = equivalent_member(
+        "claude-code@latest", installed_casks
+    )
+    claude_desktop_cask_installed = equivalent_member("claude", installed_casks)
     state: dict[str, Any] = {
         "expected_command": str(CLAUDE_COMMAND),
+        "target_casks": {
+            "cli_stable": "claude-code",
+            "cli_latest": "claude-code@latest",
+            "desktop": "claude",
+        },
+        "declared_casks": {
+            "cli_stable": claude_code_declared,
+            "cli_latest": claude_code_latest_declared,
+            "desktop": claude_desktop_declared,
+        },
+        "installed_casks": {
+            "cli_stable": claude_code_cask_installed,
+            "cli_latest": claude_code_latest_cask_installed,
+            "desktop": claude_desktop_cask_installed,
+        },
         "paths": [path_provenance(path) for path in paths],
         "active_command_present": bool(primary_path),
         "active_command": primary_provenance,
+        "homebrew_cli_active": primary_provenance.get("source") == "homebrew",
         "manual_local": primary_provenance.get("source") == "manual/local",
         "install_source": primary_provenance.get("source", "absent"),
-        "installer_discoverable_from_metadata": False,
+        "installer_discoverable_from_metadata": bool(
+            primary_provenance.get("source") == "homebrew"
+        ),
         "command_symlink": {
             "path": str(CLAUDE_COMMAND),
             "path_present": path_exists_or_symlink(CLAUDE_COMMAND),
@@ -3276,9 +3310,32 @@ def claude_code_state() -> dict[str, Any]:
         "versioned_artifacts": [],
         "active_version": None,
         "old_versions": [],
-        "classification": "managed_exception",
+        "desktop_app": {
+            "path": str(CLAUDE_DESKTOP_APP),
+            "present": CLAUDE_DESKTOP_APP.is_dir(),
+            "homebrew_cask_installed": claude_desktop_cask_installed,
+            "declared_cask": claude_desktop_declared,
+            "bundle_identifier": None,
+            "version": None,
+        },
+        "classification": "migration_pending",
         "scan_errors": [],
     }
+
+    info_plist = CLAUDE_DESKTOP_APP / "Contents/Info.plist"
+    if info_plist.is_file():
+        try:
+            with info_plist.open("rb") as handle:
+                plist = plistlib.load(handle)
+            state["desktop_app"]["bundle_identifier"] = plist.get("CFBundleIdentifier")
+            state["desktop_app"]["version"] = (
+                plist.get("CFBundleShortVersionString")
+                or plist.get("CFBundleVersion")
+            )
+        except (OSError, plistlib.InvalidFileException) as exc:
+            state["scan_errors"].append(
+                f"claude desktop plist: {type(exc).__name__}: {exc}"
+            )
 
     if CLAUDE_COMMAND.is_symlink():
         try:
@@ -3599,41 +3656,113 @@ def scan_claude_code(findings: list[dict[str, Any]]) -> None:
     state = claude_code_state()
     command_details = {
         "expected_command": state["expected_command"],
+        "target_casks": state["target_casks"],
+        "declared_casks": state["declared_casks"],
+        "installed_casks": state["installed_casks"],
         "paths": state["paths"],
         "active_command": state["active_command"],
         "command_symlink": state["command_symlink"],
         "active_version": state["active_version"],
         "install_source": state["install_source"],
+        "homebrew_cli_active": state["homebrew_cli_active"],
         "manual_local": state["manual_local"],
         "installer_discoverable_from_metadata": state[
             "installer_discoverable_from_metadata"
         ],
         "scan_errors": state["scan_errors"],
     }
-    if state["active_command_present"]:
+    if state["active_command_present"] and state["homebrew_cli_active"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="claude.command",
+            summary="Claude Code active CLI resolves through the declared Homebrew cask.",
+            details=command_details,
+        )
+    elif state["active_command_present"] and state["declared_casks"]["cli_stable"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="claude.command",
+            severity="low",
+            summary="Claude Code is declared in the Brewfile, but the active CLI is still manual-local.",
+            details=command_details,
+            recommendation=(
+                "Migrate Claude Code to the stable Homebrew cask in a separate "
+                "approved reinstall task; do not mutate live Claude state from doctor."
+            ),
+        )
+    elif state["active_command_present"]:
         add_finding(
             findings,
             area="ai_tools",
             classification="managed_exception",
             name="claude.command",
             severity="low",
-            summary="Claude Code active CLI is present as a manual-local managed exception.",
+            summary="Claude Code active CLI is present, but no repo-owned installer is declared.",
             details=command_details,
-            recommendation=(
-                "Keep Claude Code manual-local until a later task declares the CLI "
-                "install path; do not mutate live Claude state from doctor."
-            ),
+            recommendation="Declare a Claude Code installer before cleanup or migration.",
         )
     else:
         add_finding(
             findings,
             area="ai_tools",
-            classification="missing",
+            classification=(
+                "declared_absent" if state["declared_casks"]["cli_stable"] else "missing"
+            ),
             name="claude.command",
             severity="low",
             summary="Claude Code active CLI is not present on PATH.",
             details=command_details,
-            recommendation="Install or declare Claude Code only through a separate approved task.",
+            recommendation="Install Claude Code only through a separate approved Homebrew task.",
+        )
+
+    if state["desktop_app"]["homebrew_cask_installed"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="claude.desktop",
+            summary="Claude Desktop is installed through the declared Homebrew cask.",
+            details=state["desktop_app"],
+        )
+    elif state["desktop_app"]["present"] and state["desktop_app"]["declared_cask"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="claude.desktop",
+            severity="low",
+            summary="Claude Desktop is declared in the Brewfile, but the live app is not Homebrew-owned yet.",
+            details=state["desktop_app"],
+            recommendation=(
+                "Migrate Claude Desktop to the Homebrew cask in a separate approved "
+                "reinstall task; do not remove sensitive ~/.claude state."
+            ),
+        )
+    elif state["desktop_app"]["present"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="managed_exception",
+            name="claude.desktop",
+            severity="low",
+            summary="Claude Desktop is present outside a repo-owned installer.",
+            details=state["desktop_app"],
+            recommendation="Declare or remove Claude Desktop only through a separate approved task.",
+        )
+    elif state["desktop_app"]["declared_cask"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="declared_absent",
+            name="claude.desktop",
+            severity="low",
+            summary="Claude Desktop is declared in the Brewfile but is not installed.",
+            details=state["desktop_app"],
+            recommendation="Install Claude Desktop only through a separate approved Homebrew task.",
         )
 
     old_version_artifacts = [

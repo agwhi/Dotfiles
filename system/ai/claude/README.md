@@ -1,14 +1,19 @@
 # Claude
 
-Claude Code is currently a manual-local AI Tool Surface.
+Claude Desktop and Claude Code should be repo-owned AI Tool Surfaces through
+Homebrew casks.
 
 Current local state:
 
-- Binary: `~/.local/bin/claude`
-- Resolved binary: `~/.local/share/claude/versions/2.1.198`
-- Version observed: `2.1.198 (Claude Code)`
-- Install source: `manual/local`; the original installer is not discoverable
-  from the allowed metadata-only inspection.
+- CLI binary: `~/.local/bin/claude`
+- Resolved CLI binary: `~/.local/share/claude/versions/2.1.198`
+- CLI version observed: `2.1.198 (Claude Code)`
+- CLI install source: `manual/local`; migrate to the declared Homebrew stable
+  cask `claude-code` in a later approved reinstall task.
+- Desktop app: `/Applications/Claude.app`
+- Desktop version observed: `1.18286.0`
+- Desktop install source: manual app install; migrate to the declared
+  Homebrew cask `claude` in a later approved reinstall task.
 - Config and cache roots: `~/.claude`, `~/.claude.json`,
   `~/.local/share/claude`
 - Older versioned executable artifacts observed: `2.1.187`, `2.1.196`, and
@@ -16,12 +21,24 @@ Current local state:
 
 ## Classification
 
-Claude Code is a managed exception until the repo declares the intended install
-path for the CLI binary. Its local configuration, permissions, plugin caches,
-marketplace clones, histories, backups, and app state are Sensitive Local State.
+Claude Code and Claude Desktop are migration-pending until the live installs
+are replaced by the Brewfile-declared casks:
+
+- `cask "claude-code"` for the stable Claude Code terminal harness.
+- `cask "claude"` for Claude Desktop.
+
+The official Claude Code docs distinguish the stable `claude-code` cask from
+`claude-code@latest`; use the stable cask unless a later ADR deliberately
+chooses the latest release channel.
+
+Local configuration, permissions, plugin caches, marketplace clones, histories,
+backups, and app state are Sensitive Local State.
 
 Older versioned executable artifacts are approval-gated cleanup candidates
-only. Do not remove them in a documentation, doctor, or APM baseline task.
+only. Do not remove them in a documentation, doctor, or APM baseline task. A
+later reinstall task should snapshot safe metadata, uninstall the manual CLI
+and app surfaces, install the Homebrew casks, and verify `claude` resolves
+through Homebrew before cleaning old version files.
 
 Claude plugin cache contents are not source-of-truth assets. If a plugin or
 skill should become part of the Global AI Baseline, declare its package source

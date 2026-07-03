@@ -9,6 +9,11 @@ sets the Global AI Baseline to only `grill-with-docs`; selecting APM does not
 promote `using-superpowers`, Pi, opencode, or project-specific assets into the
 global baseline.
 
+AI harness binaries and apps should be reproducible from the package manifests
+where possible. Codex, Claude Desktop, and the stable Claude Code terminal
+harness are Homebrew cask-owned surfaces; APM owns shared AI Assets installed
+into those surfaces after separate target-write gates.
+
 ## Consequences
 
 The active `apm` command resolves through the Homebrew formula
