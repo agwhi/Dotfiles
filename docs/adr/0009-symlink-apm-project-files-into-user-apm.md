@@ -14,8 +14,7 @@ symlink model:
 ## Consequences
 
 APM remains the AI Asset Manager. It should materialize generated modules and
-target output after the locked package source is corrected and a later
-deployment gate approves writing target files.
+target output after a later deployment gate approves writing target files.
 
 The Orchestrator Repo should not keep a repo-owned Codex skill tree as the
 primary source of truth. Do not symlink `system/ai/codex/skills/grill-with-docs`
@@ -26,6 +25,7 @@ Running the normal symlink setup on a machine may back up existing
 This is acceptable because the repo files are the source of truth for APM's
 baseline project.
 
-Live Codex deployment remains blocked. The currently locked public
-`grill-with-docs` package is not equivalent to the desired live skill, and
-`using-superpowers` remains intentionally excluded from the Global AI Baseline.
+Live Codex deployment remains blocked until an explicit target-write gate. The
+APM files now pin the public `grill-with-docs` wrapper plus its public
+`grilling` and `domain-modeling` dependency skills, and `using-superpowers`
+remains intentionally excluded from the Global AI Baseline.

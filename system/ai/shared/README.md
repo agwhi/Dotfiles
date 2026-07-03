@@ -15,15 +15,19 @@ The only target Baseline AI Asset is:
 - `grill-with-docs`
 
 Current source status: `system/ai/apm/apm.yml` and `apm.lock.yaml` pin the
-public package
-`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. Scratch preview
-showed that package is a wrapper over `/grilling` and `/domain-modeling`, so it
-is not yet equivalent to the current self-contained live Codex skill.
+public `grill-with-docs` wrapper plus the public dependency skills it invokes:
 
-The public dependency-expansion route was tested on 2026-07-03 and does not
-resolve the mismatch at `v1.0.1`: `domain-modeling` exists, but
-`skills/engineering/grilling` is absent. Live Codex deployment remains blocked
-until the APM package source is corrected.
+- `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`
+- `mattpocock/skills/skills/productivity/grilling#v1.0.1`
+- `mattpocock/skills/skills/engineering/domain-modeling#v1.0.1`
+
+Scratch validation on 2026-07-03 showed that `grilling` lives under
+`skills/productivity/grilling`, not `skills/engineering/grilling`. The frozen
+scratch install generated `grill-with-docs`, `grilling`, and
+`domain-modeling`, and it did not generate `using-superpowers`.
+
+Live Codex deployment remains blocked until a later gate approves target
+writes and reviews the generated split-skill layout.
 
 The following are intentionally not baseline assets:
 
@@ -42,8 +46,8 @@ asset is promoted, declare its package source through APM and map each target
 surface explicitly.
 
 The Orchestrator Repo exposes APM's project files through `~/.apm` symlinks;
-APM should own generated modules and target output after the package source is
-corrected.
+APM should own generated modules and target output after target writes are
+approved.
 
 ## Source Versus Adapter
 

@@ -36,7 +36,8 @@ Current global skills include:
 Target state:
 
 - Keep `grill-with-docs` as the only Baseline AI Asset.
-- Receive baseline assets from APM after the locked package source is corrected.
+- Receive baseline assets from APM after the corrected public source is
+  approved for target writes.
 - Treat `using-superpowers` as approval-gated cleanup, not as baseline.
 - Treat system, runtime, and plugin-provided skills as vendor or app state
   unless intentionally declared.
@@ -44,24 +45,26 @@ Target state:
 ## APM Status
 
 `system/ai/apm/apm.yml` and `system/ai/apm/apm.lock.yaml` now pin the public
-`grill-with-docs` APM package. Scratch preview showed that the package is a
-thin wrapper that invokes `/grilling` and `/domain-modeling`, while the current
-live Codex skill is self-contained and includes the detailed workflow plus
-format references.
+`grill-with-docs` APM package plus the public dependency skills it invokes:
 
-Do not deploy the pinned public package over `~/.codex/skills/grill-with-docs`.
-The 2026-07-03 expanded scratch test showed that `domain-modeling` exists, but
-`mattpocock/skills/skills/engineering/grilling#v1.0.1` is absent at that path.
-The current public package is therefore not equivalent to the desired live
-skill.
+- `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`
+- `mattpocock/skills/skills/productivity/grilling#v1.0.1`
+- `mattpocock/skills/skills/engineering/domain-modeling#v1.0.1`
+
+Scratch preview showed that `grill-with-docs` is a thin wrapper that invokes
+`/grilling` and `/domain-modeling`, while the current live Codex skill is
+self-contained and includes the detailed workflow plus format references. The
+2026-07-03 source investigation found that `grilling` lives under
+`skills/productivity/grilling`, not `skills/engineering/grilling`, and a frozen
+scratch install generated all three public skills without `using-superpowers`.
 
 APM's default Codex skill output is `.agents/skills/`. Codex desktop currently
 discovers the live global skill from `~/.codex/skills`, and the scratch preview
 confirmed APM can produce that layout with `--legacy-skill-paths`.
 
-Do not run live Codex deployment yet. After the package source is corrected and
-a later deployment gate approves target writes, APM should materialize the
-Codex target output.
+Do not run live Codex deployment yet. After a later deployment gate approves
+target writes and reviews the generated split-skill layout, APM should
+materialize the Codex target output.
 
 ## Repo Ownership
 

@@ -1,7 +1,17 @@
 lockfile_version: '1'
-generated_at: '2026-07-02T23:25:04.181862+00:00'
+generated_at: '2026-07-03T10:07:03.338436+00:00'
 apm_version: 0.23.1
 dependencies:
+- repo_url: mattpocock/skills
+  name: skills
+  host: github.com
+  resolved_commit: 2454c95dc305c158b21a0cdafeb728879dd0359a
+  resolved_ref: v1.0.1
+  version: unknown
+  virtual_path: skills/engineering/domain-modeling
+  is_virtual: true
+  package_type: claude_skill
+  content_hash: sha256:67343881f5def98487d56243155716110afbcbf22ec92421c882d532b941cb17
 - repo_url: mattpocock/skills
   name: skills
   host: github.com
@@ -12,3 +22,13 @@ dependencies:
   is_virtual: true
   package_type: claude_skill
   content_hash: sha256:e7ef25bbee50cda2eb7b3a8ef541db0a0396dad7d369f7d14fb610671dd1864b
+- repo_url: mattpocock/skills
+  name: skills
+  host: github.com
+  resolved_commit: 2454c95dc305c158b21a0cdafeb728879dd0359a
+  resolved_ref: v1.0.1
+  version: unknown
+  virtual_path: skills/productivity/grilling
+  is_virtual: true
+  package_type: claude_skill
+  content_hash: sha256:ef685a6fa0bbe73b05bbd8dc1ec97258191587f07c6aa7dbc9006675ceb8f90f

@@ -9,8 +9,12 @@ description: Codex-first Global AI Baseline for this dotfiles repo.
 targets:
   - codex
 
-# The only intended baseline asset is grill-with-docs.
+# The only intended baseline asset is grill-with-docs. Its public v1.0.1
+# wrapper invokes grilling and domain-modeling, so pin those public dependency
+# skills too.
 # using-superpowers is intentionally excluded.
 dependencies:
   apm:
     - mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1
+    - mattpocock/skills/skills/productivity/grilling#v1.0.1
+    - mattpocock/skills/skills/engineering/domain-modeling#v1.0.1

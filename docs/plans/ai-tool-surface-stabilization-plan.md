@@ -22,7 +22,8 @@ source policy: custom skills, prompts, agents, templates, and workflow artifacts
 can live in a Companion Repo, local bundle, Git source, or marketplace, but the
 Orchestrator Repo should declare the laptop's Global AI Baseline through APM.
 ADR-0009 links the repo APM manifest and lockfile into `~/.apm`; APM remains
-responsible for generated modules and target placement after package correction.
+responsible for generated modules and target placement after target-write
+approval.
 
 Keep project-specific AI Assets project-local unless Alex promotes them to the
 Global AI Baseline after repeated cross-project use.
@@ -97,8 +98,7 @@ Current local facts:
 
 The shared source should be conceptual, not a copied tree per tool. Author each
 Shared AI Asset once, declare and lock it through APM, and let APM materialize
-the tool-specific output after the package source is corrected and target
-writes are approved.
+the tool-specific output after target writes are approved.
 
 The first Global AI Baseline should contain only:
 
@@ -181,7 +181,7 @@ name exactly which files or directories are in scope.
 1. Link `~/.apm/apm.yml` to `system/ai/apm/apm.yml` through normal setup.
 2. Link `~/.apm/apm.lock.yaml` to `system/ai/apm/apm.lock.yaml` through normal setup.
 3. Let setup back up any existing live APM project files before replacing them.
-4. Keep live Codex deployment blocked until the package source is corrected.
+4. Keep live Codex deployment blocked until a target-write gate is approved.
 5. Verify doctor reports repo APM files separately from live APM symlink state.
 
 ### P2 Cleanup Behind Approval
@@ -195,11 +195,9 @@ name exactly which files or directories are in scope.
 
 ## Open Questions
 
-1. Which package source should make `grill-with-docs` equivalent to the desired
-   live skill before Codex deployment?
-2. Should Claude Code itself remain manually installed, or should a later task
+1. Should Claude Code itself remain manually installed, or should a later task
    find a declared installer for the CLI binary separately from assets?
-3. Should opencode remain available as a project-local experiment, or should it
+2. Should opencode remain available as a project-local experiment, or should it
    be removed after APM/Codex/Claude coverage is stable?
-4. Should Pi be intentionally excluded, or is there a specific project that
+3. Should Pi be intentionally excluded, or is there a specific project that
    should own it locally?

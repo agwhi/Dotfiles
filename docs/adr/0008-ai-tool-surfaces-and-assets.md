@@ -19,9 +19,9 @@ Homebrew formula and confirms PATH precedence. No APM update, prune, uninstall,
 or self-update command should run without an explicit Reset Approval Gate.
 
 The APM package evidence files are `system/ai/apm/apm.yml` and
-`system/ai/apm/apm.lock.yaml`. The first lockfile pins the public
-`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` package, but a
-scratch preview showed that package is only a thin wrapper over `/grilling` and
-`/domain-modeling`. ADR-0009 exposes the repo APM project to `~/.apm` with
-symlinks, while live Codex target placement remains blocked until the package
-source is corrected.
+`system/ai/apm/apm.lock.yaml`. The lockfile pins the public
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` wrapper plus its
+public `grilling` and `domain-modeling` dependency skills at the same
+`v1.0.1` tag. ADR-0009 exposes the repo APM project to `~/.apm` with symlinks,
+while live Codex target placement remains blocked until a later deployment gate
+approves target writes and reviews the generated split-skill layout.

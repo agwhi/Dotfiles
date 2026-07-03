@@ -21,6 +21,11 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - older system Python fallback
     tomllib = None  # type: ignore[assignment]
 
+try:
+    import yaml
+except ModuleNotFoundError:  # pragma: no cover - optional local dependency
+    yaml = None  # type: ignore[assignment]
+
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
@@ -95,8 +100,22 @@ DEV_APP_RE = re.compile(
 AI_COMMANDS = ["codex", "claude", "opencode", "open-code", "pi", "apm"]
 BASELINE_AI_ASSETS = {"grill-with-docs"}
 EXCLUDED_AI_ASSETS = {"using-superpowers"}
+APM_BASELINE_TARGETS = ["codex"]
 GRILL_WITH_DOCS_REF = "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1"
+GRILL_WITH_DOCS_APM_REFS = [
+    "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1",
+    "mattpocock/skills/skills/productivity/grilling#v1.0.1",
+    "mattpocock/skills/skills/engineering/domain-modeling#v1.0.1",
+]
+GRILL_WITH_DOCS_VIRTUAL_PATHS = [
+    "skills/engineering/grill-with-docs",
+    "skills/productivity/grilling",
+    "skills/engineering/domain-modeling",
+]
 GRILL_WITH_DOCS_COMMIT = "2454c95dc305c158b21a0cdafeb728879dd0359a"
+GRILL_WITH_DOCS_RESOLVED_REF = "v1.0.1"
+GRILL_WITH_DOCS_REPO_URL = "mattpocock/skills"
+GRILL_WITH_DOCS_HOST = "github.com"
 SHELL_PARITY_COMMANDS = [
     "node",
     "npm",
@@ -271,6 +290,264 @@ def clean_manifest_lines(path: Path) -> list[str]:
         if line:
             result.append(line)
     return result
+
+
+def yaml_parser_mode() -> str:
+    return "pyyaml" if yaml is not None else "conservative_text"
+
+
+def yaml_parser_notes() -> list[str]:
+    if yaml is not None:
+        return ["Parsed with PyYAML safe_load."]
+    return [
+        "PyYAML is unavailable; parsed only simple top-level YAML blocks.",
+        "Full-line comments and blank lines are ignored; APM #version suffixes are treated as scalar text.",
+        "Canonical status requires exact parsed targets, dependencies.apm refs, lockfile virtual paths, refs, and commits.",
+    ]
+
+
+def load_yaml_with_optional_pyyaml(path: Path) -> tuple[Any | None, list[str]]:
+    if yaml is None:
+        return None, []
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}, []
+    except OSError as exc:
+        return None, [f"{type(exc).__name__}: {exc}"]
+    except Exception as exc:
+        return None, [f"{type(exc).__name__}: {exc}"]
+
+
+def simple_yaml_content_lines(text: str) -> list[str]:
+    return [
+        raw.rstrip()
+        for raw in text.splitlines()
+        if raw.strip() and not raw.lstrip().startswith("#")
+    ]
+
+
+def normalize_simple_yaml_scalar(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1]
+    return value
+
+
+def extract_top_level_yaml_block(
+    lines_: list[str],
+    key: str,
+) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    start: int | None = None
+    key_pattern = re.compile(rf"^{re.escape(key)}:\s*$")
+    inline_pattern = re.compile(rf"^{re.escape(key)}:\s+.+$")
+    for index, line in enumerate(lines_):
+        if key_pattern.match(line):
+            start = index + 1
+            break
+        if inline_pattern.match(line):
+            errors.append(f"unsupported inline top-level {key} value")
+            return [], errors
+
+    if start is None:
+        errors.append(f"missing top-level {key} block")
+        return [], errors
+
+    block: list[str] = []
+    top_level_key = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*:\s*(?:.*)$")
+    for line in lines_[start:]:
+        if top_level_key.match(line):
+            break
+        block.append(line)
+    return block, errors
+
+
+def duplicate_values(values: list[str]) -> list[str]:
+    return sorted(value for value, count in Counter(values).items() if count > 1)
+
+
+def missing_expected_values(values: list[str], expected: list[str]) -> list[str]:
+    present = Counter(values)
+    return sorted(value for value in expected if present[value] == 0)
+
+
+def unexpected_values(values: list[str], expected: list[str]) -> list[str]:
+    expected_set = set(expected)
+    return sorted(value for value in set(values) if value not in expected_set)
+
+
+def values_match_exactly(values: list[str], expected: list[str]) -> bool:
+    return Counter(values) == Counter(expected)
+
+
+def normalize_yaml_string_list(value: Any, field: str) -> tuple[list[str], list[str]]:
+    if value is None:
+        return [], [f"missing {field}"]
+    if not isinstance(value, list):
+        return [], [f"{field} is not a list"]
+
+    result: list[str] = []
+    errors: list[str] = []
+    for item in value:
+        if isinstance(item, str):
+            result.append(item)
+        else:
+            errors.append(f"{field} contains non-string item")
+    return result, errors
+
+
+def parse_manifest_with_text_fallback(
+    text: str,
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    parser_errors: list[str] = []
+    content_lines = simple_yaml_content_lines(text)
+
+    target_block, errors = extract_top_level_yaml_block(content_lines, "targets")
+    parser_errors.extend(errors)
+    targets: list[str] = []
+    for line in target_block:
+        stripped = line.strip()
+        match = re.match(r"^-\s+(.+?)\s*$", stripped)
+        if match:
+            targets.append(normalize_simple_yaml_scalar(match.group(1)))
+        else:
+            parser_errors.append(f"unsupported targets line: {stripped}")
+
+    dependencies_block, errors = extract_top_level_yaml_block(content_lines, "dependencies")
+    parser_errors.extend(errors)
+    dependency_sections: list[str] = []
+    apm_refs: list[str] = []
+    current_section: str | None = None
+    current_section_indent: int | None = None
+
+    for line in dependencies_block:
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" "))
+        section_match = re.match(r"^([A-Za-z0-9_-]+):\s*$", stripped)
+        if section_match and indent > 0 and (
+            current_section_indent is None or indent <= current_section_indent
+        ):
+            current_section = section_match.group(1)
+            current_section_indent = indent
+            dependency_sections.append(current_section)
+            continue
+
+        if current_section == "apm" and current_section_indent is not None:
+            item_match = re.match(r"^-\s+(.+?)\s*$", stripped)
+            if indent > current_section_indent and item_match:
+                apm_refs.append(normalize_simple_yaml_scalar(item_match.group(1)))
+                continue
+
+        parser_errors.append(f"unsupported dependencies line: {stripped}")
+
+    if dependencies_block and "apm" not in dependency_sections:
+        parser_errors.append("missing dependencies.apm block")
+
+    return targets, dependency_sections, apm_refs, parser_errors
+
+
+def parse_manifest_values(path: Path, text: str) -> dict[str, Any]:
+    parser_errors: list[str] = []
+    if yaml is not None:
+        data, errors = load_yaml_with_optional_pyyaml(path)
+        parser_errors.extend(errors)
+        targets: list[str] = []
+        dependency_sections: list[str] = []
+        apm_refs: list[str] = []
+        if not parser_errors:
+            if not isinstance(data, dict):
+                parser_errors.append("manifest root is not a mapping")
+            else:
+                targets, errors = normalize_yaml_string_list(data.get("targets"), "targets")
+                parser_errors.extend(errors)
+                dependencies = data.get("dependencies")
+                if not isinstance(dependencies, dict):
+                    parser_errors.append("dependencies is not a mapping")
+                else:
+                    dependency_sections = sorted(str(key) for key in dependencies.keys())
+                    refs, errors = normalize_yaml_string_list(
+                        dependencies.get("apm"), "dependencies.apm"
+                    )
+                    apm_refs = refs
+                    parser_errors.extend(errors)
+        return {
+            "targets": targets,
+            "dependency_sections": dependency_sections,
+            "apm_refs": apm_refs,
+            "parser_errors": parser_errors,
+        }
+
+    targets, dependency_sections, apm_refs, parser_errors = parse_manifest_with_text_fallback(text)
+    return {
+        "targets": targets,
+        "dependency_sections": sorted(dependency_sections),
+        "apm_refs": apm_refs,
+        "parser_errors": parser_errors,
+    }
+
+
+def parse_lockfile_dependencies_with_text_fallback(
+    text: str,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    parser_errors: list[str] = []
+    content_lines = simple_yaml_content_lines(text)
+    dependencies_block, errors = extract_top_level_yaml_block(content_lines, "dependencies")
+    parser_errors.extend(errors)
+    dependencies: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+
+    for line in dependencies_block:
+        stripped = line.strip()
+        item_match = re.match(r"^-\s*([^:\s][^:]*):\s*(.*?)\s*$", stripped)
+        if item_match:
+            current = {
+                item_match.group(1).strip(): normalize_simple_yaml_scalar(
+                    item_match.group(2)
+                )
+            }
+            dependencies.append(current)
+            continue
+
+        field_match = re.match(r"^\s+([^:\s][^:]*):\s*(.*?)\s*$", line)
+        if current is not None and field_match:
+            current[field_match.group(1).strip()] = normalize_simple_yaml_scalar(
+                field_match.group(2)
+            )
+            continue
+
+        parser_errors.append(f"unsupported dependencies line: {stripped}")
+
+    return dependencies, parser_errors
+
+
+def parse_lockfile_dependencies(path: Path, text: str) -> tuple[list[dict[str, Any]], list[str]]:
+    parser_errors: list[str] = []
+    if yaml is not None:
+        data, errors = load_yaml_with_optional_pyyaml(path)
+        parser_errors.extend(errors)
+        if parser_errors:
+            return [], parser_errors
+        if not isinstance(data, dict):
+            return [], ["lockfile root is not a mapping"]
+        dependencies = data.get("dependencies")
+        if not isinstance(dependencies, list):
+            return [], ["dependencies is not a list"]
+        result: list[dict[str, Any]] = []
+        for item in dependencies:
+            if isinstance(item, dict):
+                result.append({str(key): value for key, value in item.items()})
+            else:
+                parser_errors.append("dependencies contains non-mapping item")
+        return result, parser_errors
+
+    return parse_lockfile_dependencies_with_text_fallback(text)
+
+
+def yamlish_string(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
 
 
 def load_toml(path: Path) -> dict[str, Any]:
@@ -2615,20 +2892,68 @@ def apm_manifest_state() -> dict[str, Any]:
     state: dict[str, Any] = {
         "path": str(APM_MANIFEST),
         "exists": APM_MANIFEST.exists(),
+        "parser": yaml_parser_mode(),
+        "parser_notes": yaml_parser_notes(),
+        "parser_errors": [],
+        "expected_targets": APM_BASELINE_TARGETS,
+        "targets": [],
         "targets_codex": False,
+        "target_set_exact": False,
+        "unexpected_targets": [],
+        "duplicate_targets": [],
+        "dependency_sections": [],
+        "unexpected_dependency_sections": [],
+        "dependencies_apm_refs": [],
         "declares_grill_with_docs": False,
+        "declares_public_dependency_set": False,
+        "expected_refs": GRILL_WITH_DOCS_APM_REFS,
+        "declared_expected_refs": [],
+        "missing_expected_refs": GRILL_WITH_DOCS_APM_REFS,
+        "unexpected_refs": [],
+        "duplicate_refs": [],
         "declares_using_superpowers": False,
+        "canonical": False,
     }
     if not APM_MANIFEST.exists():
         return state
 
     text = APM_MANIFEST.read_text(encoding="utf-8")
-    uncommented = "\n".join(
-        line for line in text.splitlines() if not line.strip().startswith("#")
+    uncommented = "\n".join(simple_yaml_content_lines(text))
+    parsed = parse_manifest_values(APM_MANIFEST, text)
+    targets = parsed["targets"]
+    apm_refs = parsed["apm_refs"]
+    dependency_sections = parsed["dependency_sections"]
+
+    state["parser_errors"] = parsed["parser_errors"]
+    state["targets"] = targets
+    state["targets_codex"] = "codex" in targets
+    state["target_set_exact"] = values_match_exactly(targets, APM_BASELINE_TARGETS)
+    state["unexpected_targets"] = unexpected_values(targets, APM_BASELINE_TARGETS)
+    state["duplicate_targets"] = duplicate_values(targets)
+    state["dependency_sections"] = dependency_sections
+    state["unexpected_dependency_sections"] = unexpected_values(
+        dependency_sections, ["apm"]
     )
-    state["targets_codex"] = bool(re.search(r"(?m)^\s*-\s*codex\s*$", uncommented))
-    state["declares_grill_with_docs"] = GRILL_WITH_DOCS_REF in uncommented
+    state["dependencies_apm_refs"] = apm_refs
+    state["declares_grill_with_docs"] = GRILL_WITH_DOCS_REF in apm_refs
+    declared_refs = [ref for ref in GRILL_WITH_DOCS_APM_REFS if ref in apm_refs]
+    state["declared_expected_refs"] = declared_refs
+    state["missing_expected_refs"] = missing_expected_values(
+        apm_refs, GRILL_WITH_DOCS_APM_REFS
+    )
+    state["unexpected_refs"] = unexpected_values(apm_refs, GRILL_WITH_DOCS_APM_REFS)
+    state["duplicate_refs"] = duplicate_values(apm_refs)
+    state["declares_public_dependency_set"] = values_match_exactly(
+        apm_refs, GRILL_WITH_DOCS_APM_REFS
+    )
     state["declares_using_superpowers"] = "using-superpowers" in uncommented
+    state["canonical"] = bool(
+        not state["parser_errors"]
+        and state["target_set_exact"]
+        and not state["unexpected_dependency_sections"]
+        and state["declares_public_dependency_set"]
+        and not state["declares_using_superpowers"]
+    )
     return state
 
 
@@ -2636,33 +2961,176 @@ def apm_lockfile_state() -> dict[str, Any]:
     state: dict[str, Any] = {
         "path": str(APM_LOCKFILE),
         "exists": APM_LOCKFILE.exists(),
+        "parser": yaml_parser_mode(),
+        "parser_notes": yaml_parser_notes(),
+        "parser_errors": [],
+        "dependency_count": 0,
+        "dependency_summaries": [],
         "pins_grill_with_docs": False,
+        "pins_public_dependency_set": False,
+        "expected_virtual_paths": GRILL_WITH_DOCS_VIRTUAL_PATHS,
+        "pinned_virtual_paths": [],
+        "missing_virtual_paths": GRILL_WITH_DOCS_VIRTUAL_PATHS,
+        "unexpected_virtual_paths": [],
+        "duplicate_virtual_paths": [],
+        "virtual_paths_exact": False,
+        "expected_repo_url": GRILL_WITH_DOCS_REPO_URL,
+        "repo_urls": [],
+        "unexpected_repo_urls": [],
+        "expected_host": GRILL_WITH_DOCS_HOST,
+        "hosts": [],
+        "unexpected_hosts": [],
+        "dependencies_from_expected_repo": False,
+        "dependencies_are_virtual": False,
+        "dependencies_resolved_to_expected_commit": False,
+        "dependencies_resolved_to_expected_ref": False,
+        "unexpected_dependencies": [],
         "resolved_commit": None,
+        "resolved_commits": [],
+        "expected_resolved_commit": GRILL_WITH_DOCS_COMMIT,
         "resolved_ref": None,
+        "resolved_refs": [],
+        "expected_resolved_ref": GRILL_WITH_DOCS_RESOLVED_REF,
         "package_type": None,
+        "package_types": [],
         "mentions_using_superpowers": False,
+        "canonical": False,
     }
     if not APM_LOCKFILE.exists():
         return state
 
     text = APM_LOCKFILE.read_text(encoding="utf-8")
-    state["pins_grill_with_docs"] = (
-        "repo_url: mattpocock/skills" in text
-        and "virtual_path: skills/engineering/grill-with-docs" in text
+    dependencies, parser_errors = parse_lockfile_dependencies(APM_LOCKFILE, text)
+    state["parser_errors"] = parser_errors
+    state["dependency_count"] = len(dependencies)
+    dependency_summaries = [
+        {
+            "repo_url": yamlish_string(dependency.get("repo_url")),
+            "host": yamlish_string(dependency.get("host")),
+            "resolved_commit": yamlish_string(dependency.get("resolved_commit")),
+            "resolved_ref": yamlish_string(dependency.get("resolved_ref")),
+            "virtual_path": yamlish_string(dependency.get("virtual_path")),
+            "is_virtual": yamlish_string(dependency.get("is_virtual")),
+            "package_type": yamlish_string(dependency.get("package_type")),
+        }
+        for dependency in dependencies
+    ]
+    state["dependency_summaries"] = dependency_summaries
+
+    pinned_virtual_paths = [
+        summary["virtual_path"]
+        for summary in dependency_summaries
+        if summary["virtual_path"] is not None
+    ]
+    state["pins_grill_with_docs"] = "skills/engineering/grill-with-docs" in pinned_virtual_paths
+    state["pinned_virtual_paths"] = pinned_virtual_paths
+    state["missing_virtual_paths"] = missing_expected_values(
+        pinned_virtual_paths, GRILL_WITH_DOCS_VIRTUAL_PATHS
     )
+    state["unexpected_virtual_paths"] = unexpected_values(
+        pinned_virtual_paths, GRILL_WITH_DOCS_VIRTUAL_PATHS
+    )
+    state["duplicate_virtual_paths"] = duplicate_values(pinned_virtual_paths)
+    state["virtual_paths_exact"] = values_match_exactly(
+        pinned_virtual_paths, GRILL_WITH_DOCS_VIRTUAL_PATHS
+    )
+    state["pins_public_dependency_set"] = state["virtual_paths_exact"]
     state["mentions_using_superpowers"] = "using-superpowers" in text
 
-    commit = re.search(r"(?m)^\s*resolved_commit:\s*([0-9a-f]+)\s*$", text)
-    if commit:
-        state["resolved_commit"] = commit.group(1)
+    commits = sorted(
+        set(
+            value
+            for value in (
+                summary["resolved_commit"] for summary in dependency_summaries
+            )
+            if value
+        )
+    )
+    state["resolved_commits"] = commits
+    if commits:
+        state["resolved_commit"] = commits[0]
 
-    ref = re.search(r"(?m)^\s*resolved_ref:\s*(\S+)\s*$", text)
-    if ref:
-        state["resolved_ref"] = ref.group(1)
+    refs = sorted(
+        set(
+            value
+            for value in (summary["resolved_ref"] for summary in dependency_summaries)
+            if value
+        )
+    )
+    state["resolved_refs"] = refs
+    if refs:
+        state["resolved_ref"] = refs[0]
 
-    package_type = re.search(r"(?m)^\s*package_type:\s*(\S+)\s*$", text)
-    if package_type:
-        state["package_type"] = package_type.group(1)
+    package_types = sorted(
+        set(
+            value
+            for value in (summary["package_type"] for summary in dependency_summaries)
+            if value
+        )
+    )
+    state["package_types"] = package_types
+    if package_types:
+        state["package_type"] = package_types[0]
+
+    repo_urls = sorted(
+        set(
+            value
+            for value in (summary["repo_url"] for summary in dependency_summaries)
+            if value
+        )
+    )
+    hosts = sorted(
+        set(value for value in (summary["host"] for summary in dependency_summaries) if value)
+    )
+    state["repo_urls"] = repo_urls
+    state["unexpected_repo_urls"] = unexpected_values(repo_urls, [GRILL_WITH_DOCS_REPO_URL])
+    state["hosts"] = hosts
+    state["unexpected_hosts"] = unexpected_values(hosts, [GRILL_WITH_DOCS_HOST])
+
+    expected_dependency_count = len(GRILL_WITH_DOCS_VIRTUAL_PATHS)
+    state["dependencies_from_expected_repo"] = bool(
+        len(dependency_summaries) == expected_dependency_count
+        and all(
+            summary["repo_url"] == GRILL_WITH_DOCS_REPO_URL
+            and summary["host"] == GRILL_WITH_DOCS_HOST
+            for summary in dependency_summaries
+        )
+    )
+    state["dependencies_are_virtual"] = bool(
+        len(dependency_summaries) == expected_dependency_count
+        and all(summary["is_virtual"] == "true" for summary in dependency_summaries)
+    )
+    state["dependencies_resolved_to_expected_commit"] = bool(
+        len(dependency_summaries) == expected_dependency_count
+        and all(
+            summary["resolved_commit"] == GRILL_WITH_DOCS_COMMIT
+            for summary in dependency_summaries
+        )
+    )
+    state["dependencies_resolved_to_expected_ref"] = bool(
+        len(dependency_summaries) == expected_dependency_count
+        and all(
+            summary["resolved_ref"] == GRILL_WITH_DOCS_RESOLVED_REF
+            for summary in dependency_summaries
+        )
+    )
+    state["unexpected_dependencies"] = [
+        summary
+        for summary in dependency_summaries
+        if summary["virtual_path"] not in GRILL_WITH_DOCS_VIRTUAL_PATHS
+        or summary["repo_url"] != GRILL_WITH_DOCS_REPO_URL
+        or summary["host"] != GRILL_WITH_DOCS_HOST
+    ]
+    state["canonical"] = bool(
+        not state["parser_errors"]
+        and state["virtual_paths_exact"]
+        and state["dependencies_from_expected_repo"]
+        and state["dependencies_are_virtual"]
+        and state["dependencies_resolved_to_expected_commit"]
+        and state["dependencies_resolved_to_expected_ref"]
+        and not state["mentions_using_superpowers"]
+        and not state["unexpected_dependencies"]
+    )
 
     return state
 
@@ -2798,17 +3266,13 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             details=manifest,
             recommendation="Restore system/ai/apm/apm.yml with the approved Global AI Baseline.",
         )
-    elif (
-        manifest["targets_codex"]
-        and manifest["declares_grill_with_docs"]
-        and not manifest["declares_using_superpowers"]
-    ):
+    elif manifest["canonical"]:
         add_finding(
             findings,
             area="ai_tools",
             classification="canonical",
             name="ai_tools.apm_manifest",
-            summary="Repo APM manifest declares the intended grill-with-docs baseline.",
+            summary="Repo APM manifest declares the intended public grill-with-docs dependency set.",
             details=manifest,
         )
     else:
@@ -2818,9 +3282,9 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             classification="drift",
             name="ai_tools.apm_manifest",
             severity="high",
-            summary="APM manifest does not match the approved Codex-first grill-with-docs baseline.",
+            summary="APM manifest does not match the approved Codex-first grill-with-docs dependency set.",
             details=manifest,
-            recommendation="Keep targets pinned to codex and declare only the approved baseline asset.",
+            recommendation="Keep targets pinned to codex and declare the approved public grill-with-docs dependency set only.",
         )
 
     if manifest["declares_using_superpowers"]:
@@ -2846,17 +3310,13 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             details=lockfile,
             recommendation="Create the lockfile only through an approved APM lock gate.",
         )
-    elif (
-        lockfile["pins_grill_with_docs"]
-        and lockfile["resolved_commit"] == GRILL_WITH_DOCS_COMMIT
-        and not lockfile["mentions_using_superpowers"]
-    ):
+    elif lockfile["canonical"]:
         add_finding(
             findings,
             area="ai_tools",
             classification="canonical",
             name="ai_tools.apm_lockfile",
-            summary="APM lockfile pins the approved public grill-with-docs package evidence.",
+            summary="APM lockfile pins the approved public grill-with-docs dependency evidence.",
             details=lockfile,
         )
     else:
@@ -2866,7 +3326,7 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             classification="drift",
             name="ai_tools.apm_lockfile",
             severity="high",
-            summary="APM lockfile does not match the approved grill-with-docs baseline.",
+            summary="APM lockfile does not match the approved grill-with-docs dependency set.",
             details=lockfile,
             recommendation="Review apm.lock.yaml before any install or deploy command.",
         )
@@ -2919,8 +3379,8 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             summary="Codex is missing the live baseline grill-with-docs skill.",
             details={"skills": codex_skills, "live_skill": live_skill},
             recommendation=(
-                "Correct the locked package source before using APM to materialize "
-                "Codex target output."
+                "Keep live Codex deployment blocked until target-write approval is "
+                "granted and the generated split-skill output has been reviewed."
             ),
         )
     else:
@@ -2936,8 +3396,8 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             ),
             details={"skills": codex_skills, "live_skill": live_skill},
             recommendation=(
-                "Keep live Codex deployment blocked until the locked package source "
-                "is equivalent to the desired skill."
+                "Keep live Codex deployment blocked until target-write approval is "
+                "granted and the generated split-skill output has been reviewed."
             ),
         )
 

@@ -10,7 +10,7 @@ cache trees, trusted-project state, or vendor runtime state.
 APM is the selected AI Asset Manager. The Orchestrator Repo owns APM's
 manifest and lockfile, exposes them to `~/.apm` with symlinks, and lets APM
 install, audit, and materialize AI Assets for the AI Tool Surfaces that consume
-them after package sources are correct.
+them after sources are declared and target writes are approved.
 
 Homebrew remains the installer for AI app surfaces declared in
 `system/packages/Brewfile`, including Codex, ChatGPT, ChatGPT Atlas, and
@@ -20,9 +20,10 @@ The Global AI Baseline is intentionally small:
 
 - `grill-with-docs`
 
-The current APM lockfile pins the public `grill-with-docs` package, but live
-deployment is blocked until the package source is made equivalent to the
-desired live skill.
+The current APM lockfile pins the public `grill-with-docs` package plus its
+public `grilling` and `domain-modeling` dependency skills. Live deployment is
+still blocked until a later gate approves target writes and reviews the
+generated split-skill layout.
 
 Do not include `using-superpowers`, Pi, opencode, broad language/framework
 skills, or project-specific prompts in the global baseline unless a later ADR
@@ -42,7 +43,7 @@ flow through the same APM declaration and lock process as third-party assets.
 
 Author each Shared AI Asset once. Let APM generate, install, or link the
 tool-specific adapter for Codex, Claude Code, opencode, Pi, or future AI Tool
-Surfaces after the package source and target writes are approved.
+Surfaces after target writes are approved.
 
 Do not copy the same prompt or skill manually across tool-specific config trees
 or keep a repo-owned Codex skill tree as the primary model. If a tool requires
