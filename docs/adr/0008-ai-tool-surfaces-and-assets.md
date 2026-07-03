@@ -24,5 +24,6 @@ The APM package evidence files are `system/ai/apm/apm.yml` and
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` wrapper plus its
 public `grilling` and `domain-modeling` dependency skills at the same
 `v1.0.1` tag. ADR-0009 exposes the repo APM project to `~/.apm` with symlinks,
-while live Codex target placement remains blocked until a later deployment gate
-approves target writes and reviews the generated split-skill layout.
+and the approved Codex deployment has materialized the split baseline. Claude
+Code, opencode, Pi, and future target surfaces still require separate
+target-write gates before APM materializes assets for them.

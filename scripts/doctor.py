@@ -41,6 +41,8 @@ APM_LOCKFILE = ROOT / "system/ai/apm/apm.lock.yaml"
 APM_USER_MANIFEST = HOME / ".apm/apm.yml"
 APM_USER_LOCKFILE = HOME / ".apm/apm.lock.yaml"
 CODEX_SKILLS_DIR = HOME / ".codex/skills"
+CLAUDE_COMMAND = HOME / ".local/bin/claude"
+CLAUDE_VERSIONS_DIR = HOME / ".local/share/claude/versions"
 DEV_ENV = ROOT / "scripts/dev_env.sh"
 MISE_CONFIG = ROOT / "system/mise/config.toml"
 MISE_USER_CONFIG = HOME / ".config/mise/config.toml"
@@ -3250,6 +3252,93 @@ def codex_split_baseline_state() -> dict[str, Any]:
     return state
 
 
+def claude_code_state() -> dict[str, Any]:
+    paths = which_all("claude")
+    primary_path = paths[0] if paths else None
+    primary_provenance = path_provenance(primary_path)
+    state: dict[str, Any] = {
+        "expected_command": str(CLAUDE_COMMAND),
+        "paths": [path_provenance(path) for path in paths],
+        "active_command_present": bool(primary_path),
+        "active_command": primary_provenance,
+        "manual_local": primary_provenance.get("source") == "manual/local",
+        "install_source": primary_provenance.get("source", "absent"),
+        "installer_discoverable_from_metadata": False,
+        "command_symlink": {
+            "path": str(CLAUDE_COMMAND),
+            "path_present": path_exists_or_symlink(CLAUDE_COMMAND),
+            "is_symlink": CLAUDE_COMMAND.is_symlink(),
+            "link_target": None,
+            "resolved_path": None,
+        },
+        "versions_path": str(CLAUDE_VERSIONS_DIR),
+        "versions_path_present": CLAUDE_VERSIONS_DIR.is_dir(),
+        "versioned_artifacts": [],
+        "active_version": None,
+        "old_versions": [],
+        "classification": "managed_exception",
+        "scan_errors": [],
+    }
+
+    if CLAUDE_COMMAND.is_symlink():
+        try:
+            state["command_symlink"]["link_target"] = os.readlink(CLAUDE_COMMAND)
+        except OSError as exc:
+            state["scan_errors"].append(
+                f"claude command symlink: {type(exc).__name__}: {exc}"
+            )
+
+    if path_exists_or_symlink(CLAUDE_COMMAND):
+        try:
+            active_resolved_path = CLAUDE_COMMAND.resolve(strict=False)
+            state["command_symlink"]["resolved_path"] = str(active_resolved_path)
+            if active_resolved_path.parent == CLAUDE_VERSIONS_DIR:
+                state["active_version"] = active_resolved_path.name
+        except OSError as exc:
+            state["scan_errors"].append(
+                f"claude command resolve: {type(exc).__name__}: {exc}"
+            )
+
+    versioned_artifacts: list[dict[str, Any]] = []
+    if CLAUDE_VERSIONS_DIR.is_dir():
+        try:
+            for item in CLAUDE_VERSIONS_DIR.iterdir():
+                if item.name.startswith("."):
+                    continue
+                if item.is_symlink():
+                    kind = "symlink"
+                elif item.is_dir():
+                    kind = "directory"
+                elif item.is_file():
+                    kind = "file"
+                else:
+                    continue
+                versioned_artifacts.append(
+                    {
+                        "name": item.name,
+                        "path": str(item),
+                        "kind": kind,
+                        "executable": os.access(item, os.X_OK),
+                    }
+                )
+        except OSError as exc:
+            state["scan_errors"].append(
+                f"claude versions: {type(exc).__name__}: {exc}"
+            )
+
+    versioned_artifacts = sorted(
+        versioned_artifacts, key=lambda artifact: str(artifact["name"])
+    )
+    state["versioned_artifacts"] = versioned_artifacts
+    if state["active_version"]:
+        state["old_versions"] = [
+            str(artifact["name"])
+            for artifact in versioned_artifacts
+            if artifact["name"] != state["active_version"]
+        ]
+    return state
+
+
 def apm_user_project_state() -> dict[str, Any]:
     files = {
         "apm.yml": symlink_file_state(APM_USER_MANIFEST, APM_MANIFEST),
@@ -3506,6 +3595,92 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
         )
 
 
+def scan_claude_code(findings: list[dict[str, Any]]) -> None:
+    state = claude_code_state()
+    command_details = {
+        "expected_command": state["expected_command"],
+        "paths": state["paths"],
+        "active_command": state["active_command"],
+        "command_symlink": state["command_symlink"],
+        "active_version": state["active_version"],
+        "install_source": state["install_source"],
+        "manual_local": state["manual_local"],
+        "installer_discoverable_from_metadata": state[
+            "installer_discoverable_from_metadata"
+        ],
+        "scan_errors": state["scan_errors"],
+    }
+    if state["active_command_present"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="managed_exception",
+            name="claude.command",
+            severity="low",
+            summary="Claude Code active CLI is present as a manual-local managed exception.",
+            details=command_details,
+            recommendation=(
+                "Keep Claude Code manual-local until a later task declares the CLI "
+                "install path; do not mutate live Claude state from doctor."
+            ),
+        )
+    else:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="missing",
+            name="claude.command",
+            severity="low",
+            summary="Claude Code active CLI is not present on PATH.",
+            details=command_details,
+            recommendation="Install or declare Claude Code only through a separate approved task.",
+        )
+
+    old_version_artifacts = [
+        artifact
+        for artifact in state["versioned_artifacts"]
+        if artifact["name"] in state["old_versions"]
+    ]
+    if state["old_versions"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="approval_gated_removal",
+            name="claude.versions.cleanup_candidates",
+            severity="low",
+            summary="Older Claude Code versioned executable artifacts are present.",
+            details={
+                "versions_path": state["versions_path"],
+                "active_version": state["active_version"],
+                "old_versions": state["old_versions"],
+                "old_version_artifacts": old_version_artifacts,
+                "scan_errors": state["scan_errors"],
+            },
+            recommendation=(
+                "Remove older Claude Code artifacts only in a separate cleanup task "
+                "with explicit approval."
+            ),
+        )
+
+    add_finding(
+        findings,
+        area="ai_tools",
+        classification="not_required",
+        name="claude.apm_baseline",
+        summary="Claude does not have an APM-managed baseline requirement yet.",
+        details={
+            "target": "claude",
+            "baseline_required": False,
+            "future_candidate_skills": CODEX_BASELINE_SKILLS,
+            "excluded_assets": sorted(EXCLUDED_AI_ASSETS),
+        },
+        recommendation=(
+            "Do not deploy APM assets to Claude until a separate target-write gate "
+            "approves the Claude target."
+        ),
+    )
+
+
 def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
     detected: dict[str, list[str]] = {}
     for command in AI_COMMANDS:
@@ -3558,6 +3733,8 @@ def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
             name="ai_tools.path",
             summary="No codex, claude, opencode, pi, apm, or obvious variants were found on PATH.",
         )
+
+    scan_claude_code(findings)
 
     apm_paths = which_all("apm")
     if apm_paths:

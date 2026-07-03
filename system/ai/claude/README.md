@@ -6,16 +6,22 @@ Current local state:
 
 - Binary: `~/.local/bin/claude`
 - Resolved binary: `~/.local/share/claude/versions/2.1.198`
-- Version observed: `2.1.198`
+- Version observed: `2.1.198 (Claude Code)`
+- Install source: `manual/local`; the original installer is not discoverable
+  from the allowed metadata-only inspection.
 - Config and cache roots: `~/.claude`, `~/.claude.json`,
   `~/.local/share/claude`
-- Older local versions observed: `2.1.187`, `2.1.196`, and `2.1.197`
+- Older versioned executable artifacts observed: `2.1.187`, `2.1.196`, and
+  `2.1.197`
 
 ## Classification
 
 Claude Code is a managed exception until the repo declares the intended install
 path for the CLI binary. Its local configuration, permissions, plugin caches,
 marketplace clones, histories, backups, and app state are Sensitive Local State.
+
+Older versioned executable artifacts are approval-gated cleanup candidates
+only. Do not remove them in a documentation, doctor, or APM baseline task.
 
 Claude plugin cache contents are not source-of-truth assets. If a plugin or
 skill should become part of the Global AI Baseline, declare its package source
@@ -25,8 +31,9 @@ through APM and generate or install the Claude target from there.
 
 Target state:
 
-- Consume `grill-with-docs` from the APM-managed baseline only after the Codex
-  baseline source mismatch is resolved.
+- No APM deployment or baseline requirement applies to Claude yet.
+- If Claude receives the shared baseline later, use the existing APM-managed
+  split baseline: `grill-with-docs`, `grilling`, and `domain-modeling`.
 - Do not include `using-superpowers` in the global baseline.
 - Keep project-specific commands, agents, and rules in the project repos that
   need them.

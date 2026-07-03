@@ -21,9 +21,10 @@ The Global AI Baseline is intentionally small:
 - `grill-with-docs`
 
 The current APM lockfile pins the public `grill-with-docs` package plus its
-public `grilling` and `domain-modeling` dependency skills. Live deployment is
-still blocked until a later gate approves target writes and reviews the
-generated split-skill layout.
+public `grilling` and `domain-modeling` dependency skills. The approved Codex
+deployment has materialized that split baseline. Claude, opencode, Pi, and
+future target surfaces still require separate target-write gates before APM
+materializes assets for them.
 
 Do not include `using-superpowers`, Pi, opencode, broad language/framework
 skills, or project-specific prompts in the global baseline unless a later ADR
@@ -43,7 +44,7 @@ flow through the same APM declaration and lock process as third-party assets.
 
 Author each Shared AI Asset once. Let APM generate, install, or link the
 tool-specific adapter for Codex, Claude Code, opencode, Pi, or future AI Tool
-Surfaces after target writes are approved.
+Surfaces after each target's writes are approved.
 
 Do not copy the same prompt or skill manually across tool-specific config trees
 or keep a repo-owned Codex skill tree as the primary model. If a tool requires
