@@ -45,13 +45,13 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   PATH resolves through `/Users/alex/.local/share/mise/shims/dotnet`; keep it
   as an approval-gated cleanup candidate until a separate task confirms no
   project, editor, workload, or Lambda workflow depends on the pkg root.
-- `/usr/local/bin/apm`: manual/pkg CLI resolving to `/usr/local/lib/apm/apm`.
-  ADR-0008 selects APM as the AI Asset Manager, and
-  `system/packages/Brewfile` now declares the official Homebrew tap formula
-  `microsoft/apm/apm` as the intended installer. Keep this manual binary as a
-  managed exception and cleanup candidate until a later task installs/verifies
-  the Homebrew formula and confirms PATH precedence. Do not self-update,
-  reinstall, prune, or remove it without approval.
+- `/usr/local/bin/apm`: legacy manual/pkg duplicate resolving to
+  `/usr/local/lib/apm/apm`. ADR-0008 selects APM as the AI Asset Manager, and
+  the active `apm` command now resolves through `/opt/homebrew/bin/apm` from
+  the declared Homebrew formula `microsoft/apm/apm`. Keep the old root-owned
+  manual binary as an approval-gated removal candidate; remove it only in a
+  separate cleanup task after confirming Homebrew PATH precedence remains
+  stable. Do not self-update, reinstall, prune, or remove it without approval.
 - `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
   Cursor cask. Keep as local app state unless a later editor policy migrates
   it.
@@ -72,11 +72,12 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 
 ## AI Approval-Gated Cleanup
 
-- `~/.codex/skills/grill-with-docs`: target Baseline AI Asset. Do not replace
-  or remove until APM can reproduce the intended baseline.
-- `~/.codex/skills/using-superpowers`: approval-gated-removal. ADR-0003 keeps
-  it out of the Global AI Baseline; remove only in a later cleanup task with a
-  Rebuild Snapshot.
+- `~/.codex/skills/grill-with-docs`, `~/.codex/skills/grilling`, and
+  `~/.codex/skills/domain-modeling`: APM-managed Codex baseline. Mutate only
+  through approved APM target-write gates.
+- `~/.codex/skills/using-superpowers`: intentionally excluded and currently
+  absent from the live baseline. Reinstall only if a later ADR changes the
+  Global AI Baseline.
 - Claude cached superpowers plugin versions under `~/.claude/plugins/cache`:
   approval-gated-removal after APM reproduces the selected baseline.
 - npm global `opencode-ai`: approval-gated-removal or migration candidate after

@@ -3561,16 +3561,51 @@ def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
 
     apm_paths = which_all("apm")
     if apm_paths:
-        add_finding(
-            findings,
-            area="ai_tools",
-            classification="managed_exception",
-            name="apm.command",
-            severity="low",
-            summary="apm is present and selected as the AI Asset Manager; the current binary is a managed exception.",
-            details={"paths": [path_provenance(path) for path in apm_paths]},
-            recommendation="Install and verify the declared Homebrew APM formula before removing the manual binary.",
-        )
+        apm_path_details = [path_provenance(path) for path in apm_paths]
+        primary_apm = apm_path_details[0]
+        manual_apm_paths = [
+            path
+            for path in apm_path_details
+            if str(path.get("source")) in {"manual/pkg", "manual/local"}
+        ]
+        if primary_apm.get("source") == "homebrew":
+            add_finding(
+                findings,
+                area="ai_tools",
+                classification="canonical",
+                name="apm.command",
+                summary="apm resolves through the declared Homebrew formula.",
+                details={
+                    "primary": primary_apm,
+                    "paths": apm_path_details,
+                    "legacy_manual_paths": manual_apm_paths,
+                },
+            )
+            if manual_apm_paths:
+                add_finding(
+                    findings,
+                    area="ai_tools",
+                    classification="approval_gated_removal",
+                    name="apm.command.legacy_manual_duplicate",
+                    severity="low",
+                    summary="A legacy manual APM binary is still present after Homebrew migration.",
+                    details={"paths": manual_apm_paths},
+                    recommendation=(
+                        "Remove the legacy /usr/local APM install only in a separate "
+                        "cleanup task after confirming Homebrew PATH precedence remains stable."
+                    ),
+                )
+        else:
+            add_finding(
+                findings,
+                area="ai_tools",
+                classification="managed_exception",
+                name="apm.command",
+                severity="low",
+                summary="apm is present and selected as the AI Asset Manager, but does not resolve through Homebrew.",
+                details={"paths": apm_path_details},
+                recommendation="Install and verify the declared Homebrew APM formula before removing the manual binary.",
+            )
     else:
         add_finding(
             findings,

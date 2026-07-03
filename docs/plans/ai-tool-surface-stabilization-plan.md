@@ -52,8 +52,10 @@ Current local facts:
   it.
 - Codex app runtime also exposes `/Applications/Codex.app/Contents/Resources`
   commands in the current app context.
-- APM is present at `/usr/local/bin/apm`, resolves to `/usr/local/lib/apm/apm`,
-  and reports version `0.23.1`.
+- APM is present at `/opt/homebrew/bin/apm`, resolves through the Homebrew
+  formula `microsoft/apm/apm`, and reports version `0.23.1`. The old
+  `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` manual install remains as a
+  lower-priority approval-gated cleanup candidate.
 - APM uses `apm.yml` and `apm.lock.yaml` for package declarations and locks.
   `apm lock` writes a lockfile without deploying files, while `apm install`,
   `apm update`, `apm prune`, `apm uninstall`, and `apm self-update` mutate
@@ -70,8 +72,9 @@ Current local facts:
   contain sensitive User-Managed AI State, histories, caches, auth-adjacent
   files, trusted-project state, local databases, generated adapters, and plugin
   caches.
-- `~/.codex/skills` currently includes system skills, runtime skills,
-  `grill-with-docs`, and `using-superpowers`.
+- `~/.codex/skills` currently includes system/runtime skills plus the
+  APM-managed split baseline skills `grill-with-docs`, `grilling`, and
+  `domain-modeling`. `using-superpowers` is intentionally excluded.
 - Claude plugin caches include installed third-party or official plugin state,
   including cached superpowers versions.
 
@@ -81,10 +84,10 @@ Current local facts:
 
 | Tool or surface | Current binaries | Config and state paths | Current provenance | Classification | Recommendation |
 | --- | --- | --- | --- | --- | --- |
-| APM | `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` | future repo manifest under `system/ai/apm/`; current install tree under `/usr/local/lib/apm` | manual/pkg | canonical target plus managed exception | Use APM as the AI Asset Manager, but treat the current binary provenance as unresolved until the install/update path is declared. Do not run `apm install`, `apm update`, `apm prune`, `apm uninstall`, or `apm self-update` without approval. |
-| Codex CLI | `/opt/homebrew/bin/codex`; app resource binary in `/Applications/Codex.app` | `~/.codex` plus app/runtime cache paths | Homebrew cask plus app runtime | canonical install surface | Keep Codex declared through Homebrew. Keep `~/.codex` as Sensitive Local State until APM can reproduce the approved baseline and a later deployment gate approves target writes. |
+| APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm`; legacy duplicate at `/usr/local/bin/apm` | repo manifest and lockfile under `system/ai/apm/`; live project symlinks under `~/.apm` | Homebrew formula `microsoft/apm/apm` plus legacy manual duplicate | canonical binary plus approval-gated cleanup candidate | Use APM as the AI Asset Manager. Keep the old `/usr/local` binary only until a later cleanup removes the duplicate. Do not run `apm install`, `apm update`, `apm prune`, `apm uninstall`, or `apm self-update` without approval. |
+| Codex CLI | `/opt/homebrew/bin/codex`; app resource binary in `/Applications/Codex.app` | `~/.codex` plus app/runtime cache paths | Homebrew cask plus app runtime | canonical install surface | Keep Codex declared through Homebrew. Keep `~/.codex` as Sensitive Local State; mutate baseline skills only through approved APM target-write gates. |
 | Codex runtime helpers | `codex-execve-wrapper`, `codex_chronicle` in Codex app/runtime paths | Codex app runtime directories and temporary command wrappers | app_runtime | managed context | Do not classify these as package-manager drift. They are execution context from the Codex app. |
-| Codex skills | `~/.codex/skills/grill-with-docs`, `~/.codex/skills/using-superpowers`, system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | manual/local plus app/runtime | mixed | Keep `grill-with-docs` as the only target baseline. Treat `using-superpowers` as approval-gated cleanup. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |
+| Codex skills | APM-managed split baseline under `~/.codex/skills`: `grill-with-docs`, `grilling`, and `domain-modeling`; system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | APM target output plus app/runtime | canonical baseline plus vendor state | Keep the split `grill-with-docs` workflow as the only target baseline. Keep `using-superpowers` absent. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |
 | Claude Code | `~/.local/bin/claude` -> `~/.local/share/claude/versions/2.1.197` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | manual/local | managed exception | Keep documented as manual-local until APM or a declared installer owns cross-surface assets. Do not remove or migrate existing Claude state without a snapshot and approval. |
 | Claude plugins and commands | plugin cache under `~/.claude/plugins` | `~/.claude/plugins/cache`, `~/.claude/plugins/marketplaces`, install manifests | Claude-managed local cache | manual local / approval-gated cleanup | Do not commit cache contents. Reinstall selected shared assets through APM later, then remove old cache copies only behind approval. |
 | opencode | `opencode-ai` npm global binary under the `fnm` default alias path | `~/.local/share/opencode`, `~/.config/opencode` | npm global plus local config | legacy managed exception | Do not add to the Global AI Baseline now. Decide later whether opencode is a project-local tool, declared AI Tool Surface, or removal candidate. |

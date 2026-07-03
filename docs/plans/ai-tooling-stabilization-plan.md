@@ -76,7 +76,7 @@ tree.
 | Claude Code | `/Users/alex/.local/bin/claude` -> `/Users/alex/.local/share/claude/versions/2.1.198` | `2.1.198 (Claude Code)` | manual/local | No | Managed exception | Older local versions `2.1.187`, `2.1.196`, and `2.1.197` are also present under the local Claude versions tree. |
 | opencode | `/Users/alex/.local/share/fnm/aliases/default/bin/opencode` | `1.17.13` | npm global under fnm default Node, package `opencode-ai` | No | Legacy managed exception | `open-code` is not on PATH. Decide later whether opencode is project-local, managed, or removed behind approval. |
 | Pi | `/Users/alex/Library/pnpm/pi` | `0.73.0` | pnpm global, package `@mariozechner/pi-coding-agent` | No | Approval-gated project-local or removal candidate | Not declared in `system/packages/pnpm-global.txt`; do not add it to the baseline by accident. |
-| APM | `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` | `0.23.1 (d1d926d)` | manual/pkg | Desired state now declared as `brew "microsoft/apm/apm"` | Selected AI Asset Manager, manual binary managed exception | ADR-0008 selects APM for AI Assets. Official docs list a Homebrew tap formula; the current manual binary remains a cleanup candidate until Homebrew install/PATH verification. Do not self-update or mutate with APM. |
+| APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm`; legacy duplicate at `/usr/local/bin/apm` | `0.23.1 (d1d926d)` | Homebrew formula `microsoft/apm/apm` plus legacy manual duplicate | Yes, `brew "microsoft/apm/apm"` | Selected AI Asset Manager, canonical binary plus approval-gated cleanup candidate | ADR-0008 selects APM for AI Assets. The active command now resolves through Homebrew; the old `/usr/local` manual binary remains a lower-priority cleanup candidate. Do not self-update or mutate with APM without approval. |
 | ChatGPT | Homebrew cask app | `1.2026.160,1781312926` | Homebrew cask | Yes, `cask "chatgpt"` | Canonical app surface | App state is local and out of repo. No shared asset policy is needed yet. |
 | ChatGPT Atlas | Homebrew cask app | `1.2026.98.2,20260416164957000` | Homebrew cask | Yes, `cask "chatgpt-atlas"` | Canonical app surface | App state is local and out of repo. |
 | Ollama | Homebrew formula | `0.30.11` | Homebrew formula | Yes, `brew "ollama"` | Canonical app surface | Model downloads and local server state are local state, not repo assets. |
@@ -210,12 +210,15 @@ future Pi auth, project, history, or cache state.
 
 Name-only paths inspected:
 
+- `/opt/homebrew/bin/apm`
+- `/opt/homebrew/Cellar/apm/0.23.1`
 - `/usr/local/lib/apm`
 - `/Users/alex/.apm`
 - `system/ai/apm`
 
-Classification: selected AI Asset Manager with a manual/pkg binary managed
-exception. `~/.apm/config.json` is local state and was not read.
+Classification: selected AI Asset Manager with a Homebrew-managed canonical
+binary and a legacy manual duplicate. `~/.apm/config.json` is local state and
+was not read.
 
 `apm targets --json` currently reports only the repo's `.cursor/` target as
 active. Codex, Claude, opencode, and other AI targets are inactive because the
@@ -367,8 +370,7 @@ Open questions before live deployment:
 
 1. Should opencode and Pi remain local experiments, become declared AI Tool
    Surfaces, or be removed behind approval?
-2. When should the manual `/usr/local/bin/apm` binary be replaced by the
-   declared Homebrew formula?
+2. When should the legacy manual `/usr/local/bin/apm` duplicate be removed?
 
 ## Repo Versus Companion Repo
 
@@ -451,12 +453,12 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 ### P0: Freeze Current Policy
 
 1. Keep this plan as the current machine-state handoff.
-2. Accept ADR-0008 as the APM role decision while keeping the current manual
-   APM binary as a managed exception.
+2. Accept ADR-0008 as the APM role decision with the active APM binary managed
+   by the Homebrew formula.
 3. Accept ADR-0009 as the APM project-file placement decision: repo manifest
    and lockfile symlinked into `~/.apm`.
-4. Keep the Brewfile-declared Homebrew APM formula as desired state; do not
-   install or remove binaries until a separate cleanup task.
+4. Keep the legacy `/usr/local/bin/apm` manual binary only as an
+   approval-gated cleanup candidate until a separate task removes it.
 5. Do not broaden the Global AI Baseline beyond the split `grill-with-docs`
    workflow.
 

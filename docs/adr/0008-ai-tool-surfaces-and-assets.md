@@ -11,12 +11,13 @@ global baseline.
 
 ## Consequences
 
-The current `/usr/local/bin/apm` install is a managed exception. Official APM
-documentation includes a Homebrew tap formula, so this repo declares
-`microsoft/apm/apm` in the Brewfile as the intended binary installer. The
-manual binary stays in place until a separate task installs/verifies the
-Homebrew formula and confirms PATH precedence. No APM update, prune, uninstall,
-or self-update command should run without an explicit Reset Approval Gate.
+The active `apm` command resolves through the Homebrew formula
+`microsoft/apm/apm`, declared in the Brewfile and installed from the official
+Microsoft tap. The old `/usr/local/bin/apm` ->
+`/usr/local/lib/apm/apm` manual install remains only as an approval-gated
+cleanup candidate until a separate task removes the root-owned duplicate. No
+APM update, prune, uninstall, or self-update command should run without an
+explicit Reset Approval Gate.
 
 The APM package evidence files are `system/ai/apm/apm.yml` and
 `system/ai/apm/apm.lock.yaml`. The lockfile pins the public

@@ -4,18 +4,19 @@ APM is the selected AI Asset Manager for this Development Ecosystem.
 
 Current local state:
 
-- Binary: `/usr/local/bin/apm`
-- Resolved binary: `/usr/local/lib/apm/apm`
+- Binary: `/opt/homebrew/bin/apm`
+- Resolved binary: `/opt/homebrew/Cellar/apm/0.23.1/bin/apm`
 - Version: `0.23.1`
-- Current provenance: manual/pkg install
+- Current provenance: Homebrew formula `microsoft/apm/apm`
 - Target role: AI Asset discovery, locking, audit, and later materialization
 
-The current APM binary is a managed exception. Official APM installation docs
-list the Homebrew tap formula `microsoft/apm/apm`, and
-`system/packages/Brewfile` now declares that formula as the intended installer:
+The current APM binary is installed through the official Homebrew tap formula
+declared in `system/packages/Brewfile`:
 <https://microsoft.github.io/apm/getting-started/installation/#package-managers>.
-Selecting APM for assets does not approve self-updating, reinstalling,
-pruning, or migrating existing AI state.
+The old manual `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` install still
+exists as an approval-gated cleanup candidate, but it no longer wins PATH.
+Selecting APM for assets does not approve self-updating, pruning, or migrating
+existing AI state.
 
 ## What APM Should Manage
 
@@ -279,6 +280,5 @@ Read-only APM inspection commands are acceptable when a task allows them.
 
 ## Unresolved
 
-- When the current manual `/usr/local/bin/apm` binary should be replaced by
-  the declared Homebrew `microsoft/apm/apm` formula.
+- When the legacy manual `/usr/local/bin/apm` duplicate should be removed.
 - Which custom AI assets Alex will later place in a companion repo.
