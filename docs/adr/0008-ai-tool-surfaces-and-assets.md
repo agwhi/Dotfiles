@@ -11,8 +11,9 @@ global baseline.
 
 AI harness binaries and apps should be reproducible from the package manifests
 where possible. Codex, Claude Desktop, and the stable Claude Code terminal
-harness are Homebrew cask-owned surfaces; APM owns shared AI Assets installed
-into those surfaces after separate target-write gates.
+harness are Homebrew cask-owned surfaces. APM owns shared AI Assets installed
+into supported harness targets after separate target-write gates, starting with
+Codex, Claude Code, and opencode.
 
 ## Consequences
 
@@ -28,7 +29,8 @@ The APM package evidence files are `system/ai/apm/apm.yml` and
 `system/ai/apm/apm.lock.yaml`. The lockfile pins the public
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` wrapper plus its
 public `grilling` and `domain-modeling` dependency skills at the same
-`v1.0.1` tag. ADR-0009 exposes the repo APM project to `~/.apm` with symlinks,
-and the approved Codex deployment has materialized the split baseline. Claude
-Code, opencode, Pi, and future target surfaces still require separate
-target-write gates before APM materializes assets for them.
+`v1.0.1` tag. ADR-0009 exposes the repo APM project to `~/.apm` with symlinks.
+The manifest targets Codex, Claude Code, and opencode so each supported
+harness receives the same shared baseline. The approved Codex deployment has
+materialized the split baseline; Claude Code and opencode still require
+separate target-write gates before APM materializes assets for them.

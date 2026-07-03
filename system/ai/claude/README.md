@@ -48,9 +48,11 @@ through APM and generate or install the Claude target from there.
 
 Target state:
 
-- No APM deployment or baseline requirement applies to Claude yet.
-- If Claude receives the shared baseline later, use the existing APM-managed
-  split baseline: `grill-with-docs`, `grilling`, and `domain-modeling`.
+- Claude is part of the shared APM baseline target set.
+- Use the existing APM-managed split baseline: `grill-with-docs`, `grilling`,
+  and `domain-modeling`.
+- Do not write live Claude target output until a separate APM target-write gate
+  previews and approves the generated files.
 - Do not include `using-superpowers` in the global baseline.
 - Keep project-specific commands, agents, and rules in the project repos that
   need them.

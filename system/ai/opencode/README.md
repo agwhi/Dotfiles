@@ -16,8 +16,10 @@ on PATH.
 
 ## Classification
 
-`opencode-ai` is a legacy managed exception and possible project-local tool. It
-is not part of the Global AI Baseline.
+`opencode-ai` is a legacy managed exception and possible project-local tool.
+The opencode target is still included in the shared APM baseline target set so
+that, if opencode remains installed, it receives the same global skills and AI
+assets as Codex and Claude Code.
 
 `~/.local/share/opencode` and `~/.config/opencode` are Sensitive Local State.
 They include account/auth files, local databases, logs, snapshots, storage, and
@@ -27,12 +29,12 @@ provider configuration. Do not commit them directly.
 
 If opencode remains in the ecosystem, it should consume Shared AI Assets from
 APM-generated or APM-installed adapters. It should not own the source copy of
-shared prompts or skills.
+shared prompts, skills, commands, MCP definitions, or agents.
 
 Later options:
 
 - keep opencode as a documented project-local or manual-local tool
-- declare opencode as a managed AI Tool Surface with APM adapters
+- preview and deploy the shared APM target output for opencode
 - remove npm global `opencode-ai` behind a Reset Approval Gate
 
 No option is implemented in this task.

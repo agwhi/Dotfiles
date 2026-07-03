@@ -9,8 +9,8 @@ cache trees, trusted-project state, or vendor runtime state.
 
 APM is the selected AI Asset Manager. The Orchestrator Repo owns APM's
 manifest and lockfile, exposes them to `~/.apm` with symlinks, and lets APM
-install, audit, and materialize AI Assets for the AI Tool Surfaces that consume
-them after sources are declared and target writes are approved.
+install, audit, and materialize shared AI Assets for the AI Tool Surfaces that
+consume them after sources are declared and target writes are approved.
 
 Homebrew remains the installer for AI app and harness surfaces declared in
 `system/packages/Brewfile`, including APM, Codex, Claude Desktop, Claude Code,
@@ -21,11 +21,12 @@ The Global AI Baseline is intentionally small:
 
 - `grill-with-docs`
 
-The current APM lockfile pins the public `grill-with-docs` package plus its
-public `grilling` and `domain-modeling` dependency skills. The approved Codex
-deployment has materialized that split baseline. Claude, opencode, Pi, and
-future target surfaces still require separate target-write gates before APM
-materializes assets for them.
+The current APM manifest targets Codex, Claude Code, and opencode so those
+harnesses converge on the same shared baseline. The lockfile pins the public
+`grill-with-docs` package plus its public `grilling` and `domain-modeling`
+dependency skills. The approved Codex deployment has materialized that split
+baseline; Claude and opencode still require separate target-write gates before
+APM materializes assets for them.
 
 Do not include `using-superpowers`, Pi, opencode, broad language/framework
 skills, or project-specific prompts in the global baseline unless a later ADR
@@ -44,8 +45,10 @@ flow through the same APM declaration and lock process as third-party assets.
 ## Shared Asset Strategy
 
 Author each Shared AI Asset once. Let APM generate, install, or link the
-tool-specific adapter for Codex, Claude Code, opencode, Pi, or future AI Tool
-Surfaces after each target's writes are approved.
+tool-specific adapter for Codex, Claude Code, opencode, or future AI Tool
+Surfaces after each target's writes are approved. Skills, commands, agents,
+MCP definitions, and similar AI assets should enter the global baseline through
+APM rather than by hand-copying tool-specific files.
 
 Do not copy the same prompt or skill manually across tool-specific config trees
 or keep a repo-owned Codex skill tree as the primary model. If a tool requires

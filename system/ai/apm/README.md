@@ -56,14 +56,16 @@ The normal dotfiles symlink setup maps those files into the live APM project:
 When setup is eventually run, existing files at those two paths are backed up
 before being replaced with symlinks.
 
-The manifest pins the first APM target to Codex only so the repo's active
+The manifest pins shared harness targets explicitly so the repo's active
 `.cursor/` directory is not selected by auto-detection during an AI-only
-stabilization pass.
+stabilization pass. The current shared harness targets are `codex`, `claude`,
+and `opencode`.
 Run project-scoped APM checks from `system/ai/apm` when package or lock
 evidence is needed.
 
 Generated APM dependencies and target output under this directory are ignored:
-`apm_modules/`, `.agents/`, `.codex/`, `AGENTS.md`, and `CLAUDE.md`.
+`apm_modules/`, `.agents/`, `.codex/`, `.claude/`, `.opencode/`,
+`AGENTS.md`, and `CLAUDE.md`.
 
 Global APM mode does not consume this repo manifest directly. It expects
 `~/.apm/apm.yml`, so `~/.apm` consumes the repo source of truth through
@@ -229,7 +231,7 @@ absent.
 `apm audit --ci` currently reports expected drift because it wants the
 project-scoped deployed file `.agents/skills/grill-with-docs/SKILL.md` to exist
 beside the lockfile. Do not satisfy that drift by committing generated target
-output or by writing live Codex state.
+output or by writing live harness state.
 
 ## Deployment Model
 
@@ -245,15 +247,17 @@ Preferred model:
   normal dotfiles symlink setup
 - keep the corrected public package source in the APM manifest and lockfile
 - let APM materialize generated modules and target output through approved
-  target-write gates
+  target-write gates for each harness
 - treat `~/.apm`, `apm_modules/`, and generated target output as local state
 
-Do not satisfy APM audit drift by writing live Codex state or committing
-generated `.agents/` or `.codex/` target output.
+Do not satisfy APM audit drift by writing live harness state or committing
+generated `.agents/`, `.codex/`, `.claude/`, `.opencode/`, `AGENTS.md`, or
+`CLAUDE.md` target output.
 
 ## What APM Should Not Manage Yet
 
-APM should not be used yet to change:
+APM should not be used yet to change these live targets without an explicit
+per-target approval gate:
 
 - `~/.codex`
 - `~/.claude`

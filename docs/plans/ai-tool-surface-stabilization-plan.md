@@ -119,7 +119,7 @@ Do not include these globally yet:
 - broad language or framework skills
 - project-specific prompts, rules, or agents
 - experimental tool-specific plugins
-- Pi or opencode assets
+- Pi assets and opencode-specific assets
 
 If an asset is useful in one project, keep it in that project. Promote it only
 after it has clear repeated cross-project value.

@@ -116,7 +116,7 @@ CODEX_STALE_BASELINE_FILES = [
 ]
 CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS = [".system", "codex-primary-runtime"]
 EXCLUDED_AI_ASSETS = {"using-superpowers"}
-APM_BASELINE_TARGETS = ["codex"]
+APM_BASELINE_TARGETS = ["codex", "claude", "opencode"]
 GRILL_WITH_DOCS_REF = "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1"
 GRILL_WITH_DOCS_APM_REFS = [
     "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1",
@@ -2914,6 +2914,7 @@ def apm_manifest_state() -> dict[str, Any]:
         "expected_targets": APM_BASELINE_TARGETS,
         "targets": [],
         "targets_codex": False,
+        "targets_shared_harnesses": False,
         "target_set_exact": False,
         "unexpected_targets": [],
         "duplicate_targets": [],
@@ -2943,6 +2944,9 @@ def apm_manifest_state() -> dict[str, Any]:
     state["parser_errors"] = parsed["parser_errors"]
     state["targets"] = targets
     state["targets_codex"] = "codex" in targets
+    state["targets_shared_harnesses"] = values_match_exactly(
+        targets, APM_BASELINE_TARGETS
+    )
     state["target_set_exact"] = values_match_exactly(targets, APM_BASELINE_TARGETS)
     state["unexpected_targets"] = unexpected_values(targets, APM_BASELINE_TARGETS)
     state["duplicate_targets"] = duplicate_values(targets)
@@ -3484,9 +3488,9 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             classification="drift",
             name="ai_tools.apm_manifest",
             severity="high",
-            summary="APM manifest does not match the approved Codex-first grill-with-docs dependency set.",
+            summary="APM manifest does not match the approved shared harness grill-with-docs dependency set.",
             details=manifest,
-            recommendation="Keep targets pinned to codex and declare the approved public grill-with-docs dependency set only.",
+            recommendation="Keep targets pinned to codex, claude, and opencode, and declare the approved public grill-with-docs dependency set only.",
         )
 
     if manifest["declares_using_superpowers"]:
@@ -3794,18 +3798,42 @@ def scan_claude_code(findings: list[dict[str, Any]]) -> None:
     add_finding(
         findings,
         area="ai_tools",
-        classification="not_required",
+        classification="migration_pending",
         name="claude.apm_baseline",
-        summary="Claude does not have an APM-managed baseline requirement yet.",
+        severity="low",
+        summary="Claude is part of the shared APM baseline target set, but live Claude target output is not deployed yet.",
         details={
             "target": "claude",
-            "baseline_required": False,
+            "baseline_required": True,
+            "target_declared": "claude" in APM_BASELINE_TARGETS,
             "future_candidate_skills": CODEX_BASELINE_SKILLS,
             "excluded_assets": sorted(EXCLUDED_AI_ASSETS),
         },
         recommendation=(
-            "Do not deploy APM assets to Claude until a separate target-write gate "
-            "approves the Claude target."
+            "Preview and deploy Claude target output only through a separate "
+            "approved APM target-write gate."
+        ),
+    )
+
+
+def scan_opencode_baseline(findings: list[dict[str, Any]]) -> None:
+    add_finding(
+        findings,
+        area="ai_tools",
+        classification="migration_pending",
+        name="opencode.apm_baseline",
+        severity="low",
+        summary="opencode is part of the shared APM baseline target set, but live opencode target output is not deployed yet.",
+        details={
+            "target": "opencode",
+            "baseline_required": True,
+            "target_declared": "opencode" in APM_BASELINE_TARGETS,
+            "future_candidate_skills": CODEX_BASELINE_SKILLS,
+            "excluded_assets": sorted(EXCLUDED_AI_ASSETS),
+        },
+        recommendation=(
+            "Preview and deploy opencode target output only through a separate "
+            "approved APM target-write gate."
         ),
     )
 
@@ -3864,6 +3892,7 @@ def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
         )
 
     scan_claude_code(findings)
+    scan_opencode_baseline(findings)
 
     apm_paths = which_all("apm")
     if apm_paths:

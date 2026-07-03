@@ -25,7 +25,8 @@ Running the normal symlink setup on a machine may back up existing
 This is acceptable because the repo files are the source of truth for APM's
 baseline project.
 
-Live Codex deployment remains blocked until an explicit target-write gate. The
-APM files now pin the public `grill-with-docs` wrapper plus its public
-`grilling` and `domain-modeling` dependency skills, and `using-superpowers`
-remains intentionally excluded from the Global AI Baseline.
+The APM files pin the public `grill-with-docs` wrapper plus its public
+`grilling` and `domain-modeling` dependency skills. They target Codex, Claude
+Code, and opencode so supported harnesses receive the same shared baseline
+after their target-write gates. `using-superpowers` remains intentionally
+excluded from the Global AI Baseline.

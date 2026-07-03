@@ -1,17 +1,20 @@
-# Draft only: this manifest declares intent for the Global AI Baseline but is
-# not approved for install, lock, update, prune, or target-file deployment.
+# This manifest declares the shared Global AI Baseline. It is not approval to
+# run install, update, prune, or live target-file deployment.
 name: dotfiles-ai-baseline
 version: 0.1.0
-description: Codex-first Global AI Baseline for this dotfiles repo.
+description: Shared Global AI Baseline for this dotfiles repo.
 
-# Pin targets explicitly because APM auto-detects the repo's .cursor/ target.
-# The first baseline target is Codex only.
+# Pin harness targets explicitly because APM auto-detects unrelated repo
+# targets such as .cursor/. Cursor/editor targets can be added in an editor
+# pass; Pi has no confirmed APM target in the current CLI.
 targets:
   - codex
+  - claude
+  - opencode
 
-# The only intended baseline asset is grill-with-docs. Its public v1.0.1
-# wrapper invokes grilling and domain-modeling, so pin those public dependency
-# skills too.
+# The only intended baseline skill workflow is grill-with-docs. Its public
+# v1.0.1 wrapper invokes grilling and domain-modeling, so pin those public
+# dependency skills too.
 # using-superpowers is intentionally excluded.
 dependencies:
   apm:

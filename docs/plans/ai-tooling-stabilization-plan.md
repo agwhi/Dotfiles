@@ -24,7 +24,7 @@ Evidence gathered for this pass:
 - `fnm exec --using default npm ls -g --depth=0 --json`.
 - `fnm exec --using default pnpm list -g --depth 0 --json`.
 - Read-only APM help and `apm targets --json`.
-- `apm lock --target codex` for the approved repo lockfile gate.
+- the previous `apm lock --target codex` approved repo lockfile gate.
 - Scratch-only frozen APM installs under ignored `reports/apm-scratch/`.
 - Name-only and metadata-only listings of AI asset directories.
 
@@ -37,9 +37,9 @@ lock, audit, install, generated modules, and target output for reusable AI
 Assets after sources are declared and target writes are approved. It does not
 automatically own every AI binary on the laptop.
 
-Homebrew remains the canonical installer for AI application surfaces already
-declared in `system/packages/Brewfile`, including Codex, ChatGPT,
-ChatGPT Atlas, and Ollama.
+Homebrew remains the canonical installer for AI application and harness
+surfaces already declared in `system/packages/Brewfile`, including APM, Codex,
+Claude Desktop, Claude Code, ChatGPT, ChatGPT Atlas, and Ollama.
 
 The Global AI Baseline stays intentionally small. The approved Codex baseline
 is the public `grill-with-docs` workflow materialized as split skills:
@@ -52,14 +52,14 @@ Do not promote these into the Global AI Baseline yet:
 
 - `using-superpowers`
 - Pi assets
-- opencode assets
+- opencode-specific assets
 - Claude plugin cache contents
 - Codex system, runtime, or plugin skills
 - broad language or framework skills
 - project-specific prompts, rules, agents, and commands
 
 Shared AI Assets should be authored once and consumed through APM-generated or
-APM-installed adapters for Codex, Claude Code, opencode, Pi, or future
+APM-installed adapters for Codex, Claude Code, opencode, or future supported
 surfaces. Tool-specific files are adapters, not the source of truth.
 `grill-with-docs` is already a public APM skill, not a repo-owned Codex skill
 tree.
@@ -221,11 +221,10 @@ Classification: selected AI Asset Manager with a Homebrew-managed canonical
 binary and a legacy manual duplicate. `~/.apm/config.json` is local state and
 was not read.
 
-`apm targets --json` currently reports only the repo's `.cursor/` target as
-active. Codex, Claude, opencode, and other AI targets are inactive because the
-repo does not yet contain target files such as `.codex/`, `.opencode/`, or
-`CLAUDE.md`. The draft `system/ai/apm/apm.yml` pins `targets: [codex]` so
-APM target auto-detection is not used for the first AI-only baseline pass.
+`apm targets --json` can auto-detect unrelated repo targets such as `.cursor/`.
+The repo APM manifest pins the shared harness target set explicitly as
+`codex`, `claude`, and `opencode` so APM target auto-detection is not used for
+AI baseline decisions.
 Run project-scoped APM checks from `system/ai/apm` when package or lock
 evidence is needed.
 
@@ -467,7 +466,7 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 1. Keep `system/ai/apm/apm.yml` pinned to the public `grill-with-docs`
    wrapper plus its `grilling` and `domain-modeling` dependency skills, with
-   the only active target as Codex.
+   explicit shared harness targets `codex`, `claude`, and `opencode`.
 2. Treat repo `apm.lock.yaml` creation and the current dependency-source
    correction as approved and complete for the public baseline source.
 3. Treat scratch-root materialization as proven for the corrected dependency
