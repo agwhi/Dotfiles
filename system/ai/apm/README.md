@@ -8,7 +8,7 @@ Current local state:
 - Resolved binary: `/usr/local/lib/apm/apm`
 - Version: `0.23.1`
 - Current provenance: manual/pkg install
-- Target role: Canonical Installer for AI Assets
+- Target role: AI Asset discovery, locking, audit, and later materialization
 
 The current APM binary is a managed exception. Official APM installation docs
 list the Homebrew tap formula `microsoft/apm/apm`, and
@@ -19,13 +19,13 @@ pruning, or migrating existing AI state.
 
 ## What APM Should Manage
 
-APM should eventually own:
+APM should eventually support:
 
-- the Global AI Baseline
+- source/package discovery for the Global AI Baseline
 - lockfiles for baseline AI Asset sources
 - third-party AI Asset packages
 - Custom AI Assets from normal AI Package Sources
-- generated adapters for Codex, Claude Code, opencode, Pi, or future targets
+- generated modules and target output after package correction
 - audit and policy checks for installed assets
 
 The initial baseline should contain only:
@@ -34,7 +34,8 @@ The initial baseline should contain only:
 
 `grill-with-docs` is a public APM skill from
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. It is not part
-of a future custom companion repo.
+of a future custom companion repo, but the locked public package is not
+equivalent to the reviewed live Codex skill.
 
 ## Repo Files
 
@@ -43,17 +44,26 @@ The repo now carries the source-of-truth APM files:
 - `system/ai/apm/apm.yml`
 - `system/ai/apm/apm.lock.yaml`
 
+The normal dotfiles symlink setup maps those files into the live APM project:
+
+- `~/.apm/apm.yml`
+- `~/.apm/apm.lock.yaml`
+
+When setup is eventually run, existing files at those two paths are backed up
+before being replaced with symlinks.
+
 The manifest pins the first APM target to Codex only so the repo's active
 `.cursor/` directory is not selected by auto-detection during an AI-only
 stabilization pass.
-Run project-scoped APM checks from `system/ai/apm` until a repo wrapper exists.
+Run project-scoped APM checks from `system/ai/apm` when package or lock
+evidence is needed.
 
 Generated APM dependencies and target output under this directory are ignored:
 `apm_modules/`, `.agents/`, `.codex/`, `AGENTS.md`, and `CLAUDE.md`.
 
 Global APM mode does not consume this repo manifest directly. It expects
-`~/.apm/apm.yml`, so `~/.apm` remains generated/local state and must not become
-the source of truth.
+`~/.apm/apm.yml`, so `~/.apm` consumes the repo source of truth through
+symlinks and must not become the source of truth itself.
 
 Read-only commands to prefer before any install:
 
@@ -80,19 +90,22 @@ Read-only APM inspection identified these `0.23.1` conventions:
   such as `owner/repo/path#ref`, and object forms with fields such as `git`
   and `ref`
 
-The canonical source for `grill-with-docs` is the public APM package
+The APM lock evidence for `grill-with-docs` is the public package
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. Read-only APM
 inspection resolved tag `v1.0.1` to commit
-`2454c95dc305c158b21a0cdafeb728879dd0359a`. Do not point the baseline at
-`/Users/alex/.codex/skills/grill-with-docs`; that path is machine-local AI
-tool state and not reproducible from this repo.
+`2454c95dc305c158b21a0cdafeb728879dd0359a`.
 
 The first scratch preview found that this public package is not equivalent to
 the currently installed live Codex skill. The package contains a thin
 `SKILL.md` wrapper that invokes `/grilling` and `/domain-modeling`; the live
 Codex skill is self-contained and includes the detailed workflow plus format
-references. Do not deploy this package over the live skill until the baseline
-source decision is resolved.
+references. Do not deploy this package over the live skill.
+
+The 2026-07-03 dependency comparison ruled out expanding this exact public
+baseline at `v1.0.1`. `domain-modeling` exists and installs, but
+`mattpocock/skills/skills/engineering/grilling#v1.0.1` is absent at that path.
+Do not replace this with a repo-owned Codex skill tree. Correct the APM package
+source first, then let APM materialize generated modules and target output.
 
 ## Non-Deploying Codex Gate
 
@@ -149,7 +162,8 @@ present in the scratch root. The generated `.codex/` directory was empty.
 concrete package files when run from `system/ai/apm`; APM reported no content
 found to compile. Running the same dry-run from the scratch root failed because
 the scratch root is not an APM project and has no `apm.yml`. Treat this as a
-compile-source limitation to resolve before any live deploy.
+compile-source limitation for APM target previews, not as a reason to use APM
+for live Codex placement.
 
 ## Lockfile And Codex Preview Gate
 
@@ -179,13 +193,14 @@ That command was tested only with redirected HOME/XDG state and an ignored
 scratch root. It produced `.codex/skills/grill-with-docs/SKILL.md` and no
 `using-superpowers` output.
 
-Live deployment remains blocked because the materialized public skill is only a
-wrapper over `/grilling` and `/domain-modeling`.
+APM target deployment remains blocked because the materialized public skill is
+only a wrapper over `/grilling` and `/domain-modeling`, and the referenced
+public `skills/engineering/grilling` package is absent at `v1.0.1`.
 
 `apm audit --ci` currently reports expected drift because it wants the
 project-scoped deployed file `.agents/skills/grill-with-docs/SKILL.md` to exist
 beside the lockfile. Do not satisfy that drift by committing generated target
-output until the source mismatch is resolved.
+output or by writing live Codex state.
 
 ## Deployment Model
 
@@ -193,15 +208,19 @@ The live deployment model is not `apm install --global` from this repo.
 Redirected-HOME testing showed that global mode looks for `~/.apm/apm.yml` and
 does not consume `system/ai/apm/apm.yml` directly.
 
-Preferred model after the source mismatch is resolved:
+Preferred model:
 
-- keep `system/ai/apm/apm.yml` and `system/ai/apm/apm.lock.yaml` as source
-- run a repo-owned command or wrapper from `system/ai/apm`
-- snapshot live Codex skill names and metadata before writing
-- deploy only reviewed Codex target paths
-- use `--legacy-skill-paths` if Codex desktop still requires
-  `~/.codex/skills`
+- keep `system/ai/apm/apm.yml` and `system/ai/apm/apm.lock.yaml` as the repo
+  source of truth
+- link those files to `~/.apm/apm.yml` and `~/.apm/apm.lock.yaml` through the
+  normal dotfiles symlink setup
+- correct the locked package source before any live Codex deployment
+- let APM materialize generated modules and target output after the package
+  source is corrected and target writes are approved
 - treat `~/.apm`, `apm_modules/`, and generated target output as local state
+
+Do not satisfy APM audit drift by writing live Codex state or committing
+generated `.agents/` or `.codex/` target output.
 
 ## What APM Should Not Manage Yet
 
@@ -232,7 +251,7 @@ Read-only APM inspection commands are acceptable when a task allows them.
 
 ## Unresolved
 
-- Whether APM itself should be installed through Homebrew, a package installer,
-  a bootstrap script, or another declared source.
+- When the current manual `/usr/local/bin/apm` binary should be replaced by
+  the declared Homebrew `microsoft/apm/apm` formula.
 - Which generated target paths are safe for Codex after dry-run review.
 - Which custom AI assets Alex will later place in a companion repo.

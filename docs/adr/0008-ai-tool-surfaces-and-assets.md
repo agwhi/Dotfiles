@@ -18,10 +18,10 @@ manual binary stays in place until a separate task installs/verifies the
 Homebrew formula and confirms PATH precedence. No APM update, prune, uninstall,
 or self-update command should run without an explicit Reset Approval Gate.
 
-The source-of-truth files are `system/ai/apm/apm.yml` and
+The APM package evidence files are `system/ai/apm/apm.yml` and
 `system/ai/apm/apm.lock.yaml`. The first lockfile pins the public
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` package, but a
 scratch preview showed that package is only a thin wrapper over `/grilling` and
-`/domain-modeling`. Do not overwrite the current live Codex skill until the
-baseline source is made self-contained or the dependent assets are deliberately
-promoted.
+`/domain-modeling`. ADR-0009 exposes the repo APM project to `~/.apm` with
+symlinks, while live Codex target placement remains blocked until the package
+source is corrected.

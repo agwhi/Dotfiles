@@ -3,9 +3,10 @@
 Shared AI Assets are authored once and adapted for multiple AI Tool Surfaces
 when formats differ.
 
-APM is the selected installer and adapter path for shared assets. This directory
-should document source packages, target mappings, and sensitive-safe templates,
-not hold copied tool-specific cache state.
+APM is the selected package discovery, lock, audit, and materialization path
+for shared assets. This directory should document source packages, target
+mappings, and sensitive-safe templates, not hold copied tool-specific cache
+state.
 
 ## Global Baseline
 
@@ -18,6 +19,11 @@ public package
 `mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. Scratch preview
 showed that package is a wrapper over `/grilling` and `/domain-modeling`, so it
 is not yet equivalent to the current self-contained live Codex skill.
+
+The public dependency-expansion route was tested on 2026-07-03 and does not
+resolve the mismatch at `v1.0.1`: `domain-modeling` exists, but
+`skills/engineering/grilling` is absent. Live Codex deployment remains blocked
+until the APM package source is corrected.
 
 The following are intentionally not baseline assets:
 
@@ -32,17 +38,18 @@ The following are intentionally not baseline assets:
 ## Promotion Rule
 
 Keep an asset project-local unless it has repeated cross-project value. When an
-asset is promoted, declare its source through APM and map each target surface
-explicitly.
+asset is promoted, declare its package source through APM and map each target
+surface explicitly.
 
-Before live deployment, resolve whether the baseline should include the public
-package's supporting skills or move to a self-contained package source.
+The Orchestrator Repo exposes APM's project files through `~/.apm` symlinks;
+APM should own generated modules and target output after the package source is
+corrected.
 
 ## Source Versus Adapter
 
-The source asset is the canonical package or repository. Codex, Claude Code,
-opencode, Pi, or other tool-specific files are adapters. Adapters may be
-generated output, but they are not the source of truth.
+The source asset is the canonical package or repository consumed by APM. Codex,
+Claude Code, opencode, Pi, or other tool-specific files are adapters. Generated
+adapters are not source of truth.
 
 ## Sensitive State
 

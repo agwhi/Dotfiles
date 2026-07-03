@@ -20,8 +20,9 @@ part of the target baseline.
 Treat Custom AI Assets exactly like Third-Party AI Assets. ADR-0002 remains the
 source policy: custom skills, prompts, agents, templates, and workflow artifacts
 can live in a Companion Repo, local bundle, Git source, or marketplace, but the
-Orchestrator Repo should declare only the laptop's Global AI Baseline and let
-APM install, lock, link, verify, and adapt it.
+Orchestrator Repo should declare the laptop's Global AI Baseline through APM.
+ADR-0009 links the repo APM manifest and lockfile into `~/.apm`; APM remains
+responsible for generated modules and target placement after package correction.
 
 Keep project-specific AI Assets project-local unless Alex promotes them to the
 Global AI Baseline after repeated cross-project use.
@@ -80,7 +81,7 @@ Current local facts:
 | Tool or surface | Current binaries | Config and state paths | Current provenance | Classification | Recommendation |
 | --- | --- | --- | --- | --- | --- |
 | APM | `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` | future repo manifest under `system/ai/apm/`; current install tree under `/usr/local/lib/apm` | manual/pkg | canonical target plus managed exception | Use APM as the AI Asset Manager, but treat the current binary provenance as unresolved until the install/update path is declared. Do not run `apm install`, `apm update`, `apm prune`, `apm uninstall`, or `apm self-update` without approval. |
-| Codex CLI | `/opt/homebrew/bin/codex`; app resource binary in `/Applications/Codex.app` | `~/.codex` plus app/runtime cache paths | Homebrew cask plus app runtime | canonical install surface | Keep Codex declared through Homebrew. Keep `~/.codex` as Sensitive Local State except for safe generated adapters or declarations explicitly added under `system/ai/codex`. |
+| Codex CLI | `/opt/homebrew/bin/codex`; app resource binary in `/Applications/Codex.app` | `~/.codex` plus app/runtime cache paths | Homebrew cask plus app runtime | canonical install surface | Keep Codex declared through Homebrew. Keep `~/.codex` as Sensitive Local State until APM can reproduce the approved baseline and a later deployment gate approves target writes. |
 | Codex runtime helpers | `codex-execve-wrapper`, `codex_chronicle` in Codex app/runtime paths | Codex app runtime directories and temporary command wrappers | app_runtime | managed context | Do not classify these as package-manager drift. They are execution context from the Codex app. |
 | Codex skills | `~/.codex/skills/grill-with-docs`, `~/.codex/skills/using-superpowers`, system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | manual/local plus app/runtime | mixed | Keep `grill-with-docs` as the only target baseline. Treat `using-superpowers` as approval-gated cleanup. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |
 | Claude Code | `~/.local/bin/claude` -> `~/.local/share/claude/versions/2.1.197` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | manual/local | managed exception | Keep documented as manual-local until APM or a declared installer owns cross-surface assets. Do not remove or migrate existing Claude state without a snapshot and approval. |
@@ -95,10 +96,11 @@ Current local facts:
 ## Shared Asset Strategy
 
 The shared source should be conceptual, not a copied tree per tool. Author each
-Shared AI Asset once, then let APM produce or install the tool-specific adapter
-for Codex, Claude Code, opencode, Pi, or another AI Tool Surface.
+Shared AI Asset once, declare and lock it through APM, and let APM materialize
+the tool-specific output after the package source is corrected and target
+writes are approved.
 
-The first APM-managed baseline should contain only:
+The first Global AI Baseline should contain only:
 
 - `grill-with-docs`
 
@@ -143,8 +145,8 @@ approval in a later task:
 - Remove `~/.codex/skills/using-superpowers`.
 - Remove cached Claude superpowers plugin versions or related installed plugin
   cache state.
-- Remove, rewrite, or replace `~/.codex/skills/grill-with-docs` before APM has
-  reproduced the same intended baseline.
+- Remove, rewrite, or replace `~/.codex/skills/grill-with-docs` before APM can
+  reproduce the intended baseline and a live deployment gate is approved.
 - Remove pnpm global `@mariozechner/pi-coding-agent` or `~/Library/pnpm/pi`.
 - Remove npm global `opencode-ai` or its `fnm` alias binary.
 - Remove or migrate `~/.local/bin/claude` or `~/.local/share/claude`.
@@ -165,35 +167,36 @@ name exactly which files or directories are in scope.
 1. Accept ADR-0008 selecting APM as the AI Asset Manager.
 2. Keep `system/packages/Brewfile` as the owner for AI app install surfaces:
    Codex, ChatGPT, ChatGPT Atlas, and Ollama.
-3. Add an APM manifest under `system/ai/apm/` only after reviewing the exact
-   schema and deciding the source for `grill-with-docs`.
-4. Prefer `apm targets --json`, `apm lock`, and `apm audit --ci` before any
+3. Accept ADR-0009 selecting repo APM project files linked into `~/.apm`.
+4. Keep the APM manifest and lockfile under `system/ai/apm/` as package
+   evidence and source of truth for `grill-with-docs`.
+5. Prefer `apm targets --json`, `apm lock`, and `apm audit --ci` before any
    command that deploys, prunes, updates, or uninstalls assets.
-5. Record the intended generated targets for Codex, Claude Code, opencode, and
+6. Record the intended generated targets for Codex, Claude Code, opencode, and
    future surfaces before running APM.
-6. Add doctor checks for the selected baseline after an APM manifest exists.
+7. Add doctor checks for the selected baseline after an APM manifest exists.
 
-### P1 Reproduce The Baseline
+### P1 Expose The APM Project
 
-1. Use APM lock/audit commands in read-only mode first.
-2. Install or compile only `grill-with-docs` into approved targets.
-3. Verify Codex and Claude can discover the APM-installed baseline.
-4. Compare installed outputs with current local `grill-with-docs`.
-5. Decide whether opencode and Pi should consume the same shared baseline.
+1. Link `~/.apm/apm.yml` to `system/ai/apm/apm.yml` through normal setup.
+2. Link `~/.apm/apm.lock.yaml` to `system/ai/apm/apm.lock.yaml` through normal setup.
+3. Let setup back up any existing live APM project files before replacing them.
+4. Keep live Codex deployment blocked until the package source is corrected.
+5. Verify doctor reports repo APM files separately from live APM symlink state.
 
 ### P2 Cleanup Behind Approval
 
 1. Snapshot current AI state.
-2. Remove `using-superpowers` from global Codex and Claude surfaces if the APM
-   baseline works.
+2. Remove `using-superpowers` from global Codex and Claude surfaces only if a
+   later ADR changes the Global AI Baseline.
 3. Remove or migrate Pi if it is not a baseline AI Tool Surface.
 4. Remove or migrate `opencode-ai` if it is not a declared AI Tool Surface.
 5. Tighten doctor so undeclared AI tools and assets are actionable drift.
 
 ## Open Questions
 
-1. Which repository or package source should own the canonical `grill-with-docs`
-   asset consumed by APM?
+1. Which package source should make `grill-with-docs` equivalent to the desired
+   live skill before Codex deployment?
 2. Should Claude Code itself remain manually installed, or should a later task
    find a declared installer for the CLI binary separately from assets?
 3. Should opencode remain available as a project-local experiment, or should it

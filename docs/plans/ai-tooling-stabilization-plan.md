@@ -32,9 +32,10 @@ No GUI or computer-use inspection was needed.
 
 ## Target Architecture
 
-APM is the selected AI Asset Manager from ADR-0008. It should own the future
-declaration, lock, audit, install, and adapter path for reusable AI Assets. It
-does not automatically own every AI binary on the laptop.
+APM is the selected AI Asset Manager from ADR-0008. It should own declaration,
+lock, audit, install, generated modules, and target output for reusable AI
+Assets after package sources are correct. It does not automatically own every
+AI binary on the laptop.
 
 Homebrew remains the canonical installer for AI application surfaces already
 declared in `system/packages/Brewfile`, including Codex, ChatGPT,
@@ -57,7 +58,8 @@ Do not promote these into the Global AI Baseline yet:
 Shared AI Assets should be authored once and consumed through APM-generated or
 APM-installed adapters for Codex, Claude Code, opencode, Pi, or future
 surfaces. Tool-specific files are adapters, not the source of truth.
-`grill-with-docs` is already a public APM skill, not a companion-repo asset.
+`grill-with-docs` is already a public APM skill, not a repo-owned Codex skill
+tree.
 
 ## Tool Provenance
 
@@ -100,9 +102,8 @@ Classification: repo-managed documentation and sensitive-safe policy.
 
 There is now a repo-owned `system/ai/apm/apm.yml` and
 `system/ai/apm/apm.lock.yaml`. The lockfile pins the public
-`grill-with-docs` package, but live Codex deployment is blocked because the
-materialized public package is a thin wrapper over additional skills that are
-not in the current one-asset baseline.
+`grill-with-docs` package as package evidence. ADR-0009 makes those files the
+repo source of truth and links them into `~/.apm` through normal setup.
 
 ### Codex
 
@@ -129,8 +130,8 @@ Observed Codex plugin cache roots:
 
 Classification: mixed manual/local, vendor, plugin cache, and app runtime
 state. Only `grill-with-docs` is target baseline policy. It is declared and
-locked by the repo, but the locked public package does not yet reproduce the
-richer local Codex skill content.
+locked as APM package evidence, but live Codex is not yet known to be generated
+by the corrected APM baseline.
 
 Excluded as Sensitive Local State: Codex auth, histories, sessions, logs,
 local databases, memory stores, trusted-project state, plugin caches,
@@ -217,10 +218,20 @@ active. Codex, Claude, opencode, and other AI targets are inactive because the
 repo does not yet contain target files such as `.codex/`, `.opencode/`, or
 `CLAUDE.md`. The draft `system/ai/apm/apm.yml` pins `targets: [codex]` so
 APM target auto-detection is not used for the first AI-only baseline pass.
-Run project-scoped APM checks from `system/ai/apm` until a repo wrapper exists.
+Run project-scoped APM checks from `system/ai/apm` when package or lock
+evidence is needed.
 
 Excluded as Sensitive Local State: `~/.apm/config.json`, future global APM
 manifests under `~/.apm`, caches, credentials, and generated target output.
+
+The live APM project should consume the repo source-of-truth files through
+normal dotfiles symlinks:
+
+- `~/.apm/apm.yml` -> `system/ai/apm/apm.yml`
+- `~/.apm/apm.lock.yaml` -> `system/ai/apm/apm.lock.yaml`
+
+When setup is eventually run, it may back up existing files at those two paths
+before replacing them with symlinks.
 
 APM schema findings from read-only inspection and the approved lockfile gate:
 
@@ -270,33 +281,40 @@ That preview also found the current blocker: the locked public package's
 `SKILL.md` is only a wrapper that says to run `/grilling` using
 `/domain-modeling`. The current live Codex skill under `~/.codex/skills` is
 self-contained and includes the detailed workflow plus format references. Do
-not deploy the public package over the live skill until either the dependent
-skills are deliberately added to the baseline or a self-contained
-`grill-with-docs` package source is chosen.
+not deploy the public package over the live skill.
+
+The 2026-07-03 follow-up compared the pinned public package with the live
+Codex skill and tested an expanded scratch manifest. `domain-modeling` exists
+at `mattpocock/skills/skills/engineering/domain-modeling#v1.0.1`, and its
+format reference files match the live `grill-with-docs` reference files.
+However, `mattpocock/skills/skills/engineering/grilling#v1.0.1` does not
+exist at that path: APM failed the expanded scratch install for that dependency
+and the public GitHub contents API returned 404 for the path. Therefore the
+public dependency expansion does not reproduce the live skill at the pinned
+tag. Do not work around this by keeping a repo-owned Codex skill tree. Correct
+the APM package source before live deployment.
 
 Global APM mode was tested with redirected `HOME` and XDG paths. It does not
 consume the repo manifest directly; `apm install --global` expects
-`~/.apm/apm.yml`. Therefore `~/.apm` must remain generated/local state, not the
-source of truth. Any future live deployment should be driven by an explicit
-repo wrapper that reads `system/ai/apm/apm.yml` and `apm.lock.yaml`, snapshots
-current Codex skill names, writes only reviewed target paths, and refuses to
-touch auth, history, cache, or unrelated skills.
+`~/.apm/apm.yml`. Therefore `~/.apm` consumes the repo source of truth through
+symlinks, while APM owns generated modules and target output after package
+correction.
 
 `apm audit --ci` currently reports expected APM drift because generated target
 output is intentionally absent from `system/ai/apm`. Do not make the audit pass
-by committing `.agents/` output until the baseline source mismatch is resolved.
+by committing `.agents/` output or by writing live Codex state.
 
 ## Shared Assets, Prompts, And Commands
 
-The shared source should be an AI Package Source consumed by APM, not copied
-files under each tool's home directory.
+The shared source should be an AI Package Source consumed by APM, not a
+repo-owned copy of a tool-specific skill tree.
 
 Source policy:
 
-- Keep source assets in an APM package source.
-- Use the Orchestrator Repo only for the laptop's Global AI Baseline
-  declarations, lockfiles, target mappings, validation, and redacted
-  templates.
+- Keep package-source evidence in APM manifests and lockfiles.
+- Link the repo APM manifest and lockfile into `~/.apm`.
+- Let APM materialize generated modules and target output after package
+  correction.
 - Put project-specific prompts, rules, commands, agents, and workflows in the
   project repos that need them.
 - Promote a project-local asset only after repeated cross-project use.
@@ -310,36 +328,29 @@ Initial target baseline:
 - Do not include `using-superpowers` in the baseline.
 
 The current baseline source is the public APM package
-`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1`. The
-machine-local path `/Users/alex/.codex/skills/grill-with-docs` is useful
-evidence for current behavior, but it must not be copied into this repo as
-source because it is live AI tool state. The source choice now needs one more
-decision: either accept the public package plus its `/grilling` and
-`/domain-modeling` dependencies, or publish/consume a self-contained
-`grill-with-docs` package. A future companion repo is reserved for Alex's
-custom AI assets.
+`mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1` for APM lock
+evidence. It is not equivalent to the desired live skill yet. A future
+companion repo is reserved for Alex's custom AI assets that need their own
+lifecycle.
 
 ## APM Role And Open Questions
 
-APM should eventually own:
+APM should eventually support:
 
 - `system/ai/apm/apm.yml`
 - `system/ai/apm/apm.lock.yaml`
-- Global AI Baseline package declarations
+- Global AI Baseline package evidence
 - target mappings for Codex, Claude Code, opencode, Pi, and future surfaces
 - audit and policy checks for installed AI Assets
-- generated or installed adapters that contain no secrets
+- generated modules and target output after package correction
 
 Open questions before live deployment:
 
-1. Should the public `grill-with-docs` wrapper bring `grilling` and
-   `domain-modeling` into the baseline, or should the baseline use a
-   self-contained package?
-2. Should live Codex output use APM's default `.agents/skills` path, or the
-   legacy `.codex/skills` path that matches current Codex desktop discovery?
-3. Should opencode and Pi remain local experiments, become declared AI Tool
+1. Which package source should make `grill-with-docs` equivalent to the desired
+   live skill before Codex deployment?
+2. Should opencode and Pi remain local experiments, become declared AI Tool
    Surfaces, or be removed behind approval?
-4. When should the manual `/usr/local/bin/apm` binary be replaced by the
+3. When should the manual `/usr/local/bin/apm` binary be replaced by the
    declared Homebrew formula?
 
 ## Repo Versus Companion Repo
@@ -424,9 +435,11 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 1. Keep this plan as the current machine-state handoff.
 2. Accept ADR-0008 as the APM role decision while keeping the current manual
    APM binary as a managed exception.
-3. Keep the Brewfile-declared Homebrew APM formula as desired state; do not
+3. Accept ADR-0009 as the APM project-file placement decision: repo manifest
+   and lockfile symlinked into `~/.apm`.
+4. Keep the Brewfile-declared Homebrew APM formula as desired state; do not
    install or remove binaries until a separate cleanup task.
-4. Do not broaden the Global AI Baseline beyond `grill-with-docs`.
+5. Do not broaden the Global AI Baseline beyond `grill-with-docs`.
 
 ### P1: Declare The Baseline Without Deploying
 
@@ -437,27 +450,26 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
    current public package.
 3. Treat scratch-root materialization as proven for `grill-with-docs`, with
    output confined to ignored local state.
-4. Keep live deployment blocked until the public wrapper dependency issue is
-   resolved.
-5. Update doctor to recognize ADR-0008, the APM manifest, the lockfile, and
-   target baseline checks.
+4. Link `~/.apm/apm.yml` and `~/.apm/apm.lock.yaml` to the repo source files
+   through normal setup.
+5. Keep live Codex deployment blocked until the package source is corrected.
+6. Update doctor to report repo APM validity, live APM symlink state, and live
+   Codex migration state separately.
 
-### P2: Reproduce Shared Skills
+### P2: Correct Package Source And Deploy Through APM
 
-1. Decide whether the public package dependencies are part of the baseline or
-   whether a self-contained package source is required.
-2. Generate or install the `grill-with-docs` adapter into the first approved
-   target surface.
-3. Verify tool discovery for that target.
-4. Compare generated output with the current local `grill-with-docs` intent.
-5. Expand to Claude Code, opencode, or Pi only after target behavior is
-   understood.
+1. Choose or publish a package source equivalent to the desired live skill.
+2. Lock the corrected package source through APM.
+3. Capture a Rebuild Snapshot before writing live Codex target output.
+4. Let APM materialize the approved Codex target output.
+5. Keep `using-superpowers` intentionally excluded unless a later ADR changes
+   the Global AI Baseline.
 
 ### P3: Cleanup Behind Approval
 
 1. Capture a Rebuild Snapshot for AI local state.
-2. Remove duplicate or non-baseline global assets only after APM reproduction
-   works.
+2. Remove duplicate or non-baseline global assets only after the APM-generated
+   baseline is verified.
 3. Decide whether opencode and Pi remain local tools, become declared surfaces,
    or are removed.
 4. Tighten doctor so undeclared AI tools and shared assets are actionable
@@ -465,9 +477,8 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 
 ## Recommended Next Implementation Task
 
-Resolve the `grill-with-docs` source mismatch before live deployment. The
-specific decision is whether to add the public package's `/grilling` and
-`/domain-modeling` dependencies to the Global AI Baseline, or to create a
-self-contained package source for the richer skill behavior currently present
-in Codex. Do not run update, prune, or live target deployment commands before
-that decision.
+Correct the `grill-with-docs` package source before live Codex deployment.
+The repo source of truth is `system/ai/apm/apm.yml` plus
+`system/ai/apm/apm.lock.yaml`, consumed by `~/.apm` symlinks. Do not run APM
+update, prune, global install, or target deployment commands until the package
+source is equivalent to the desired live skill.

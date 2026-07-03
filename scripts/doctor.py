@@ -33,6 +33,9 @@ DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
 APM_MANIFEST = ROOT / "system/ai/apm/apm.yml"
 APM_LOCKFILE = ROOT / "system/ai/apm/apm.lock.yaml"
+APM_USER_MANIFEST = HOME / ".apm/apm.yml"
+APM_USER_LOCKFILE = HOME / ".apm/apm.lock.yaml"
+CODEX_GRILL_WITH_DOCS_LIVE = HOME / ".codex/skills/grill-with-docs"
 DEV_ENV = ROOT / "scripts/dev_env.sh"
 MISE_CONFIG = ROOT / "system/mise/config.toml"
 MISE_USER_CONFIG = HOME / ".config/mise/config.toml"
@@ -2696,10 +2699,93 @@ def codex_skill_names() -> dict[str, Any]:
     return state
 
 
+def symlink_file_state(path: Path, expected_target: Path) -> dict[str, Any]:
+    state: dict[str, Any] = {
+        "path": str(path),
+        "path_present": path.exists() or path.is_symlink(),
+        "exists": path.exists(),
+        "is_file": path.is_file(),
+        "is_symlink": path.is_symlink(),
+        "link_target": None,
+        "resolved_path": None,
+        "expected_target": str(expected_target),
+        "points_to_expected_target": False,
+        "canonical": False,
+    }
+    if path.is_symlink():
+        try:
+            state["link_target"] = os.readlink(path)
+        except OSError:
+            pass
+        try:
+            resolved_path = path.resolve(strict=False)
+            state["resolved_path"] = str(resolved_path)
+            state["points_to_expected_target"] = (
+                resolved_path == expected_target.resolve(strict=False)
+            )
+        except OSError:
+            pass
+
+    state["canonical"] = bool(
+        state["is_symlink"] and state["points_to_expected_target"]
+    )
+    return state
+
+
+def apm_user_project_state() -> dict[str, Any]:
+    files = {
+        "apm.yml": symlink_file_state(APM_USER_MANIFEST, APM_MANIFEST),
+        "apm.lock.yaml": symlink_file_state(APM_USER_LOCKFILE, APM_LOCKFILE),
+    }
+    missing = sorted(
+        name for name, info in files.items() if not info["path_present"]
+    )
+    noncanonical = sorted(
+        name
+        for name, info in files.items()
+        if info["path_present"] and not info["canonical"]
+    )
+    return {
+        "path": str(HOME / ".apm"),
+        "files": files,
+        "missing": missing,
+        "noncanonical": noncanonical,
+        "canonical": not missing and not noncanonical,
+    }
+
+
+def codex_live_skill_state() -> dict[str, Any]:
+    state: dict[str, Any] = {
+        "path": str(CODEX_GRILL_WITH_DOCS_LIVE),
+        "path_present": CODEX_GRILL_WITH_DOCS_LIVE.exists()
+        or CODEX_GRILL_WITH_DOCS_LIVE.is_symlink(),
+        "exists": CODEX_GRILL_WITH_DOCS_LIVE.exists(),
+        "is_dir": CODEX_GRILL_WITH_DOCS_LIVE.is_dir(),
+        "is_symlink": CODEX_GRILL_WITH_DOCS_LIVE.is_symlink(),
+        "link_target": None,
+        "resolved_path": None,
+        "known_generated_by_corrected_apm_baseline": False,
+    }
+    if CODEX_GRILL_WITH_DOCS_LIVE.is_symlink():
+        try:
+            state["link_target"] = os.readlink(CODEX_GRILL_WITH_DOCS_LIVE)
+        except OSError:
+            pass
+        try:
+            state["resolved_path"] = str(
+                CODEX_GRILL_WITH_DOCS_LIVE.resolve(strict=False)
+            )
+        except OSError:
+            pass
+    return state
+
+
 def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
     manifest = apm_manifest_state()
     lockfile = apm_lockfile_state()
+    apm_user_project = apm_user_project_state()
     codex_skills = codex_skill_names()
+    live_skill = codex_live_skill_state()
 
     if not manifest["exists"]:
         add_finding(
@@ -2712,13 +2798,17 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             details=manifest,
             recommendation="Restore system/ai/apm/apm.yml with the approved Global AI Baseline.",
         )
-    elif manifest["targets_codex"] and manifest["declares_grill_with_docs"]:
+    elif (
+        manifest["targets_codex"]
+        and manifest["declares_grill_with_docs"]
+        and not manifest["declares_using_superpowers"]
+    ):
         add_finding(
             findings,
             area="ai_tools",
             classification="canonical",
             name="ai_tools.apm_manifest",
-            summary="APM manifest declares the Codex-first grill-with-docs baseline.",
+            summary="Repo APM manifest declares the intended grill-with-docs baseline.",
             details=manifest,
         )
     else:
@@ -2766,7 +2856,7 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             area="ai_tools",
             classification="canonical",
             name="ai_tools.apm_lockfile",
-            summary="APM lockfile pins only the approved public grill-with-docs package.",
+            summary="APM lockfile pins the approved public grill-with-docs package evidence.",
             details=lockfile,
         )
     else:
@@ -2781,16 +2871,57 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             recommendation="Review apm.lock.yaml before any install or deploy command.",
         )
 
-    if codex_skills["baseline_missing"]:
+    if apm_user_project["canonical"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="ai_tools.apm_user_project",
+            summary="Live APM project files are symlinked to the repo manifest and lockfile.",
+            details=apm_user_project,
+        )
+    elif apm_user_project["noncanonical"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="drift",
+            name="ai_tools.apm_user_project",
+            severity="medium",
+            summary="Live APM project files exist but are not symlinked to the repo source files.",
+            details=apm_user_project,
+            recommendation=(
+                "Run the normal dotfiles symlink setup after approval; it will back up "
+                "existing ~/.apm/apm.yml or ~/.apm/apm.lock.yaml before replacing them."
+            ),
+        )
+    else:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="ai_tools.apm_user_project",
+            severity="low",
+            summary="Live APM project files are not linked to the repo manifest and lockfile yet.",
+            details=apm_user_project,
+            recommendation=(
+                "Run the normal dotfiles symlink setup when live ~/.apm project files "
+                "should consume the repo source of truth."
+            ),
+        )
+
+    if codex_skills["baseline_missing"] or not live_skill["path_present"]:
         add_finding(
             findings,
             area="ai_tools",
             classification="missing",
             name="ai_tools.codex_baseline",
             severity="medium",
-            summary="Codex is missing baseline AI skills.",
-            details=codex_skills,
-            recommendation="Deploy baseline assets only after APM preview and approval.",
+            summary="Codex is missing the live baseline grill-with-docs skill.",
+            details={"skills": codex_skills, "live_skill": live_skill},
+            recommendation=(
+                "Correct the locked package source before using APM to materialize "
+                "Codex target output."
+            ),
         )
     else:
         add_finding(
@@ -2800,13 +2931,13 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
             name="ai_tools.codex_baseline",
             severity="low",
             summary=(
-                "Codex has the baseline skill by name, but it has not been "
-                "verified as APM-managed output."
+                "Codex has the live baseline skill, but it is not known to be "
+                "generated by the corrected APM baseline."
             ),
-            details=codex_skills,
+            details={"skills": codex_skills, "live_skill": live_skill},
             recommendation=(
-                "Resolve the grill-with-docs package-source mismatch before "
-                "replacing the live Codex skill."
+                "Keep live Codex deployment blocked until the locked package source "
+                "is equivalent to the desired skill."
             ),
         )
 

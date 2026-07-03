@@ -36,8 +36,7 @@ Current global skills include:
 Target state:
 
 - Keep `grill-with-docs` as the only Baseline AI Asset.
-- Reinstall or adapt the baseline through APM only after the package source
-  mismatch is resolved.
+- Receive baseline assets from APM after the locked package source is corrected.
 - Treat `using-superpowers` as approval-gated cleanup, not as baseline.
 - Treat system, runtime, and plugin-provided skills as vendor or app state
   unless intentionally declared.
@@ -50,22 +49,26 @@ thin wrapper that invokes `/grilling` and `/domain-modeling`, while the current
 live Codex skill is self-contained and includes the detailed workflow plus
 format references.
 
-Do not deploy the pinned public package over `~/.codex/skills/grill-with-docs`
-until one of these is true:
-
-- the dependent `grilling` and `domain-modeling` assets are deliberately added
-  to the Global AI Baseline
-- a self-contained `grill-with-docs` package source is chosen
+Do not deploy the pinned public package over `~/.codex/skills/grill-with-docs`.
+The 2026-07-03 expanded scratch test showed that `domain-modeling` exists, but
+`mattpocock/skills/skills/engineering/grilling#v1.0.1` is absent at that path.
+The current public package is therefore not equivalent to the desired live
+skill.
 
 APM's default Codex skill output is `.agents/skills/`. Codex desktop currently
 discovers the live global skill from `~/.codex/skills`, and the scratch preview
 confirmed APM can produce that layout with `--legacy-skill-paths`.
 
+Do not run live Codex deployment yet. After the package source is corrected and
+a later deployment gate approves target writes, APM should materialize the
+Codex target output.
+
 ## Repo Ownership
 
 This directory may contain only Codex-safe managed declarations, generated
-adapters, and redacted templates. Do not copy raw `~/.codex` files into the
-repo.
+adapters after review, and redacted templates. It should not contain a
+repo-owned `skills/` tree as the primary model for global Codex skills.
 
-Future APM output should target Codex only after the target path is reviewed,
-the source mismatch is resolved, and existing local skills are snapshotted.
+Do not copy raw `~/.codex` trees, auth-adjacent state, histories, caches,
+vendor plugin contents, generated target output, or unrelated local skills into
+the repo.

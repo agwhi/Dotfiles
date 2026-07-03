@@ -119,6 +119,10 @@ create_symlink "$DOTFILES_DIR/system/direnv.toml" "$HOME/.config/direnv/direnv.t
 # DNS encryption configuration
 create_symlink "$DOTFILES_DIR/system/dnscrypt-proxy/dnscrypt-proxy.toml" "$HOME/.config/dnscrypt-proxy/dnscrypt-proxy.toml" "DNS encryption config"
 
+# APM project files for the Global AI Baseline
+create_symlink "$DOTFILES_DIR/system/ai/apm/apm.yml" "$HOME/.apm/apm.yml" "APM manifest"
+create_symlink "$DOTFILES_DIR/system/ai/apm/apm.lock.yaml" "$HOME/.apm/apm.lock.yaml" "APM lockfile"
+
 # Global Git ignore setup
 if [[ -e "$DOTFILES_DIR/system/git/gitignore_global" ]]; then
     echo "🔧 Setting up global gitignore"

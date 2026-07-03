@@ -7,8 +7,10 @@ cache trees, trusted-project state, or vendor runtime state.
 
 ## Target Model
 
-APM is the selected AI Asset Manager. It should install, lock, audit, and adapt
-AI Assets for the AI Tool Surfaces that consume them.
+APM is the selected AI Asset Manager. The Orchestrator Repo owns APM's
+manifest and lockfile, exposes them to `~/.apm` with symlinks, and lets APM
+install, audit, and materialize AI Assets for the AI Tool Surfaces that consume
+them after package sources are correct.
 
 Homebrew remains the installer for AI app surfaces declared in
 `system/packages/Brewfile`, including Codex, ChatGPT, ChatGPT Atlas, and
@@ -20,8 +22,7 @@ The Global AI Baseline is intentionally small:
 
 The current APM lockfile pins the public `grill-with-docs` package, but live
 deployment is blocked until the package source is made equivalent to the
-current self-contained Codex skill or its supporting skills are deliberately
-added to the baseline.
+desired live skill.
 
 Do not include `using-superpowers`, Pi, opencode, broad language/framework
 skills, or project-specific prompts in the global baseline unless a later ADR
@@ -41,15 +42,16 @@ flow through the same APM declaration and lock process as third-party assets.
 
 Author each Shared AI Asset once. Let APM generate, install, or link the
 tool-specific adapter for Codex, Claude Code, opencode, Pi, or future AI Tool
-Surfaces.
+Surfaces after the package source and target writes are approved.
 
-Do not copy the same prompt or skill manually across tool-specific config trees.
-If a tool requires a different format, the adapter is generated output or an
-explicit target-specific wrapper, not the source of truth.
+Do not copy the same prompt or skill manually across tool-specific config trees
+or keep a repo-owned Codex skill tree as the primary model. If a tool requires
+a different format, the adapter is generated output or an explicit
+target-specific wrapper, not the source of truth.
 
 ## What This Repo Owns
 
-- AI Asset Manager policy and future APM manifests under `system/ai/apm/`.
+- AI Asset Manager policy and APM project files under `system/ai/apm/`.
 - Codex-safe managed configuration and adapters under `system/ai/codex/`.
 - Claude-safe managed configuration and adapters under `system/ai/claude/`.
 - opencode-safe managed configuration and adapters under `system/ai/opencode/`.
