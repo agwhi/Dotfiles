@@ -55,16 +55,6 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
   Cursor cask. Keep as local app state unless a later editor policy migrates
   it.
-- `~/.local/bin/claude`: manual-local AI CLI resolving to
-  `~/.local/share/claude/versions/2.1.198`. The repo now declares
-  `cask "claude-code"` as the target stable Claude Code installer. Keep the
-  current manual CLI as migration-pending until a later approved reinstall task
-  snapshots safe metadata, installs the cask, verifies PATH, and then cleans old
-  versioned executable artifacts `2.1.187`, `2.1.196`, and `2.1.197`.
-- `/Applications/Claude.app`: manually installed Claude Desktop GUI. The repo
-  now declares `cask "claude"` as the target installer. Keep the current app as
-  migration-pending until a later approved reinstall task replaces or adopts it
-  through Homebrew without deleting sensitive `~/.claude` state.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
   `codex_chronicle`: app-runtime-context, not package-manager drift.
 - `~/.local/share/fnm/aliases/default/bin/opencode`: npm-global

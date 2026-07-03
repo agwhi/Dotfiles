@@ -5,24 +5,22 @@ Homebrew casks.
 
 Current local state:
 
-- CLI binary: `~/.local/bin/claude`
-- Resolved CLI binary: `~/.local/share/claude/versions/2.1.198`
-- CLI version observed: `2.1.198 (Claude Code)`
-- CLI install source: `manual/local`; migrate to the declared Homebrew stable
-  cask `claude-code` in a later approved reinstall task.
+- CLI binary: `/opt/homebrew/bin/claude`
+- Resolved CLI binary: `/opt/homebrew/Caskroom/claude-code/2.1.191/claude`
+- CLI version observed: `2.1.191 (Claude Code)`
+- CLI install source: Homebrew cask `claude-code`
 - Desktop app: `/Applications/Claude.app`
 - Desktop version observed: `1.18286.0`
-- Desktop install source: manual app install; migrate to the declared
-  Homebrew cask `claude` in a later approved reinstall task.
+- Desktop install source: Homebrew cask `claude`
 - Config and cache roots: `~/.claude`, `~/.claude.json`,
   `~/.local/share/claude`
-- Older versioned executable artifacts observed: `2.1.187`, `2.1.196`, and
-  `2.1.197`
+- The previous manual CLI symlink and versioned executable artifacts under
+  `~/.local/share/claude/versions` were removed during the approved
+  Homebrew migration.
 
 ## Classification
 
-Claude Code and Claude Desktop are migration-pending until the live installs
-are replaced by the Brewfile-declared casks:
+Claude Code and Claude Desktop are canonical Homebrew-owned AI Tool Surfaces:
 
 - `cask "claude-code"` for the stable Claude Code terminal harness.
 - `cask "claude"` for Claude Desktop.
@@ -33,12 +31,6 @@ chooses the latest release channel.
 
 Local configuration, permissions, plugin caches, marketplace clones, histories,
 backups, and app state are Sensitive Local State.
-
-Older versioned executable artifacts are approval-gated cleanup candidates
-only. Do not remove them in a documentation, doctor, or APM baseline task. A
-later reinstall task should snapshot safe metadata, uninstall the manual CLI
-and app surfaces, install the Homebrew casks, and verify `claude` resolves
-through Homebrew before cleaning old version files.
 
 Claude plugin cache contents are not source-of-truth assets. If a plugin or
 skill should become part of the Global AI Baseline, declare its package source
@@ -63,5 +55,5 @@ This directory may contain Claude-safe generated adapters or redacted templates.
 Do not commit raw `~/.claude`, `~/.claude.json`, or `~/.local/share/claude`
 content.
 
-Do not remove existing Claude plugin cache state, permissions, or installed CLI
-versions without a Rebuild Snapshot and explicit approval.
+Do not remove existing Claude plugin cache state, permissions, Homebrew casks,
+or sensitive local state without a Rebuild Snapshot and explicit approval.
