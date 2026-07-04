@@ -239,6 +239,20 @@ The live deployment model is not `apm install --global` from this repo.
 Redirected-HOME testing showed that global mode looks for `~/.apm/apm.yml` and
 does not consume `system/ai/apm/apm.yml` directly.
 
+On 2026-07-04, the approved Claude target-write gate used copied scratch
+manifests plus redirected HOME/XDG state first, then deployed Claude only with:
+
+```sh
+apm install --frozen --target claude --global
+```
+
+The live Claude output was limited to `~/.claude/skills/domain-modeling`,
+`~/.claude/skills/grill-with-docs`, and `~/.claude/skills/grilling`.
+`using-superpowers` was absent. APM 0.23.1 also tried to add deployment
+metadata to the symlinked `apm.lock.yaml` even with `--frozen`; that generated
+metadata was reverted so the repo lockfile remains source evidence only. Check
+the lockfile after any future global install.
+
 Preferred model:
 
 - keep `system/ai/apm/apm.yml` and `system/ai/apm/apm.lock.yaml` as the repo

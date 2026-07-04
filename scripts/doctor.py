@@ -42,6 +42,7 @@ APM_LOCKFILE = ROOT / "system/ai/apm/apm.lock.yaml"
 APM_USER_MANIFEST = HOME / ".apm/apm.yml"
 APM_USER_LOCKFILE = HOME / ".apm/apm.lock.yaml"
 CODEX_SKILLS_DIR = HOME / ".codex/skills"
+CLAUDE_SKILLS_DIR = HOME / ".claude/skills"
 CLAUDE_COMMAND = HOME / ".local/bin/claude"
 CLAUDE_VERSIONS_DIR = HOME / ".local/share/claude/versions"
 CLAUDE_DESKTOP_APP = Path("/Applications/Claude.app")
@@ -3159,15 +3160,20 @@ def path_exists_or_symlink(path: Path) -> bool:
     return path.exists() or path.is_symlink()
 
 
-def codex_split_baseline_state() -> dict[str, Any]:
+def split_skill_baseline_state(
+    skills_dir: Path,
+    allowed_vendor_runtime_skills: list[str] | None = None,
+) -> dict[str, Any]:
+    if allowed_vendor_runtime_skills is None:
+        allowed_vendor_runtime_skills = []
     baseline_skill_set = set(CODEX_BASELINE_SKILLS)
-    allowed_vendor_runtime_set = set(CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS)
+    allowed_vendor_runtime_set = set(allowed_vendor_runtime_skills)
     state: dict[str, Any] = {
-        "path": str(CODEX_SKILLS_DIR),
-        "exists": CODEX_SKILLS_DIR.is_dir(),
+        "path": str(skills_dir),
+        "exists": skills_dir.is_dir(),
         "skill_names": [],
         "baseline_skill_roots": CODEX_BASELINE_SKILLS,
-        "allowed_vendor_runtime_skills": CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS,
+        "allowed_vendor_runtime_skills": allowed_vendor_runtime_skills,
         "present_allowed_vendor_runtime_skills": [],
         "expected_files": CODEX_SPLIT_BASELINE_FILES,
         "present_files": [],
@@ -3182,12 +3188,12 @@ def codex_split_baseline_state() -> dict[str, Any]:
         "scan_errors": [],
         "canonical": False,
     }
-    if not CODEX_SKILLS_DIR.is_dir():
+    if not skills_dir.is_dir():
         return state
 
     names: list[str] = []
     try:
-        for item in CODEX_SKILLS_DIR.iterdir():
+        for item in skills_dir.iterdir():
             if item.is_dir():
                 names.append(item.name)
     except OSError as exc:
@@ -3198,7 +3204,7 @@ def codex_split_baseline_state() -> dict[str, Any]:
     name_set = set(names)
     state["skill_names"] = names
     state["present_allowed_vendor_runtime_skills"] = [
-        name for name in CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS if name in name_set
+        name for name in allowed_vendor_runtime_skills if name in name_set
     ]
     state["extra_non_vendor_skills"] = sorted(
         name
@@ -3212,7 +3218,7 @@ def codex_split_baseline_state() -> dict[str, Any]:
     present_files: list[str] = []
     missing_files: list[str] = []
     for relative_path in CODEX_SPLIT_BASELINE_FILES:
-        path = CODEX_SKILLS_DIR / relative_path
+        path = skills_dir / relative_path
         if path.is_file():
             present_files.append(relative_path)
         else:
@@ -3221,18 +3227,18 @@ def codex_split_baseline_state() -> dict[str, Any]:
     stale_files = [
         relative_path
         for relative_path in CODEX_STALE_BASELINE_FILES
-        if path_exists_or_symlink(CODEX_SKILLS_DIR / relative_path)
+        if path_exists_or_symlink(skills_dir / relative_path)
     ]
 
     observed_baseline_files: set[str] = set()
     for skill_name in CODEX_BASELINE_SKILLS:
-        skill_dir = CODEX_SKILLS_DIR / skill_name
+        skill_dir = skills_dir / skill_name
         if not skill_dir.is_dir():
             continue
         try:
             for item in skill_dir.rglob("*"):
                 if item.is_file() or item.is_symlink():
-                    observed_baseline_files.add(str(item.relative_to(CODEX_SKILLS_DIR)))
+                    observed_baseline_files.add(str(item.relative_to(skills_dir)))
         except OSError as exc:
             state["scan_errors"].append(
                 f"{skill_name}: {type(exc).__name__}: {exc}"
@@ -3256,6 +3262,17 @@ def codex_split_baseline_state() -> dict[str, Any]:
         and not state["unexpected_baseline_files"]
     )
     return state
+
+
+def codex_split_baseline_state() -> dict[str, Any]:
+    return split_skill_baseline_state(
+        CODEX_SKILLS_DIR,
+        allowed_vendor_runtime_skills=CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS,
+    )
+
+
+def claude_split_baseline_state() -> dict[str, Any]:
+    return split_skill_baseline_state(CLAUDE_SKILLS_DIR)
 
 
 def claude_code_state() -> dict[str, Any]:
@@ -3658,6 +3675,7 @@ def scan_ai_baseline(findings: list[dict[str, Any]]) -> None:
 
 def scan_claude_code(findings: list[dict[str, Any]]) -> None:
     state = claude_code_state()
+    claude_baseline = claude_split_baseline_state()
     command_details = {
         "expected_command": state["expected_command"],
         "target_casks": state["target_casks"],
@@ -3795,25 +3813,52 @@ def scan_claude_code(findings: list[dict[str, Any]]) -> None:
             ),
         )
 
-    add_finding(
-        findings,
-        area="ai_tools",
-        classification="migration_pending",
-        name="claude.apm_baseline",
-        severity="low",
-        summary="Claude is part of the shared APM baseline target set, but live Claude target output is not deployed yet.",
-        details={
-            "target": "claude",
-            "baseline_required": True,
-            "target_declared": "claude" in APM_BASELINE_TARGETS,
-            "future_candidate_skills": CODEX_BASELINE_SKILLS,
-            "excluded_assets": sorted(EXCLUDED_AI_ASSETS),
-        },
-        recommendation=(
-            "Preview and deploy Claude target output only through a separate "
-            "approved APM target-write gate."
-        ),
-    )
+    claude_baseline_details = {
+        "target": "claude",
+        "baseline_required": True,
+        "target_declared": "claude" in APM_BASELINE_TARGETS,
+        "expected_skills": CODEX_BASELINE_SKILLS,
+        "excluded_assets": sorted(EXCLUDED_AI_ASSETS),
+        "baseline": claude_baseline,
+    }
+    if not claude_baseline["exists"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="claude.apm_baseline",
+            severity="low",
+            summary="Claude is part of the shared APM baseline target set, but live Claude target output is not deployed yet.",
+            details=claude_baseline_details,
+            recommendation=(
+                "Preview and deploy Claude target output only through a separate "
+                "approved APM target-write gate."
+            ),
+        )
+    elif claude_baseline["canonical"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="claude.apm_baseline",
+            summary="Claude has the approved APM-managed split skill baseline.",
+            details=claude_baseline_details,
+        )
+    else:
+        classification = "missing" if claude_baseline["missing_files"] else "drift"
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification=classification,
+            name="claude.apm_baseline",
+            severity="medium",
+            summary="Claude live skills do not match the approved split baseline.",
+            details=claude_baseline_details,
+            recommendation=(
+                "Review the live Claude target output against the APM manifest and "
+                "use a separate approved deployment or cleanup gate for changes."
+            ),
+        )
 
 
 def scan_opencode_baseline(findings: list[dict[str, Any]]) -> None:

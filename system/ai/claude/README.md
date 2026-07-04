@@ -12,6 +12,7 @@ Current local state:
 - Desktop app: `/Applications/Claude.app`
 - Desktop version observed: `1.18286.0`
 - Desktop install source: Homebrew cask `claude`
+- APM baseline output: `~/.claude/skills`
 - Config and cache roots: `~/.claude`, `~/.claude.json`,
   `~/.local/share/claude`
 - The previous manual CLI symlink and versioned executable artifacts under
@@ -41,10 +42,8 @@ through APM and generate or install the Claude target from there.
 Target state:
 
 - Claude is part of the shared APM baseline target set.
-- Use the existing APM-managed split baseline: `grill-with-docs`, `grilling`,
-  and `domain-modeling`.
-- Do not write live Claude target output until a separate APM target-write gate
-  previews and approves the generated files.
+- The approved APM-managed split baseline is deployed under
+  `~/.claude/skills`: `grill-with-docs`, `grilling`, and `domain-modeling`.
 - Do not include `using-superpowers` in the global baseline.
 - Keep project-specific commands, agents, and rules in the project repos that
   need them.

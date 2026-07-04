@@ -24,9 +24,9 @@ The Global AI Baseline is intentionally small:
 The current APM manifest targets Codex, Claude Code, and opencode so those
 harnesses converge on the same shared baseline. The lockfile pins the public
 `grill-with-docs` package plus its public `grilling` and `domain-modeling`
-dependency skills. The approved Codex deployment has materialized that split
-baseline; Claude and opencode still require separate target-write gates before
-APM materializes assets for them.
+dependency skills. Approved Codex and Claude deployments have materialized that
+split baseline; opencode still requires a separate target-write gate before
+APM materializes assets for it.
 
 Do not include `using-superpowers`, Pi, opencode, broad language/framework
 skills, or project-specific prompts in the global baseline unless a later ADR
