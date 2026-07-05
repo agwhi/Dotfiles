@@ -28,9 +28,10 @@ dependency skills. Approved Codex and Claude deployments have materialized that
 split baseline; opencode still requires a separate target-write gate before
 APM materializes assets for it.
 
-Do not include `using-superpowers`, Pi, opencode, broad language/framework
-skills, or project-specific prompts in the global baseline unless a later ADR
-promotes them.
+Do not include `using-superpowers`, Pi-specific assets, opencode-specific
+assets, broad language/framework skills, or project-specific prompts in the
+global baseline unless a later ADR promotes them. This does not exclude Pi as
+a declared CLI Tool Surface; Pi packages live in the pnpm global manifest.
 
 ## Global Versus Project-Local Assets
 

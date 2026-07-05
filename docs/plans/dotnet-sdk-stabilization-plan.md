@@ -86,8 +86,8 @@ Local command evidence collected on 2026-07-01:
 - `system/packages/dotnet-tools.txt` declares only `Amazon.Lambda.Tools` and
   `Amazon.Lambda.TestTool-8.0`; both declared tools are installed as
   `amazon.lambda.tools 7.0.0` and `amazon.lambda.testtool-8.0 0.18.0`.
-- Remaining installed undeclared global tools are `amazon.lambda.testtool`,
-  `csharpier`, `deadcsharp`, and `dotnet-ef`.
+- The previously installed undeclared global tools `amazon.lambda.testtool`,
+  `csharpier`, `deadcsharp`, and `dotnet-ef` were removed on 2026-07-05.
 - Global tool shims exist in `/Users/alex/.dotnet/tools`, and the shell/dev
   environment contract now uses the expanded path rather than a literal tilde.
 
@@ -247,17 +247,18 @@ Current decisions:
   `mise`-managed SDK context.
 - Keep `system/packages/dotnet-tools.txt` unchanged until repo evidence proves
   another tool belongs in the global baseline.
-- Keep installed undeclared tools in place until a later explicit cleanup task.
+- Keep project-specific .NET tools out of the global baseline unless a later
+  workflow proves they need to be globally installed.
 
-Remaining installed undeclared global tool classification:
+Removed undeclared global tool classification:
 
 <!-- markdownlint-disable MD013 -->
 
 | Tool | Classification | Decision |
 | --- | --- | --- |
-| `amazon.lambda.testtool` | approval-gated removal candidate | Legacy Lambda test tool variant duplicates the declared `Amazon.Lambda.TestTool-8.0` baseline. Do not declare unless Alex confirms a workflow still needs the non-8.0 package. |
+| `amazon.lambda.testtool` | removed approval-gated cleanup | Legacy Lambda test tool variant duplicated the declared `Amazon.Lambda.TestTool-8.0` baseline. Do not reintroduce unless Alex confirms a workflow still needs the non-8.0 package. |
 | `csharpier` | project-local | Formatter version should be pinned by consuming C# projects if needed. Do not declare globally from this repo without project evidence. |
-| `deadcsharp` | approval-gated removal candidate | Analysis tool is installed locally but has no baseline evidence in this repo. Remove only after explicit approval. |
+| `deadcsharp` | removed approval-gated cleanup | Analysis tool had no baseline evidence in this repo. Do not reintroduce without explicit approval. |
 | `dotnet-ef` | project-local | EF Core CLI version should track the consuming project's EF package line. Do not declare globally from this repo without project evidence. |
 
 <!-- markdownlint-enable MD013 -->
@@ -334,8 +335,8 @@ Before removing or changing global tools:
 11. Keep .NET global tools as `dotnet tool --global` installs for now; migrate
    to `mise` `dotnet:ToolName` declarations only if a later decision finds
    better reproducibility.
-12. Classify `dotnet-ef`, `csharpier`, `deadcsharp`, and the legacy Lambda test
-   tool package. Done.
+12. Classify and remove `dotnet-ef`, `csharpier`, `deadcsharp`, and the legacy
+   Lambda test tool package. Done.
 13. Re-run editor-terminal checks from VS Code and Cursor before SDK-source
    cleanup if those editors are in scope for the removal task.
 14. Only after cleanup gates pass, ask for explicit approval to remove

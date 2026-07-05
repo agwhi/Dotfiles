@@ -26,14 +26,14 @@ Scratch validation on 2026-07-03 showed that `grilling` lives under
 scratch install generated `grill-with-docs`, `grilling`, and
 `domain-modeling`, and it did not generate `using-superpowers`.
 
-Live Codex deployment has materialized the split baseline. Claude Code and
-opencode are part of the shared APM target set, but their live target output
-still needs separate preview and deployment gates.
+Live Codex and Claude Code deployments have materialized the split baseline.
+opencode is part of the shared APM target set, but its live target output still
+needs a separate preview and deployment gate.
 
 The following are intentionally not baseline assets:
 
 - `using-superpowers`
-- Pi assets
+- Pi-specific assets
 - Claude plugin cache contents
 - Codex runtime or system skills
 - broad language/framework skills
@@ -52,8 +52,8 @@ approved.
 ## Source Versus Adapter
 
 The source asset is the canonical package or repository consumed by APM. Codex,
-Claude Code, opencode, Pi, or other tool-specific files are adapters. Generated
-adapters are not source of truth.
+Claude Code, opencode, future Pi adapters, or other tool-specific files are
+adapters. Generated adapters are not source of truth.
 
 Skills, commands, agents, MCP definitions, and similar shared AI assets should
 be declared as APM package dependencies before they are deployed to any tool.

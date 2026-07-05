@@ -18,12 +18,6 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 
 ## Approval-Gated Homebrew State
 
-- `node` (Homebrew formula): duplicate Node runtime owner. ADR-0007 selects
-  `fnm`; remove Homebrew `node` only after proving no formula, shell, editor,
-  or project workflow still depends on it.
-- `pnpm` (Homebrew formula): duplicate package-manager owner. ADR-0007 keeps
-  Corepack/pnpm under the selected `fnm` default Node; remove the Homebrew
-  formula only after shell parity and global tool paths are verified.
 - `dotnet@8` (Homebrew formula): declared managed exception and
   approval-gated cleanup candidate. ADR-0006 selects `mise` as the strategic
   .NET SDK owner, and the `mise` SDK root now exposes the declared .NET 10 and
@@ -49,9 +43,11 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   `/usr/local/lib/apm/apm`. ADR-0008 selects APM as the AI Asset Manager, and
   the active `apm` command now resolves through `/opt/homebrew/bin/apm` from
   the declared Homebrew formula `microsoft/apm/apm`. Keep the old root-owned
-  manual binary as an approval-gated removal candidate; remove it only in a
-  separate cleanup task after confirming Homebrew PATH precedence remains
-  stable. Do not self-update, reinstall, prune, or remove it without approval.
+  manual binary as an approval-gated removal candidate. A 2026-07-05
+  non-interactive cleanup attempt confirmed Homebrew PATH precedence but could
+  not remove the duplicate because `sudo` requires a password. Do not
+  self-update, reinstall, prune, or remove it without an interactive approval
+  path.
 - `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
   Cursor cask. Keep as local app state unless a later editor policy migrates
   it.
@@ -62,9 +58,6 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   observed version is `1.17.13`. Keep as a legacy managed exception until the
   AI Tool Surface policy decides whether opencode is project-local, managed,
   or removed.
-- `~/Library/pnpm/pi`: pnpm-global Pi command from
-  `@mariozechner/pi-coding-agent`. Not part of the Global AI Baseline. Migrate
-  to APM or remove only behind approval.
 
 ## AI Approval-Gated Cleanup
 
@@ -79,8 +72,19 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   baseline.
 - npm global `opencode-ai`: approval-gated-removal or migration candidate after
   opencode policy is decided.
-- pnpm global `@mariozechner/pi-coding-agent`: approval-gated-removal or
-  project-local migration candidate after Pi policy is decided.
+
+## Completed Cleanup
+
+- Homebrew `node` and Homebrew `pnpm`: removed on 2026-07-05 after ADR-0007
+  made `fnm` plus Corepack/pnpm the canonical JavaScript toolchain owner.
+- Pi global packages: the deprecated `@mariozechner/pi-coding-agent` package
+  and npm-installed Pi helper packages were removed on 2026-07-05, then Pi was
+  restored through the canonical pnpm global manifest using the maintained
+  `@earendil-works/pi-coding-agent` package and declared Pi extension packages.
+- Undeclared `.NET` global tools: `amazon.lambda.testtool`, `csharpier`,
+  `deadcsharp`, and `dotnet-ef` were removed on 2026-07-05. Project-specific
+  .NET tooling should be pinned in consuming projects instead of reintroduced
+  as global baseline state.
 
 ## Sensitive AI Local State
 

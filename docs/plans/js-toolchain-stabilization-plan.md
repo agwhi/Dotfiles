@@ -37,16 +37,19 @@ Grounding from `just doctor --json` generated at
 - `fnm default` is `v22.17.1`.
 - Modeled `fnm` commands are available: `node` `v22.17.1`, `npm` `11.4.2`,
   `npx` `11.4.2`, `pnpm` `10.33.2`, and `corepack` `0.34.0`.
-- Current-process `node`, `npm`, and `npx` resolve through Homebrew paths.
-- Current-process `pnpm` resolves through Codex runtime and is context only.
-- Homebrew `pnpm` `11.9.0` is present as another candidate.
-- `corepack` is declared in the Brewfile but the Homebrew formula is absent.
-- `FNM_COREPACK_ENABLED` is currently `false`.
-- Trusted pnpm globals include all three declared packages plus two undeclared
-  packages: `@mariozechner/pi-coding-agent` and `markdownlint-cli`.
-- npm globals exist in both trusted scopes: `corepack`, `npm`, and
-  `opencode-ai` under `primary_fnm_default`; `aws-cdk` and `npm` under
-  Homebrew npm.
+- Current-process `node`, `npm`, and `npx` now resolve through the `fnm`
+  default Node path after the 2026-07-05 cleanup.
+- Current-process `pnpm` resolves through the `fnm`/Corepack path. A Codex
+  runtime `pnpm` can still appear as an execution-context candidate, but it is
+  not treated as canonical laptop state.
+- Homebrew `node` and Homebrew `pnpm` were removed on 2026-07-05.
+- Homebrew `corepack` is absent and intentionally not declared.
+- `FNM_COREPACK_ENABLED` is not set in the current shell probes.
+- Trusted pnpm globals now include declared development CLIs plus the declared
+  Pi CLI and extension packages.
+- npm globals remain under `primary_fnm_default`: `context-mode`, `corepack`,
+  `npm`, and `opencode-ai`. The old Homebrew npm scope was removed with
+  Homebrew `node`.
 - No competing runtime manager signals were detected for `mise`, `asdf`,
   `nodenv`, `nvm`, `volta`, or related managers.
 
@@ -140,18 +143,18 @@ cleanup plan. This task does neither.
 ## Steady-State Policy
 
 Homebrew `node`:
-Not a steady-state owner. It is a present undeclared cleanup candidate. Remove
-later only behind a Reset Approval Gate and after confirming no Homebrew formula
-dependency needs it.
+Not a steady-state owner. It was removed on 2026-07-05 after shell parity
+confirmed `node`, `npm`, and `npx` resolve through the `fnm` default Node path.
+Do not reintroduce it unless a future Homebrew formula or workflow requires it
+explicitly.
 
 Homebrew `pnpm`:
-Not a steady-state owner. Remove from the Brewfile later if Corepack-managed
-pnpm remains the target, then uninstall the formula only behind approval.
+Not a steady-state owner. It was removed on 2026-07-05 after pnpm resolved
+through the `fnm`/Corepack path and global packages were verified there.
 
 Homebrew `corepack`:
-Not a steady-state owner. Remove from the Brewfile later. It is currently
-declared but absent, and installing it would pull toward Homebrew `node`
-ownership.
+Not a steady-state owner. It is absent and not declared. Installing it would
+pull toward Homebrew `node` ownership.
 
 npm globals under `primary_fnm_default`:
 Migration exceptions only. Current packages are `corepack`, `npm`, and
@@ -159,15 +162,14 @@ Migration exceptions only. Current packages are `corepack`, `npm`, and
 wait for the AI Tool Surface and AI Asset Manager decision.
 
 npm globals under Homebrew npm:
-Migration exceptions only. Current packages are `aws-cdk` and `npm`; `aws-cdk`
-duplicates the declared pnpm global. Remove later behind approval after proving
-`cdk` resolves through the trusted pnpm path.
+Removed on 2026-07-05 with Homebrew `node`. `aws-cdk` remains available through
+the declared pnpm global path.
 
 pnpm global packages:
-Keep `@biomejs/biome`, `aws-cdk`, and `cdk-dia` as declared globals for now.
-Classify `markdownlint-cli` as likely source-of-truth drift because repo
-validation uses markdownlint. Classify `@mariozechner/pi-coding-agent` as AI
-tooling drift until AI policy decides whether Pi is baseline or local state.
+Keep `@biomejs/biome`, `aws-cdk`, `cdk-dia`, and `markdownlint-cli` as
+declared globals for now. Keep Pi declared through the maintained
+`@earendil-works/pi-coding-agent` package plus the declared Pi extension
+packages because Alex uses Pi as part of the AI workflow.
 
 Current-process Codex runtime `pnpm`:
 Non-canonical context only. Do not use it to make laptop drift claims or install
@@ -194,14 +196,9 @@ context until PATH parity proves Homebrew `npx` is no longer first.
 
 Destructive or state-moving actions that need explicit approval later:
 
-- Uninstall Homebrew formula `node`.
-- Uninstall Homebrew formula `pnpm`.
-- Remove Homebrew npm global `aws-cdk`.
-- Remove Homebrew npm global `npm`.
 - Remove `primary_fnm_default` npm global `corepack`.
 - Remove `primary_fnm_default` npm global `npm`.
 - Remove or migrate `primary_fnm_default` npm global `opencode-ai`.
-- Remove or migrate pnpm global `@mariozechner/pi-coding-agent`.
 - Remove pnpm global `markdownlint-cli` if Alex decides it is not baseline.
 - Remove old `fnm` Node versions after a retention policy is documented:
   `v20.10.0`, `v20.13.1`, `v20.18.1`, `v22.10.0`, `v22.14.0`, `v22.18.0`,
@@ -230,9 +227,10 @@ edits after Alex approves the target state.
 - Keep `@biomejs/biome`.
 - Keep `aws-cdk`.
 - Keep `cdk-dia`.
-- Add `markdownlint-cli` if markdown lint remains part of the baseline.
-- Do not add `@mariozechner/pi-coding-agent` until AI tooling policy decides
-  whether Pi is baseline, local state, or a Managed Exception.
+- Keep `markdownlint-cli` because markdown lint is part of the repo validation
+  path.
+- Do not reintroduce the deprecated `@mariozechner/pi-coding-agent` package;
+  use the declared `@earendil-works/pi-coding-agent` package instead.
 
 `system/zsh/.zshenv` and `system/zsh/.zshrc`:
 
@@ -269,24 +267,24 @@ edits after Alex approves the target state.
    Homebrew `corepack` no.
 3. Update JS recipes to use `fnm exec --using default`.
 4. Add or document the `fnm` Corepack enablement policy.
-5. Add `markdownlint-cli` to `system/packages/pnpm-global.txt` if markdownlint
-   remains required validation tooling.
-6. Classify `@mariozechner/pi-coding-agent` and `opencode-ai` under the AI
-   Tool Surface policy instead of generic JS globals.
+5. Keep `markdownlint-cli` in `system/packages/pnpm-global.txt` because
+   markdownlint remains required validation tooling.
+6. Keep Pi declared in `system/packages/pnpm-global.txt`; classify
+   `opencode-ai` under the AI Tool Surface policy instead of generic JS
+   globals.
 
 ### P1 Migrate Or Remove Duplicates
 
 1. Confirm `node`, `npm`, `npx`, `corepack`, and `pnpm` resolve through the
-   trusted `fnm` path in zsh and Codex-command contexts.
-2. After approval, remove Homebrew npm global `aws-cdk` once `cdk` resolves
-   through pnpm.
-3. After approval, remove Homebrew `pnpm`.
-4. After approval, remove Homebrew `node` if no dependency or Managed Exception
-   requires it.
+   trusted `fnm` path in zsh and Codex-command contexts. Done.
+2. Homebrew npm global `aws-cdk` removal is complete; `cdk` resolves through
+   the declared pnpm global path.
+3. Homebrew `pnpm` removal is complete.
+4. Homebrew `node` removal is complete.
 5. After approval, remove npm global `corepack` and rely on `fnm` Node
    Corepack for Node versions that provide it.
-6. After approval, migrate or remove `opencode-ai` and Pi according to AI
-   tooling policy.
+6. After approval, migrate or remove `opencode-ai` according to AI tooling
+   policy; keep Pi declared through pnpm unless a later policy changes it.
 
 ### P2 Docs And Doctor Strictness
 
@@ -299,9 +297,7 @@ edits after Alex approves the target state.
 
 ## Open Questions For Alex
 
-1. Should `markdownlint-cli` become a declared pnpm global?
-2. Is Pi a baseline AI Tool Surface or personal local state?
-3. Should Node 25+ experimentation stay installed after the retention policy is
+1. Should Pi eventually receive APM-managed assets if APM gains a confirmed Pi
+   target or adapter model?
+2. Should Node 25+ experimentation stay installed after the retention policy is
    written?
-4. Is there any Homebrew formula or workflow that intentionally requires
-   Homebrew `node`?

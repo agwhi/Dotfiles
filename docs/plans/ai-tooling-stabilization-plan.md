@@ -51,7 +51,7 @@ is the public `grill-with-docs` workflow materialized as split skills:
 Do not promote these into the Global AI Baseline yet:
 
 - `using-superpowers`
-- Pi assets
+- Pi-specific assets
 - opencode-specific assets
 - Claude plugin cache contents
 - Codex system, runtime, or plugin skills
@@ -76,7 +76,7 @@ tree.
 | Claude Code | `/opt/homebrew/bin/claude` -> `/opt/homebrew/Caskroom/claude-code/2.1.191/claude` | `2.1.191 (Claude Code)` | Homebrew cask `claude-code` | Yes, `cask "claude-code"` | Canonical AI Tool Surface | The previous manual `~/.local/bin/claude` symlink and `~/.local/share/claude/versions` executables were removed during the approved migration. |
 | Claude Desktop | `/Applications/Claude.app` | `1.18286.0` | Homebrew cask `claude` | Yes, `cask "claude"` | Canonical AI Tool Surface | Sensitive `~/.claude` state remains local and out of git. |
 | opencode | `/Users/alex/.local/share/fnm/aliases/default/bin/opencode` | `1.17.13` | npm global under fnm default Node, package `opencode-ai` | No | Legacy managed exception | `open-code` is not on PATH. Decide later whether opencode is project-local, managed, or removed behind approval. |
-| Pi | `/Users/alex/Library/pnpm/pi` | `0.73.0` | pnpm global, package `@mariozechner/pi-coding-agent` | No | Approval-gated project-local or removal candidate | Not declared in `system/packages/pnpm-global.txt`; do not add it to the baseline by accident. |
+| Pi | `/Users/alex/Library/pnpm/pi` | `0.80.3` | pnpm global, package `@earendil-works/pi-coding-agent`; extensions declared in `system/packages/pnpm-global.txt` | Yes, pnpm manifest | Declared AI Tool Surface | Restored on 2026-07-05 through the canonical fnm/pnpm global path after the deprecated `@mariozechner` package was removed. Pi-specific assets are not part of the shared APM baseline unless promoted later. |
 | APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm`; legacy duplicate at `/usr/local/bin/apm` | `0.23.1 (d1d926d)` | Homebrew formula `microsoft/apm/apm` plus legacy manual duplicate | Yes, `brew "microsoft/apm/apm"` | Selected AI Asset Manager, canonical binary plus approval-gated cleanup candidate | ADR-0008 selects APM for AI Assets. The active command now resolves through Homebrew; the old `/usr/local` manual binary remains a lower-priority cleanup candidate. Do not self-update or mutate with APM without approval. |
 | ChatGPT | Homebrew cask app | `1.2026.160,1781312926` | Homebrew cask | Yes, `cask "chatgpt"` | Canonical app surface | App state is local and out of repo. No shared asset policy is needed yet. |
 | ChatGPT Atlas | Homebrew cask app | `1.2026.98.2,20260416164957000` | Homebrew cask | Yes, `cask "chatgpt-atlas"` | Canonical app surface | App state is local and out of repo. |
@@ -196,16 +196,21 @@ local wrappers, npm package state, and generated dependencies.
 
 ### Pi
 
-Name-only paths inspected:
+Current state: Pi is installed through the canonical fnm/pnpm global path and
+is declared in `system/packages/pnpm-global.txt`.
 
-- `/Users/alex/Library/pnpm/pi`
-- `/Users/alex/Library/pnpm/global/5/node_modules/@mariozechner/pi-coding-agent`
+Declared packages:
 
-Classification: pnpm-global package state. Pi is not part of the Global AI
-Baseline and is not declared in the repo's pnpm global package manifest.
+- `@earendil-works/pi-coding-agent`
+- `@plannotator/pi-extension`
+- `pi-lens`
+- `pi-mcp-adapter`
+- `pi-subagents`
+- `pi-web-access`
 
-Excluded as Sensitive Local State: package-manager store internals and any
-future Pi auth, project, history, or cache state.
+Classification: declared AI Tool Surface and user workflow tool. Pi-specific
+assets are not part of the shared APM baseline unless a later policy promotes
+them.
 
 ### APM
 
@@ -362,14 +367,15 @@ APM should eventually support:
 - `system/ai/apm/apm.yml`
 - `system/ai/apm/apm.lock.yaml`
 - Global AI Baseline package evidence
-- target mappings for Codex, Claude Code, opencode, Pi, and future surfaces
+- target mappings for Codex, Claude Code, opencode, and future surfaces
+- future Pi integration if APM adds a confirmed Pi target or adapter model
 - audit and policy checks for installed AI Assets
 - generated modules and target output through approved target-write gates
 
 Open questions before live deployment:
 
-1. Should opencode and Pi remain local experiments, become declared AI Tool
-   Surfaces, or be removed behind approval?
+1. Should opencode remain a local experiment, become a declared AI Tool
+   Surface, or be removed behind approval?
 2. When should the legacy manual `/usr/local/bin/apm` duplicate be removed?
 
 ## Repo Versus Companion Repo
@@ -432,14 +438,13 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
   `apm self-update`, or any APM command that writes target files.
 - Rewrite `apm.lock.yaml` without approval.
 - Add another APM manifest or deploy generated adapters into Codex, Claude
-  Code, opencode, Pi, or Cursor target directories.
+  Code, opencode, any future Pi adapter, or Cursor target directories.
 - Remove or replace the APM-managed split Codex skills under
   `/Users/alex/.codex/skills`.
 - Remove any reintroduced `/Users/alex/.codex/skills/using-superpowers`.
 - Remove or rewrite Claude plugin cache state.
 - Remove Homebrew Claude casks or migrate `~/.local/share/claude`.
 - Remove npm global `opencode-ai`.
-- Remove pnpm global `@mariozechner/pi-coding-agent`.
 - Remove or migrate `~/.local/share/opencode` or
   `~/.config/opencode`.
 - Delete, rewrite, or move `~/.codex`, `~/.claude`, `~/.apm`, or any auth,
@@ -487,8 +492,8 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 1. Capture a Rebuild Snapshot for AI local state.
 2. Remove duplicate or non-baseline global assets only after the APM-generated
    baseline is verified.
-3. Decide whether opencode and Pi remain local tools, become declared surfaces,
-   or are removed.
+3. Decide whether opencode remains a local tool, becomes a declared surface, or
+   is removed; keep Pi declared through pnpm unless a later policy moves it.
 4. Tighten doctor so undeclared AI tools and shared assets are actionable
    drift.
 

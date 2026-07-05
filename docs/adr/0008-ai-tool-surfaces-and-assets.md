@@ -6,8 +6,8 @@ declared, locked, installed, audited, and adapted through APM, while
 tool-specific CLI binaries such as Codex, Claude Code, opencode, and Pi remain
 separate AI Tool Surfaces with their own install provenance. ADR-0003 still
 sets the Global AI Baseline to only `grill-with-docs`; selecting APM does not
-promote `using-superpowers`, Pi, opencode, or project-specific assets into the
-global baseline.
+promote `using-superpowers`, Pi-specific assets, opencode-specific assets, or
+project-specific assets into the global baseline.
 
 AI harness binaries and apps should be reproducible from the package manifests
 where possible. Codex, Claude Desktop, and the stable Claude Code terminal
@@ -31,6 +31,6 @@ The APM package evidence files are `system/ai/apm/apm.yml` and
 public `grilling` and `domain-modeling` dependency skills at the same
 `v1.0.1` tag. ADR-0009 exposes the repo APM project to `~/.apm` with symlinks.
 The manifest targets Codex, Claude Code, and opencode so each supported
-harness receives the same shared baseline. The approved Codex deployment has
-materialized the split baseline; Claude Code and opencode still require
-separate target-write gates before APM materializes assets for them.
+harness receives the same shared baseline. The approved Codex and Claude Code
+deployments have materialized the split baseline; opencode still requires a
+separate target-write gate before APM materializes assets for it.

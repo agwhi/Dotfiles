@@ -1,4 +1,10 @@
 @biomejs/biome
+@earendil-works/pi-coding-agent
+@plannotator/pi-extension
 aws-cdk
 cdk-dia
 markdownlint-cli
+pi-lens
+pi-mcp-adapter
+pi-subagents
+pi-web-access
