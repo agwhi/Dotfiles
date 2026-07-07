@@ -63,6 +63,7 @@ Formulae added as canonical Homebrew-managed development tools:
 - `docker-compose`
 - `ffmpeg`
 - `graphviz`
+- `httpie`
 - `mise`
 - `mysql-client`
 - `ollama`
@@ -73,12 +74,12 @@ Formulae added as canonical Homebrew-managed development tools:
 
 Casks added as canonical Homebrew-managed applications or support tools:
 
+- `bruno`
 - `caffeine`
 - `chatgpt-atlas`
 - `codex`
 - `leapp`
 - `maccy`
-- `postman`
 - `rider`
 - `session-manager-plugin`
 
@@ -132,12 +133,14 @@ and Dia was removed as unwanted local state. Falcon remains explicitly outside
 repo ownership.
 
 The final cleanup pass removed Homebrew `dotnet@8` and confirmed no Homebrew
-`unbound` formula or service was installed. Remaining root-owned cleanup needs
-interactive sudo: Microsoft pkg .NET under `/usr/local/share/dotnet`, legacy
-manual APM under `/usr/local/bin/apm` and `/usr/local/lib/apm`, and NordVPN's
-helper upgrade path. The NordVPN cask upgrade target is `10.5.1`, but the
-installed version remained `10.1.0` after the non-interactive attempt failed at
-the helper/package uninstall step.
+`unbound` formula or service was installed. Postman was replaced by Bruno for
+GUI API development and HTTPie for command-line API requests.
+
+Remaining root-owned cleanup needs interactive sudo: Microsoft pkg .NET under
+`/usr/local/share/dotnet`, legacy manual APM under `/usr/local/bin/apm` and
+`/usr/local/lib/apm`, and NordVPN's helper upgrade path. The NordVPN cask
+upgrade target is `10.5.1`, but the installed version remained `10.1.0` after
+the non-interactive attempt failed at the helper/package uninstall step.
 
 ## Intentional Exclusion
 

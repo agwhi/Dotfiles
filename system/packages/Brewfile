@@ -41,7 +41,8 @@ brew "colima"        # macOS container runtime manager
 brew "docker"        # Docker CLI
 brew "docker-buildx" # Docker BuildKit CLI plugin
 brew "docker-compose" # Docker Compose CLI
-cask "postman"       # API development client
+brew "httpie"        # HTTP API CLI client
+cask "bruno"         # Git-friendly API development client
 
 # --- Security & DevSecOps ---
 brew "gitleaks"      # Secret scanning

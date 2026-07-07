@@ -102,9 +102,9 @@ NPM_RUNTIME_GLOBALS = {"corepack", "npm"}
 
 DEV_RE = re.compile(
     r"(ai|apm|ast-grep|aws|azure|bash|biome|bun|cargo|cdk|clang|claude|"
-    r"cmake|codex|colima|composer|ctags|cursor|deno|docker|dotenv|dotnet|"
+    r"bruno|cmake|codex|colima|composer|ctags|cursor|deno|docker|dotenv|dotnet|"
     r"editorconfig|eslint|fd|ffmpeg|fnm|gcloud|gh|git|gitleaks|go|gradle|"
-    r"graphviz|helm|jenv|jq|just|kotlin|kubectl|kubernetes|lambda|llm|lua|"
+    r"graphviz|helm|httpie|jenv|jq|just|kotlin|kubectl|kubernetes|lambda|llm|lua|"
     r"mise|mysql|node|npm|nu|nushell|nvm|ollama|opencode|pnpm|podman|"
     r"poppler|postman|pycharm|pyenv|python|rbenv|redis|ripgrep|ripsecrets|"
     r"ruby|rust|rustup|sdkman|semgrep|serverless|shell|terraform|tmux|"
@@ -112,7 +112,7 @@ DEV_RE = re.compile(
 )
 
 DEV_APP_RE = re.compile(
-    r"(android studio|chatgpt atlas|codex|cursor|datagrip|docker|ghostty|"
+    r"(android studio|bruno|chatgpt atlas|codex|cursor|datagrip|docker|ghostty|"
     r"intellij|iterm|leapp|postman|pycharm|rider|session manager plugin|"
     r"sublime|tableplus|visual studio code|warp|webstorm|xcode)",
     re.IGNORECASE,
