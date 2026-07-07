@@ -75,7 +75,6 @@ _dotfiles_zsh_path_prepend "$HOME/.dotnet/tools"
 _dotfiles_zsh_path_prepend "$PNPM_HOME"
 _dotfiles_zsh_path_prepend "$HOME/.local/bin"
 _dotfiles_zsh_path_prepend "$HOME/.local/share/fnm/aliases/default/bin"
-_dotfiles_zsh_path_prepend "/opt/homebrew/opt/dotnet@8/bin"
 _dotfiles_zsh_path_prepend "$_dotfiles_mise_shims_dir"
 
 unset _dotfiles_mise_data_dir _dotfiles_mise_shims_dir _dotfiles_mise_dotnet_root

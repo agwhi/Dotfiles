@@ -8,6 +8,14 @@ dotnet_sdk_install := "$HOME/.dotfiles/scripts/dotnet_sdk_install.sh"
 dotnet_toolchain := "$HOME/.dotfiles/scripts/dotnet_toolchain.sh"
 dotnet_tools_manifest := "$HOME/.dotfiles/system/packages/dotnet-tools.txt"
 
+# Run read-only Development Ecosystem audit from any project
+doctor *args:
+    @cd "$HOME/.dotfiles" && ./scripts/doctor.py {{args}}
+
+# Alias for doctor
+audit *args:
+    @cd "$HOME/.dotfiles" && ./scripts/doctor.py {{args}}
+
 # Run quality checks (security + formatting)
 quality-check:
     {{dev_env}} ripsecrets --strict-ignore .
@@ -140,4 +148,4 @@ lulu-list:
 
 # Show available commands
 help:
-    @just --list
+    @just --global-justfile --list
