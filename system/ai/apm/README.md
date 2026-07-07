@@ -296,7 +296,7 @@ per-target approval gate:
 - `~/.config/opencode`, except approved APM skill target output under
   `~/.config/opencode/skills`
 - `~/Library/pnpm/pi`
-- npm global `opencode-ai`
+- OpenCode CLI installer state
 - any auth, history, database, log, trusted-project, or cache state
 
 ## Approval Gates

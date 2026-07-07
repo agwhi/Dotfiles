@@ -48,8 +48,8 @@ Grounding from `just doctor --json` generated at
 - Trusted pnpm globals now include declared development CLIs plus the declared
   Pi CLI and extension packages.
 - npm globals remain under `primary_fnm_default`: `context-mode`, `corepack`,
-  `npm`, and `opencode-ai`. The old Homebrew npm scope was removed with
-  Homebrew `node`.
+  and `npm`. The old Homebrew npm scope was removed with Homebrew `node`, and
+  `opencode-ai` was removed when opencode CLI ownership moved to Homebrew.
 - No competing runtime manager signals were detected for `mise`, `asdf`,
   `nodenv`, `nvm`, `volta`, or related managers.
 
@@ -157,9 +157,9 @@ Not a steady-state owner. It is absent and not declared. Installing it would
 pull toward Homebrew `node` ownership.
 
 npm globals under `primary_fnm_default`:
-Migration exceptions only. Current packages are `corepack`, `npm`, and
-`opencode-ai`. Remove or migrate later behind approval. `opencode-ai` should
-wait for the AI Tool Surface and AI Asset Manager decision.
+Migration exceptions only. Current packages are `corepack` and `npm`.
+`opencode-ai` was removed after opencode CLI ownership moved to the upstream
+Homebrew tap.
 
 npm globals under Homebrew npm:
 Removed on 2026-07-05 with Homebrew `node`. `aws-cdk` remains available through
@@ -198,7 +198,6 @@ Destructive or state-moving actions that need explicit approval later:
 
 - Remove `primary_fnm_default` npm global `corepack`.
 - Remove `primary_fnm_default` npm global `npm`.
-- Remove or migrate `primary_fnm_default` npm global `opencode-ai`.
 - Remove pnpm global `markdownlint-cli` if Alex decides it is not baseline.
 - Remove old `fnm` Node versions after a retention policy is documented:
   `v20.10.0`, `v20.13.1`, `v20.18.1`, `v22.10.0`, `v22.14.0`, `v22.18.0`,
@@ -269,9 +268,8 @@ edits after Alex approves the target state.
 4. Add or document the `fnm` Corepack enablement policy.
 5. Keep `markdownlint-cli` in `system/packages/pnpm-global.txt` because
    markdownlint remains required validation tooling.
-6. Keep Pi declared in `system/packages/pnpm-global.txt`; classify
-   `opencode-ai` under the AI Tool Surface policy instead of generic JS
-   globals.
+6. Keep Pi declared in `system/packages/pnpm-global.txt`; keep opencode CLI
+   ownership out of npm globals through the upstream Homebrew tap.
 
 ### P1 Migrate Or Remove Duplicates
 
@@ -283,8 +281,7 @@ edits after Alex approves the target state.
 4. Homebrew `node` removal is complete.
 5. After approval, remove npm global `corepack` and rely on `fnm` Node
    Corepack for Node versions that provide it.
-6. After approval, migrate or remove `opencode-ai` according to AI tooling
-   policy; keep Pi declared through pnpm unless a later policy changes it.
+6. Keep Pi declared through pnpm unless a later policy changes it.
 
 ### P2 Docs And Doctor Strictness
 

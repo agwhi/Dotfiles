@@ -1,3 +1,4 @@
+tap "anomalyco/tap"
 tap "microsoft/apm"
 
 # --- Core CLI Tools (Rust-based, fast replacements) ---
@@ -59,6 +60,7 @@ brew "ffmpeg"        # Audio/video conversion utilities
 
 # --- AI Tool Surfaces ---
 brew "microsoft/apm/apm" # AI Asset Manager
+brew "anomalyco/tap/opencode" # OpenCode terminal AI agent
 brew "ollama"        # Local LLM runner
 cask "chatgpt"       # AI assistant
 cask "chatgpt-atlas" # ChatGPT browser

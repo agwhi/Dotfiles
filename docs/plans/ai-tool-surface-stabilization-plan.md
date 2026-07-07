@@ -67,9 +67,10 @@ Current local facts:
   `2.1.191 (Claude Code)`.
 - Claude Desktop is present at `/Applications/Claude.app` version `1.18286.0`.
   It is installed through Homebrew cask `claude`.
-- opencode is installed as npm global `opencode-ai` version `1.17.13` under the
-  `fnm` default Node, with a binary under the `fnm` default alias path.
-  `opencode` is visible on PATH; `open-code` is not.
+- opencode is installed through the upstream Homebrew tap
+  `anomalyco/tap/opencode` version `1.17.14`. `opencode` is visible on PATH;
+  `open-code` is not. The old npm-global `opencode-ai` install was removed
+  after the Homebrew binary verified cleanly.
 - Pi is installed through the canonical fnm/pnpm global path as
   `@earendil-works/pi-coding-agent` version `0.80.3`, with declared Pi
   extension packages in `system/packages/pnpm-global.txt`.
@@ -95,7 +96,7 @@ Current local facts:
 | Codex skills | APM-managed split baseline under `~/.codex/skills`: `grill-with-docs`, `grilling`, and `domain-modeling`; system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | APM target output plus app/runtime | canonical baseline plus vendor state | Keep the split `grill-with-docs` workflow as the only target baseline. Keep `using-superpowers` absent. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |
 | Claude Code and Desktop | CLI: `/opt/homebrew/bin/claude` -> `/opt/homebrew/Caskroom/claude-code/2.1.191/claude`; Desktop: `/Applications/Claude.app` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | Homebrew casks `claude-code` and `claude` | canonical install surface | Keep both harness surfaces declared through Homebrew. Do not remove or migrate existing Claude state without a snapshot and approval. |
 | Claude plugins and commands | plugin cache under `~/.claude/plugins` | `~/.claude/plugins/cache`, `~/.claude/plugins/marketplaces`, install manifests | Claude-managed local cache | manual local / approval-gated cleanup | Do not commit cache contents. Reinstall selected shared assets through APM later, then remove old cache copies only behind approval. |
-| opencode | `opencode-ai` npm global binary under the `fnm` default alias path | `~/.local/share/opencode`, `~/.config/opencode`, APM skills under `~/.config/opencode/skills` | npm global plus local config plus APM skill output | legacy CLI managed exception plus canonical shared skill target | Keep IVCE AI Gateway / Bedrock config local. Decide later whether the opencode CLI should remain npm-global, move to a better installer, or be removed. |
+| opencode | `/opt/homebrew/bin/opencode` | `~/.local/share/opencode`, `~/.config/opencode`, APM skills under `~/.config/opencode/skills` | Homebrew formula `anomalyco/tap/opencode` plus local config plus APM skill output | canonical CLI plus canonical shared skill target | Keep IVCE AI Gateway / Bedrock config local. Keep using the upstream tap rather than Homebrew core so opencode does not reintroduce Homebrew `node` ownership. |
 | Pi | `/Users/alex/Library/pnpm/pi`; extension commands such as `pi-lens-mcp`, `pi-mcp-adapter`, and `pi-subagents` | pnpm global package state under `~/Library/pnpm` | pnpm global manifest | declared AI Tool Surface | Keep Pi declared in `system/packages/pnpm-global.txt`. Pi-specific assets are not part of the shared APM baseline unless promoted later. |
 | ChatGPT and ChatGPT Atlas | Homebrew casks | app-local state outside this repo | Homebrew cask | canonical app surface | Keep install declarations in `system/packages/Brewfile`; no shared asset policy needed yet. |
 | Ollama | Homebrew formula | local model storage outside this repo | Homebrew formula | canonical app surface | Keep install declaration in `system/packages/Brewfile`; model downloads are local state and not repo assets. |
@@ -155,7 +156,6 @@ approval in a later task:
   cache state.
 - Remove, rewrite, or replace `~/.codex/skills/grill-with-docs` before APM can
   reproduce the intended baseline and a live deployment gate is approved.
-- Remove npm global `opencode-ai` or its `fnm` alias binary.
 - Remove Homebrew Claude casks or migrate `~/.local/share/claude`.
 - Remove or migrate `~/.local/share/opencode` or `~/.config/opencode`.
 - Delete or rewrite `~/.codex`, `~/.claude`, or any auth/history/cache/database
@@ -200,13 +200,11 @@ name exactly which files or directories are in scope.
    later ADR changes the Global AI Baseline.
 3. Keep Pi declared through the pnpm global manifest unless a later policy
    moves it.
-4. Remove or migrate `opencode-ai` only if a later task decides the opencode
-   CLI should not remain an npm-global managed exception.
+4. Keep opencode CLI ownership on the upstream Homebrew tap unless a later ADR
+   chooses a better installer.
 5. Tighten doctor so undeclared AI tools and assets are actionable drift.
 
 ## Open Questions
 
-1. Should the opencode CLI remain npm-global, move to a better installer, or
-   be removed now that APM skills are deployed?
-2. Should Pi receive any APM-managed shared assets if APM adds a confirmed Pi
+1. Should Pi receive any APM-managed shared assets if APM adds a confirmed Pi
    target or adapter model?

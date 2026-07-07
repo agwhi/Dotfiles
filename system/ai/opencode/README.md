@@ -1,13 +1,13 @@
 # opencode
 
-opencode is currently present as a legacy npm-global AI Tool Surface. Its CLI
-installer is not canonical yet, but its shared APM skill baseline is deployed.
+opencode is a Homebrew-managed AI Tool Surface. Its CLI is installed from the
+upstream OpenCode tap, and its shared APM skill baseline is deployed.
 
 Current local state:
 
-- Package: npm global `opencode-ai`
-- Version observed: `1.17.13`
-- Binary observed: `~/.local/share/fnm/aliases/default/bin/opencode`
+- Package: Homebrew formula `anomalyco/tap/opencode`
+- Version observed: `1.17.14`
+- Binary observed: `/opt/homebrew/bin/opencode`
 - State root: `~/.local/share/opencode`
 - Config root: `~/.config/opencode`
 - APM-managed skills root: `~/.config/opencode/skills`
@@ -17,7 +17,11 @@ on PATH.
 
 ## Classification
 
-`opencode-ai` is a legacy managed exception and possible project-local tool.
+The OpenCode CLI is canonical through Homebrew. Use the upstream
+`anomalyco/tap/opencode` formula rather than the Homebrew core `opencode`
+formula, because the upstream tap tracks current OpenCode releases and avoids
+making Homebrew `node` an opencode dependency.
+
 The opencode target is included in the shared APM baseline target set, and the
 approved APM deployment has materialized the same split skill baseline as Codex
 and Claude Code:
@@ -35,13 +39,10 @@ directly.
 
 ## Target Policy
 
-If opencode remains in the ecosystem, it should consume Shared AI Assets from
-APM-generated or APM-installed adapters. It should not own the source copy of
-shared prompts, skills, commands, MCP definitions, or agents.
+opencode consumes Shared AI Assets from APM-generated or APM-installed
+adapters. It does not own the source copy of shared prompts, skills, commands,
+MCP definitions, or agents.
 
-Later options:
-
-- keep opencode as a documented npm-global managed exception
-- migrate opencode CLI installation to a better canonical installer if one is
-  chosen
-- remove npm global `opencode-ai` behind a Reset Approval Gate
+The deprecated npm-global `opencode-ai` install was removed after the Homebrew
+tap binary verified cleanly. Do not reintroduce `opencode-ai` as an npm global
+unless a later ADR replaces the Homebrew tap policy.

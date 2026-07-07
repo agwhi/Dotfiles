@@ -14,8 +14,8 @@ consume them after sources are declared and target writes are approved.
 
 Homebrew remains the installer for AI app and harness surfaces declared in
 `system/packages/Brewfile`, including APM, Codex, Claude Desktop, Claude Code,
-ChatGPT, ChatGPT Atlas, and Ollama. APM manages reusable AI Assets, not every
-AI binary on the laptop.
+opencode, ChatGPT, ChatGPT Atlas, and Ollama. APM manages reusable AI Assets,
+not every AI binary on the laptop.
 
 The Global AI Baseline is intentionally small:
 

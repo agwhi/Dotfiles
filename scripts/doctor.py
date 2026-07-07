@@ -3922,7 +3922,83 @@ def scan_opencode_baseline(findings: list[dict[str, Any]]) -> None:
         )
 
 
-def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
+def scan_opencode_command(
+    findings: list[dict[str, Any]], brew_declared: dict[str, set[str]]
+) -> None:
+    active = shutil.which("opencode")
+    homebrew = homebrew_candidate("opencode")
+    paths = which_all("opencode")
+    declared = equivalent_member("anomalyco/tap/opencode", brew_declared["brew"])
+    npm_or_fnm_paths = [
+        path
+        for path in paths
+        if path_source(path) in {"fnm", "npm"}
+    ]
+    version_path = active or homebrew
+    version_result = (
+        command_result([version_path, "--version"], timeout=10)
+        if version_path
+        else {"ok": False, "stdout": "", "stderr": "", "returncode": None}
+    )
+    details = {
+        "expected_formula": "anomalyco/tap/opencode",
+        "declared_formula": declared,
+        "active_command": path_provenance(active),
+        "homebrew_candidate": path_provenance(homebrew),
+        "path_matches": [path_provenance(path) for path in paths],
+        "npm_or_fnm_paths": [path_provenance(path) for path in npm_or_fnm_paths],
+        "version": version_result["stdout"].splitlines()[0]
+        if version_result["stdout"]
+        else None,
+        "version_returncode": version_result["returncode"],
+        "version_stderr": version_result["stderr"][:300],
+    }
+
+    if active and path_source(active) == "homebrew" and declared and not npm_or_fnm_paths:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="opencode.command",
+            summary="opencode active CLI resolves through the declared upstream Homebrew tap.",
+            details=details,
+        )
+    elif homebrew and declared:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="opencode.command",
+            severity="low",
+            summary="opencode is declared and installed through Homebrew, but PATH still exposes a different command first.",
+            details=details,
+            recommendation="Remove or demote shadowing opencode commands before treating the CLI as canonical.",
+        )
+    elif active:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="managed_exception",
+            name="opencode.command",
+            severity="low",
+            summary="opencode active CLI is present, but no canonical Homebrew tap declaration is active.",
+            details=details,
+            recommendation="Declare the selected opencode installer or migrate the CLI behind an approved cleanup task.",
+        )
+    else:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="declared_absent" if declared else "missing",
+            name="opencode.command",
+            severity="low",
+            summary="opencode CLI is not present on PATH.",
+            details=details,
+            recommendation="Install opencode through the declared upstream Homebrew tap if it remains part of the AI Tool Surface baseline.",
+        )
+
+
+def scan_ai_tools(findings: list[dict[str, Any]], brew_declared: dict[str, set[str]]) -> None:
     detected: dict[str, list[str]] = {}
     for command in AI_COMMANDS:
         matches = which_all(command)
@@ -3976,6 +4052,7 @@ def scan_ai_tools(findings: list[dict[str, Any]]) -> None:
         )
 
     scan_claude_code(findings)
+    scan_opencode_command(findings, brew_declared)
     scan_opencode_baseline(findings)
 
     apm_paths = which_all("apm")
@@ -4176,7 +4253,7 @@ def build_payload() -> dict[str, Any]:
     check_runtime_managers(findings)
     check_shell_parity(findings)
     check_dotnet(findings)
-    scan_ai_tools(findings)
+    scan_ai_tools(findings, brew_declared)
     check_manual_apps(findings, brew_declared)
 
     by_classification = Counter(finding["classification"] for finding in findings)

@@ -53,12 +53,6 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   it.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
   `codex_chronicle`: app-runtime-context, not package-manager drift.
-- `~/.local/share/fnm/aliases/default/bin/opencode`: npm-global
-  `opencode-ai` binary observed under the `fnm` default Node path. Current
-  observed version is `1.17.13`. Its shared APM skills are deployed under
-  `~/.config/opencode/skills`; keep the CLI itself as a legacy managed
-  exception until the AI Tool Surface policy decides whether opencode stays
-  npm-global, moves to a better installer, or is removed.
 
 ## AI Approval-Gated Cleanup
 
@@ -75,13 +69,15 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - Claude cached superpowers plugin versions under `~/.claude/plugins/cache`:
   approval-gated-removal if Claude later receives an approved APM-managed
   baseline.
-- npm global `opencode-ai`: approval-gated-removal or migration candidate after
-  opencode policy is decided.
 
 ## Completed Cleanup
 
 - Homebrew `node` and Homebrew `pnpm`: removed on 2026-07-05 after ADR-0007
   made `fnm` plus Corepack/pnpm the canonical JavaScript toolchain owner.
+- npm global `opencode-ai`: removed after migrating opencode CLI ownership to
+  the upstream Homebrew tap `anomalyco/tap/opencode` on 2026-07-07. The IVCE
+  AI Gateway / Bedrock config and opencode APM skills were verified unchanged
+  by hash during the migration.
 - Pi global packages: the deprecated `@mariozechner/pi-coding-agent` package
   and npm-installed Pi helper packages were removed on 2026-07-05, then Pi was
   restored through the canonical pnpm global manifest using the maintained
