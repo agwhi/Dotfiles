@@ -2,6 +2,7 @@
 
 Status: accepted.
 Date: 2026-07-07.
+Amended by: ADR-0011.
 Related: ADR-0001, docs/plans/zsh-primary-adoption-plan.md,
 scripts/dev_env.sh, scripts/js_toolchain.sh, system/packages/Brewfile.
 
@@ -78,9 +79,10 @@ repo-managed zsh files:
 
 ## Consequences
 
-VS Code, Cursor, and Ghostty launch zsh by default. Nu editor profiles,
+VS Code and Ghostty launch zsh by default. Nu editor profiles,
 language-specific settings, package declarations, symlink targets, and
-repo-managed config files are removed.
+repo-managed config files are removed. ADR-0011 later removed Cursor from the
+managed editor surface entirely.
 
 Doctor shell parity checks remain read-only by default. Login/startup probes are
 still opt-in because they execute user startup files and can run hooks. Doctor

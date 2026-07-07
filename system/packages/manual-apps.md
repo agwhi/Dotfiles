@@ -40,10 +40,6 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   self-update, reinstall, prune, or remove it without an interactive approval
   path. A 2026-07-07 non-interactive cleanup attempt could not remove it
   because `sudo` requires a password.
-- `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
-  Cursor cask. It points at
-  `/Applications/Cursor.app/Contents/Resources/app/bin/code`, so keep it as
-  app runtime state rather than a separate package.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
   `codex_chronicle`: app-runtime-context, not package-manager drift.
 - `/Users/alex/Applications/Claude Code URL Handler.app`: Claude Code app
@@ -88,6 +84,9 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   required .NET 10 and .NET 8 SDK lines.
 - Homebrew `unbound`: no installed Homebrew formula or service was detected on
   2026-07-07, so the stale approval-gated cleanup note was removed.
+- Homebrew `cursor`: removed from the Brewfile and uninstalled on 2026-07-07
+  after ADR-0011 selected VS Code plus dedicated AI agents instead of Cursor as
+  a managed GUI editor surface.
 - `/Applications/Dia.app`: removed on 2026-07-07 after Alex confirmed it was
   not needed.
 - `/Applications/Firefox.app`: migrated to Homebrew cask `firefox` on

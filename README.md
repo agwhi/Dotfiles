@@ -116,7 +116,7 @@ just security-scan
 just bootstrap              # Complete laptop setup (alias: just install)
 just brew                  # Install all Homebrew packages from system/packages/Brewfile
 just backup                # Back up current system config to repo
-just edit                  # Open dotfiles folder in Cursor editor
+just edit                  # Open dotfiles folder in VS Code
 just upgrade               # Update all packages and tools
 just vscode                # Install VS Code extensions (alias: just editor)
 just link-only             # Create symlinks only
@@ -154,12 +154,12 @@ After bootstrap, you can:
 
 ### 📦 Package Managers
 
-| Tool       | Description                                      |
-| ---------- | ------------------------------------------------ |
-| [Homebrew] | macOS-native package manager and fnm installer        |
-| [fnm]      | Owner for the Node.js runtime and trusted JS commands |
-| [pnpm]     | Preferred Node.js package manager via fnm/Corepack    |
-| [cargo]    | Rust package manager (used for many tools)            |
+| Tool       | Description                                            |
+| ---------- | ------------------------------------------------------ |
+| [Homebrew] | macOS-native package manager and fnm installer         |
+| [fnm]      | Owner for the Node.js runtime and trusted JS commands  |
+| [pnpm]     | Preferred Node.js package manager via fnm/Corepack     |
+| [cargo]    | Rust package manager (used for many tools)             |
 
 ### ✨ Editor / IDE
 
@@ -167,16 +167,14 @@ After bootstrap, you can:
 | --------- | ----------------------------------------- |
 | [Neovim]  | For terminal editing                      |
 | [VS Code] | Main GUI IDE                              |
-| [Cursor]  | AI-assisted development with custom rules |
 
-**Cursor Configuration:**
+**Agent Guidance:**
 
-- `system/cursor/settings.jsonc` - Enforces 4-space indentation, LF line
-  endings, and format-on-save
-- `system/cursor/keybindings.jsonc` - Consistent keyboard shortcuts
-- `system/cursor/extensions.json` - Recommended extensions including Biome
-  formatter
-- `.cursor/rules/` - AI context rules for development consistency
+- `AGENTS.md` - Repo-wide guidance for AI agents working in this
+  development ecosystem
+- `docs/adr/AGENTS.md` - ADR-specific guidance for decision records
+- `system/ai/apm/apm.yml` - Shared AI baseline package manifest for Codex,
+  Claude Code, and opencode
 
 ### 🚀 Productivity & Launchers
 
@@ -207,11 +205,11 @@ After bootstrap, you can:
 
 ### 🎨 Code Quality & Formatting
 
-| Tool                   | Description                               |
-| ---------------------- | ----------------------------------------- |
-| [@biomejs/biome]       | Global code formatter and linter          |
-| [.editorconfig]        | Editor configuration for consistent formatting |
-| [VS Code/Cursor]       | Configured with 4-space indentation and format-on-save |
+| Tool                   | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| [@biomejs/biome]       | Global code formatter and linter                        |
+| [.editorconfig]        | Editor configuration for consistent formatting          |
+| [VS Code]              | Configured with 4-space indentation and format-on-save  |
 
 **Formatting Standards:**
 
@@ -236,7 +234,7 @@ biome lint .                  # Lint all files
 
 **Editor Integration:**
 
-- VS Code and Cursor are configured to use Biome as the default formatter
+- VS Code is configured to use Biome as the default formatter
 - Format-on-save is enabled for automatic formatting
 - Biome respects the 4-space indentation standard
 
@@ -311,7 +309,7 @@ topgrade
 just setup                  # Full setup: install packages and create symlinks
 just brew                  # Install all Homebrew packages from system/packages/Brewfile
 just backup                # Back up current system config to repo
-just edit                  # Open dotfiles folder in Cursor editor
+just edit                  # Open dotfiles folder in VS Code
 just link                  # Set up all dotfile symlinks only
 just install-vscode-extensions # Install VS Code extensions only
 just install-node-tools    # Install global Node.js tools through fnm/Corepack/pnpm
@@ -619,11 +617,6 @@ maintainable configuration management:
 ```text
 dotfiles/
 ├── system/                  # System-wide configuration files
-│   ├── cursor/             # Global Cursor configuration
-│   │   ├── settings.jsonc  # Cursor settings (4-space indentation, formatting)
-│   │   ├── keybindings.jsonc # Cursor keyboard shortcuts
-│   │   ├── argv.jsonc      # Cursor command line arguments
-│   │   └── extensions.json # Cursor recommended extensions
 │   ├── vscode/             # Global VS Code configuration
 │   │   └── settings.jsonc  # VS Code settings (formatting, extensions)
 │   ├── zsh/                # Global shell configuration
@@ -648,7 +641,6 @@ dotfiles/
 │   │   ├── Brewfile        # Homebrew packages and apps
 │   │   ├── pnpm-global.txt # Global Node.js tools list
 │   │   ├── vscode-extensions.txt # VS Code extensions list
-│   │   ├── cursor-extensions.txt # Cursor extension recommendations
 │   │   ├── dotnet-tools.txt # Global .NET tools list
 │   │   └── manual-apps.md  # Manual or approval-gated tools
 │   ├── ai/                 # Managed AI Tool Surface scaffolding
@@ -658,8 +650,8 @@ dotfiles/
 │   │   ├── opencode/       # opencode-safe managed configuration
 │   │   └── shared/         # Shared AI Asset declarations
 │   └── .editorconfig       # Global editor configuration
-├── .cursor/                 # Repository-specific Cursor rules
-│   └── rules/              # AI context rules for development consistency
+├── AGENTS.md               # Repo-wide agent guidance
+├── docs/adr/AGENTS.md      # ADR-specific agent guidance
 ├── scripts/                 # Setup and management scripts
 │   ├── setup_symlinks.sh   # Symlink creation script
 │   ├── backup.sh           # System backup script
@@ -693,7 +685,6 @@ single source of truth:
 **Example Symlinks:**
 
 - `system/vscode/settings.jsonc` → `~/Library/Application Support/Code/User/settings.json`
-- `system/cursor/settings.jsonc` → `~/.cursor/settings.json`
 - `system/zsh/.zshenv` → `~/.zshenv`
 - `system/zsh/.zprofile` → `~/.zprofile`
 - `system/zsh/.zshrc` → `~/.zshrc`
@@ -730,7 +721,7 @@ mkdir my-project && cd my-project
 biome init
 
 # Start coding with consistent formatting
-# VS Code/Cursor will automatically format on save
+# VS Code will automatically format on save
 ```
 
 #### **Quality Assurance**
@@ -860,48 +851,25 @@ and approaches.
 
 ---
 
-## 🤖 AI Usage & Cursor Rules
+## 🤖 AI Usage & Agent Guidance
 
-This repository uses [Cursor](https://cursor.com) with custom `.cursor/rules`
-to ensure consistency and alignment with our philosophy. These rules are
-automatically applied when working in this repository and provide AI context
-for development decisions.
+This repository uses dedicated AI agent surfaces rather than Cursor as a
+managed editor. The current model is:
 
-### Rule Categories
-
-The `.cursor/rules/` directory contains specialized rules for different
-areas:
-
-| Rule File | Purpose | Based on Section |
-|-----------|---------|------------------|
-| `global-meta.mdc` | Overall repository philosophy and structure | 🎯 Philosophy |
-| `terminal-shell.mdc` | Shell and terminal tooling decisions | 🖥 Terminal + Shell |
-| `editor-config.mdc` | Editor and IDE configuration | ✨ Editor / IDE |
-| `backup-upgrade.mdc` | Backup and upgrade strategies | 🔧 Setup & Management |
-| `dotfile-management.mdc` | Dotfile organization and symlinks | 🔧 Setup & Management |
-| `devsecops-security.mdc` | Security and DevSecOps practices | 🔒 DevSecOps |
-| `biome-linting.mdc` | Code formatting and linting | 🔒 DevSecOps |
-| `language-dotnet.mdc` | .NET 8 and AWS Lambda development | 🌐 AWS / Cloud Dev |
-| `justfile-bootstrap.mdc` | Task automation and justfile usage | 🔧 Setup & Management |
-| `shell-env.mdc` | Shell environment configuration | 🖥 Terminal + Shell |
-| `docs-lint.mdc` | Documentation standards | 📋 Documentation |
-
-### How Rules Work
-
-These rules are automatically loaded by Cursor when you open this repository
-and provide context for:
-
-- Tool selection and configuration decisions
-- Code style and formatting preferences
-- Security and best practices
-- Development workflow patterns
+- Codex, Claude Code, opencode, and Pi as AI agent surfaces.
+- APM as the shared AI Asset Manager for reusable baseline skills.
+- `AGENTS.md` for repo-wide agent guidance.
+- `docs/adr/AGENTS.md` for ADR-specific writing guidance.
 
 ### Contributor Guidelines
 
-1. Check if tools/settings are already listed in the README
-2. Update relevant sections when adding new tools
-3. Use Cursor rules as a consistency checklist
-4. Rules are automatically enforced - follow the guidance they provide
+1. Check whether tools or settings are already declared in the README,
+   manifests, or ADRs.
+2. Update relevant sections when adding or removing tools.
+3. Follow `AGENTS.md` for agent-safe commands, validation, and source-of-truth
+   boundaries.
+4. Record durable tool choices in ADRs when they affect ownership,
+   reproducibility, or cleanup policy.
 
 ---
 
@@ -921,7 +889,6 @@ and provide context for:
 [cargo]: https://doc.rust-lang.org/cargo/
 [Neovim]: https://neovim.io
 [VS Code]: https://code.visualstudio.com
-[Cursor]: https://cursor.com
 [Raycast]: https://www.raycast.com
 [awscli]: https://aws.amazon.com/cli
 [cdk]: https://docs.aws.amazon.com/cdk/

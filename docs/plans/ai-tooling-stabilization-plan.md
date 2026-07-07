@@ -232,8 +232,8 @@ Classification: selected AI Asset Manager with a Homebrew-managed canonical
 binary and a legacy manual duplicate. `~/.apm/config.json` is local state and
 was not read.
 
-`apm targets --json` can auto-detect unrelated repo targets such as `.cursor/`.
-The repo APM manifest pins the shared harness target set explicitly as
+`apm targets --json` can auto-detect unrelated repo targets. The repo APM
+manifest pins the shared harness target set explicitly as
 `codex`, `claude`, and `opencode` so APM target auto-detection is not used for
 AI baseline decisions.
 Run project-scoped APM checks from `system/ai/apm` when package or lock
@@ -442,7 +442,7 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
   `apm self-update`, or any APM command that writes target files.
 - Rewrite `apm.lock.yaml` without approval.
 - Add another APM manifest or deploy generated adapters into Codex, Claude
-  Code, opencode, any future Pi adapter, or Cursor target directories.
+  Code, opencode, or any future Pi adapter target directories.
 - Remove or replace the APM-managed split Codex skills under
   `/Users/alex/.codex/skills`.
 - Remove any reintroduced `/Users/alex/.codex/skills/using-superpowers`.

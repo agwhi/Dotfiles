@@ -4,9 +4,8 @@ name: dotfiles-ai-baseline
 version: 0.1.0
 description: Shared Global AI Baseline for this dotfiles repo.
 
-# Pin harness targets explicitly because APM auto-detects unrelated repo
-# targets such as .cursor/. Cursor/editor targets can be added in an editor
-# pass; Pi has no confirmed APM target in the current CLI.
+# Pin harness targets explicitly. Editor targets can be added only through a
+# later editor-specific ADR; Pi has no confirmed APM target in the current CLI.
 targets:
   - codex
   - claude

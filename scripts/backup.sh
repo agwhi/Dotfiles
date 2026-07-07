@@ -27,7 +27,6 @@ files_to_backup=(
     "$HOME/.zshrc"
     "$HOME/.config/starship.toml"
     "$HOME/.config/nvim/init.lua"
-    "$HOME/.cursor"
     "$HOME/.gitconfig"
     "$HOME/.gitconfig.local"
     "$HOME/.aws/config"

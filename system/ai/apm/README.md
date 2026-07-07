@@ -58,10 +58,9 @@ The normal dotfiles symlink setup maps those files into the live APM project:
 When setup is eventually run, existing files at those two paths are backed up
 before being replaced with symlinks.
 
-The manifest pins shared harness targets explicitly so the repo's active
-`.cursor/` directory is not selected by auto-detection during an AI-only
-stabilization pass. The current shared harness targets are `codex`, `claude`,
-and `opencode`.
+The manifest pins shared harness targets explicitly so APM target selection is
+not driven by workspace auto-detection. The current shared harness targets are
+`codex`, `claude`, and `opencode`.
 Run project-scoped APM checks from `system/ai/apm` when package or lock
 evidence is needed.
 

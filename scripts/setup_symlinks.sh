@@ -94,14 +94,6 @@ create_symlink "$DOTFILES_DIR/system/zsh/.zprofile" "$HOME/.zprofile" "zsh login
 create_symlink "$DOTFILES_DIR/system/zsh/.zshrc" "$HOME/.zshrc" "zsh interactive config"
 create_symlink "$DOTFILES_DIR/system/mise/config.toml" "$HOME/.config/mise/config.toml" "mise config"
 
-# Cursor configuration - link system-wide config files to home directory
-create_symlink "$DOTFILES_DIR/system/cursor/settings.jsonc" "$HOME/.cursor/settings.json" "Cursor settings"
-create_symlink "$DOTFILES_DIR/system/cursor/keybindings.jsonc" "$HOME/.cursor/keybindings.json" "Cursor keybindings"
-create_symlink "$DOTFILES_DIR/system/cursor/argv.jsonc" "$HOME/.cursor/argv.json" "Cursor argv"
-create_symlink "$DOTFILES_DIR/system/cursor/extensions.json" "$HOME/.cursor/extensions.json" "Cursor extensions"
-# Cursor rules - repository rules stay in repo, no symlink needed
-# The rules are used by Cursor AI directly from the repository
-
 create_symlink "$DOTFILES_DIR/system/git/gitconfig" "$HOME/.gitconfig" "Git config"
 create_symlink "$DOTFILES_DIR/system/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config" "Ghostty config"
 create_symlink "$DOTFILES_DIR/system/aws/config" "$HOME/.aws/config" "AWS config"

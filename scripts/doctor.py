@@ -34,7 +34,6 @@ HOME = Path.home()
 BREWFILE = ROOT / "system/packages/Brewfile"
 PERSONAL_BREWFILE = ROOT / "system/packages/personal.Brewfile"
 VSCODE_EXTENSIONS = ROOT / "system/packages/vscode-extensions.txt"
-CURSOR_EXTENSIONS = ROOT / "system/packages/cursor-extensions.txt"
 PNPM_GLOBAL = ROOT / "system/packages/pnpm-global.txt"
 DOTNET_TOOLS = ROOT / "system/packages/dotnet-tools.txt"
 MANUAL_APPS = ROOT / "system/packages/manual-apps.md"
@@ -71,7 +70,6 @@ AREA_ORDER = [
     "brew",
     "js_toolchain",
     "vscode",
-    "cursor",
     "pnpm",
     "npm",
     "fnm",
@@ -1548,7 +1546,6 @@ def editor_shell_policy() -> dict[str, Any]:
     policies: dict[str, Any] = {}
     for name, path in {
         "vscode": ROOT / "system/vscode/settings.jsonc",
-        "cursor": ROOT / "system/cursor/settings.jsonc",
     }.items():
         if not path.exists():
             policies[name] = {"configured": False}
@@ -4559,13 +4556,6 @@ def build_payload() -> dict[str, Any]:
         command="code",
         manifest=VSCODE_EXTENSIONS,
         label="VS Code",
-    )
-    compare_extensions(
-        findings,
-        area="cursor",
-        command="cursor",
-        manifest=CURSOR_EXTENSIONS,
-        label="Cursor",
     )
     pnpm_installed = check_pnpm(findings, js_commands)
     check_npm(findings, set(clean_manifest_lines(PNPM_GLOBAL)), pnpm_installed, js_commands)

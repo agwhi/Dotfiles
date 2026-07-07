@@ -3,15 +3,15 @@
 Date: 2026-07-01.
 
 This plan records the completed zsh-primary adoption. It adds repo-managed zsh
-startup files, points editor terminals at zsh, and removes Nushell from the
-managed development ecosystem.
+startup files, points managed editor terminals at zsh, and removes Nushell from
+the managed development ecosystem. Cursor was later removed as a managed editor
+surface by ADR-0011.
 
 ## Scope
 
-- zsh becomes the default integrated terminal shell for VS Code, Cursor, and
-  Ghostty.
+- zsh becomes the default integrated terminal shell for VS Code and Ghostty.
 - Nushell is removed from the Homebrew manifest, editor terminal profiles,
-  symlink setup, backup coverage, Cursor rules, and repo-managed config.
+  symlink setup, backup coverage, and repo-managed config.
 - No login shell is changed with `chsh`.
 
 ## Feature Mapping
@@ -57,7 +57,7 @@ the package intentionally.
 
 - zsh config is repo-managed under `system/zsh/` and symlink-ready.
 - Nushell is absent from active package manifests, symlink setup, editor
-  defaults, and Cursor rules.
+  defaults, and repo-managed config.
 - `setup_symlinks.sh` creates a stable `~/.dotfiles` shortcut when the repo is
   cloned elsewhere, because global just recipes use that path.
 - zsh global just aliases preserve the caller's current project directory.
@@ -65,7 +65,7 @@ the package intentionally.
   non-interactive agent/tool launches.
 - zsh non-interactive startup does not emit fzf or zle warnings from the
   repo-managed files.
-- VS Code, Cursor, and Ghostty default to zsh.
+- VS Code and Ghostty default to zsh.
 - Former Nu features have zsh equivalents or explicit non-goals.
 - Doctor can observe the zsh state without mutating startup files by
   default.
@@ -94,5 +94,4 @@ the package intentionally.
 ## Open Followups
 
 - Harden zsh non-login, `just`, and AI command execution contexts.
-- Run live command checks inside VS Code and Cursor terminals after restarting
-  those apps.
+- Run live command checks inside VS Code after restarting the app.

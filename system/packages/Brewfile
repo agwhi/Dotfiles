@@ -16,7 +16,6 @@ brew "carapace"      # Completion engine for CLIs
 brew "neovim"        # Terminal editor
 brew "universal-ctags" # Maintained ctags implementation
 cask "ghostty"       # GPU-accelerated terminal
-cask "cursor"        # AI-powered code editor
 cask "visual-studio-code" # Main GUI IDE
 
 # --- Node.js & Package Management ---

@@ -71,9 +71,9 @@ editor: install-vscode-extensions
 # Alias for symlink setup (for discoverability)
 link-only: link
 
-# Open dotfiles folder in Cursor editor
+# Open dotfiles folder in VS Code
 edit:
-    cursor .
+    code .
 
 # Install latest Node.js LTS
 install-node:

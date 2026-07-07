@@ -209,7 +209,7 @@ gitignored because snapshots contain local machine state and should stay
 local-only unless Alex deliberately chooses to publish a sanitized excerpt.
 
 Editor terminals:
-VS Code, Cursor, and other editor terminals should resolve the same `mise`
+VS Code and other managed editor terminals should resolve the same `mise`
 `dotnet` and `DOTNET_ROOT` as the shell. Do not remove existing SDK sources
 until C# extension discovery, SDK listing, and terminal `dotnet --info` match
 the target owner.
@@ -282,7 +282,7 @@ Completed migration gates:
 Remaining parity gates before SDK-source removal:
 
 - Decide how `global.json` should be handled in compatibility projects.
-- Prove VS Code terminal, Cursor terminal, and AI command surfaces resolve the
+- Prove VS Code terminal and AI command surfaces resolve the
   `mise` `dotnet` if they are in scope for the cleanup task.
 - Prove editor C# tooling discovers the `mise` SDK root if editor cleanup
   confidence is required.
@@ -338,8 +338,8 @@ Before removing or changing global tools:
    better reproducibility.
 12. Classify and remove `dotnet-ef`, `csharpier`, `deadcsharp`, and the legacy
    Lambda test tool package. Done.
-13. Re-run editor-terminal checks from VS Code and Cursor before SDK-source
-   cleanup if those editors are in scope for the removal task.
+13. Re-run editor-terminal checks from VS Code before SDK-source cleanup if
+   editor verification is in scope for the removal task.
 14. Only after cleanup gates pass, ask for explicit approval to remove
    Microsoft pkg .NET. Homebrew `dotnet@8` removal is done.
 15. Remove .NET 8 from `mise` only after all compatibility projects have
