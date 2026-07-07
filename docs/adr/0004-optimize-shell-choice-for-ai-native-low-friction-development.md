@@ -1,23 +1,49 @@
 # Optimize Shell Choice For AI-Native Low-Friction Development
 
 Status: accepted.
+Date: 2026-07-07.
+Related: ADR-0001, docs/plans/zsh-primary-adoption-plan.md,
+scripts/dev_env.sh, scripts/js_toolchain.sh, system/packages/Brewfile.
 
-The shell strategy is zsh-primary. Repo-managed editor terminals launch zsh for
-Alex's daily interactive development, and Nushell is removed from the managed
-development ecosystem.
+## Context
+
+This ADR preserves the shell decision reached after investigating Nushell,
+zsh, AI agent ergonomics, and editor terminal behavior. Alex liked Nu for some
+structured-data workflows, but the development ecosystem needed a lower-friction
+default for vendor docs, AI-generated commands, bootstrap scripts, `just`
+recipes, and POSIX-compatible examples.
+
+The repo had previously needed reminders that Alex used Nushell, which consumed
+context and created command-syntax mismatches for AI agents. The stabilization
+goal was to reduce that friction while keeping explicit wrappers for commands
+that should not depend on an interactive shell.
+
+## Decision Drivers
+
+- AI agents and vendor docs overwhelmingly assume POSIX-like shells.
+- Bootstrap, install, and doctor commands should be easy to run from zsh,
+  Codex, editor terminals, and non-login command contexts.
+- Shell startup files should be repo-managed and inspectable.
+- Runtime and package-manager paths should not depend on undocumented aliases.
+- A second first-class shell doubles maintenance unless it delivers enough
+  unique value.
+
+## Considered Options
+
+- zsh as Primary Shell: selected.
+- Nushell as Primary Shell with zsh/POSIX as Automation Shell: rejected because
+  it preserved the AI friction that prompted the investigation.
+- both shells supported through generated shared environment configuration:
+  rejected because it increased maintenance for unclear daily value.
+- Nushell retained only as an optional structured-data tool: rejected for the
+  managed baseline; it can be reconsidered later if a concrete workflow proves
+  the Tool Fit.
+
+## Decision
 
 No login shell is changed with `chsh`. The repo owns zsh startup files, editor
 terminal defaults, and POSIX-compatible automation. Nu may be reintroduced only
 through a new ADR that proves a strong Tool Fit.
-
-## Considered Options
-
-- zsh as Primary Shell
-- Nushell as Primary Shell with zsh/POSIX as Automation Shell
-- both shells supported through generated shared environment configuration
-- Nushell retained only as an optional structured-data tool
-
-## Decision
 
 Use zsh as the primary interactive/editor shell because it reduces friction for
 AI agents, vendor docs, bootstrap commands, `just` recipes, and
@@ -63,3 +89,8 @@ without first mutating home startup files.
 
 Rollback requires a deliberate reinstall and a new source-of-truth update. Do
 not restore Nu casually through local-only config.
+
+The trade-off is losing Nu's structured pipeline ergonomics as a default daily
+surface. If a future workflow justifies bringing Nu back, it must define how
+zsh/POSIX automation, AI command generation, PATH policy, and shell parity stay
+in sync.

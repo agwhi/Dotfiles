@@ -1,116 +1,92 @@
-# Use mise as the .NET SDK Source
+# Use mise As The .NET SDK Source
 
-The Development Ecosystem should expose one canonical `.NET` SDK source across
-supported shells. The selected strategic source is `mise`.
+Status: accepted.
+Date: 2026-07-07.
+Related: ADR-0001, ADR-0007,
+docs/plans/dotnet-sdk-stabilization-plan.md, system/mise/config.toml,
+system/packages/Brewfile, system/packages/dotnet-tools.txt,
+scripts/dotnet_snapshot.sh, scripts/dotnet_sdk_install.sh,
+scripts/dotnet_toolchain.sh, scripts/setup_symlinks.sh.
 
-Homebrew should install `mise`; `mise` should install and select `.NET` SDKs.
-This decision applies to `.NET` only. It does not supersede ADR-0007's `fnm`
-decision for Node because this ecosystem prefers the best-fit tool for each
-runtime over a generic tool that does everything.
+## Context
+
+The .NET audit found multiple SDK sources with different ownership models:
+Microsoft pkg state under `/usr/local/share/dotnet`, Homebrew `dotnet@8`, and
+the proposed `mise` runtime-manager path. The laptop needed .NET 10 for new
+work while keeping .NET 8 available for compatibility projects.
+
+This ADR records the .NET runtime-owner decision only. It does not standardize
+all runtimes on `mise`; ADR-0007 keeps `fnm` as the specialized Node owner.
+The repo's policy is best-fit runtime ownership, not generic consolidation.
+
+As of 2026-07-07, `dotnet` resolves through the `mise` shim,
+`dotnet --list-sdks` shows `8.0.422` and `10.0.301` from the `mise` .NET
+root, Homebrew `dotnet@8` has been removed, and the Microsoft pkg root remains
+a root-owned cleanup candidate requiring interactive sudo.
+
+## Decision Drivers
+
+- .NET 10 should be the default SDK line for new work.
+- .NET 8 should remain available until compatibility projects migrate.
+- Shells, editor terminals, `just` recipes, and AI command contexts should see
+  the same SDK source.
+- Global .NET tools should be installed through the selected SDK context, not
+  whichever `dotnet` happens to be first on PATH.
+- The selected SDK source should be declared in this repo and verifiable by
+  doctor without reading sensitive state.
+- Existing root-owned SDK sources should be removed only behind explicit
+  approval and snapshots.
+
+## Considered Options
+
+- `mise`: selected because it can install .NET 10 and .NET 8 side by side under
+  a shared `DOTNET_ROOT`, supports project-level runtime selection, and gives
+  this repo one runtime-manager boundary for .NET.
+- Microsoft pkg shared root: rejected as canonical because it is manual/pkg
+  state outside the repo package manifests and requires receipt/root-owned
+  cleanup. It remains a temporary managed exception.
+- Homebrew casks `dotnet-sdk` and `dotnet-sdk@8`: rejected as the primary
+  owner because they wrap pkg-style state under `/usr/local/share/dotnet`
+  rather than a repo-managed runtime-manager root.
+- Homebrew formula `dotnet` plus `dotnet@8`: rejected because versioned
+  formulae live in separate Homebrew roots, which makes side-by-side SDK and
+  `DOTNET_ROOT` policy less clean.
+- `asdf`: rejected because .NET support is plugin-based and has weaker local
+  Tool Fit than `mise` for this repo.
+
+## Decision
+
+Homebrew installs `mise`; `mise` installs and selects .NET SDKs.
+
+The repo-managed global `mise` policy lives at `system/mise/config.toml` and is
+linked to `~/.config/mise/config.toml` by `scripts/setup_symlinks.sh`.
 
 The target SDK policy is:
 
 - .NET 10 as the default SDK line.
-- .NET 8 as a temporary compatibility SDK line until remaining projects
-  migrate.
+- .NET 8 as a temporary compatibility SDK line.
 
-The repo-managed global `mise` policy lives at:
+Automation must use `scripts/dotnet_toolchain.sh` or an explicit `mise`
+context for .NET commands. SDK installation must go through
+`scripts/dotnet_sdk_install.sh`, which reads the repo-managed `mise` config.
+Pre-migration snapshots are written by `scripts/dotnet_snapshot.sh` to ignored
+local reports.
 
-```text
-system/mise/config.toml
-```
-
-`scripts/setup_symlinks.sh` links that file to:
-
-```text
-/Users/alex/.config/mise/config.toml
-```
-
-Supported shells, editor terminals, and recipes should eventually resolve
-`dotnet` through the `mise` shim:
-
-```text
-/Users/alex/.local/share/mise/shims/dotnet
-```
-
-Tools that need `DOTNET_ROOT` should use the `mise` .NET root:
-
-```text
-/Users/alex/.local/share/mise/dotnet-root
-```
-
-The Microsoft pkg install under `/usr/local/share/dotnet` remains a root-owned
-Managed Exception and approval-gated cleanup candidate. Homebrew `dotnet@8`
-was removed on 2026-07-07 after `mise` was verified as the active SDK owner.
-The Microsoft pkg root must not be removed until an interactive sudo cleanup
-session can verify and remove it from the laptop.
-
-## Considered Options
-
-- `mise`: selected for `.NET` because it can provide side-by-side .NET 10 and
-  .NET 8 SDKs under a shared `DOTNET_ROOT` and supports project-level
-  selection.
-- Microsoft pkg: kept as a migration source and fallback because it is the
-  current zsh/Codex active SDK, but rejected as canonical because it is not
-  managed by the repo as a runtime owner.
-- Homebrew casks `dotnet-sdk` and `dotnet-sdk@8`: viable fallback because they
-  wrap Microsoft's pkg layout, but not selected because the desired long-term
-  owner is a runtime manager rather than cask-managed pkg state.
-- Homebrew formula `dotnet` plus `dotnet@8`: rejected because versioned
-  formulae live in separate Homebrew roots, which is a weaker fit for .NET 10
-  default plus .NET 8 compatibility.
-- `asdf`: rejected because `.NET` support is plugin-based and requires more
-  shell-specific environment handling than `mise` for this repo.
+.NET global tools are user-local state under `/Users/alex/.dotnet/tools`.
+They are declared separately in `system/packages/dotnet-tools.txt` and should
+be installed through the canonical `mise`-managed `dotnet`.
 
 ## Consequences
 
-`.NET` global tools are user-local state under `/Users/alex/.dotnet/tools`, not
-files installed under the SDK source. They should still be declared in a Package
-Manifest and installed or updated through the canonical `mise`-managed
-`dotnet`.
-
-Repo automation should run .NET commands through:
-
-```text
-scripts/dotnet_toolchain.sh
-```
-
-That wrapper requires `mise` and the repo-managed config. It must fail clearly
-when `mise` or the SDKs are absent instead of silently using Microsoft pkg .NET
-or Homebrew `dotnet@8`.
-
-Bootstrap has an explicit SDK step before global tool installation:
-
-```text
-Homebrew installs mise -> mise installs SDKs -> wrapper installs global tools
-```
-
-The SDK step is `install-dotnet-sdks`, which runs
-`scripts/dotnet_sdk_install.sh`. That script is intentionally mutating when
-executed: it locates `mise`, requires `system/mise/config.toml`, sets
-`MISE_GLOBAL_CONFIG_FILE` to that repo-managed config, and installs only the
-declared `dotnet` SDK lines through `mise`. It does not fall back to Microsoft
-pkg .NET or Homebrew `dotnet@8`.
-
-`setup-dotnet` must keep the order `install-dotnet-sdks` before
-`install-dotnet-tools` so global tools are installed through the ADR-0006 SDK
-source rather than a migration exception.
-
-The installer surface for global tools is a separate implementation decision:
-the repo may keep using `dotnet tool install --global` through the
-`mise`-managed SDK, or it may use `mise`'s `dotnet:ToolName` backend where that
-gives better reproducibility. Do not remove or migrate existing user-local
-tools until that choice is documented.
-
-`doctor` should report active `.NET` source, candidate paths, SDKs, runtimes,
-workloads, global tool package drift, and global tool command visibility before
-any SDK source is removed behind a Reset Approval Gate.
-
-The selected source is a strategic replacement, so implementation is gated:
-installing `mise`, installing .NET 10 and .NET 8 through `mise`, changing shell
-activation, changing editor discovery, and removing existing SDK sources are
-separate approved steps.
-
-`mise` becoming the `.NET` owner is not evidence that Node should move away
-from `fnm`. Node remains governed by ADR-0007 unless a later Node-specific ADR
-finds that another specialized Node owner has better Tool Fit.
+- Doctor can verify .NET source, SDK lines, global tools, and shell parity
+  against one declared policy.
+- Homebrew `dotnet@8`, Microsoft pkg .NET, and ad hoc global tools are not
+  steady-state owners.
+- Project compatibility should be expressed with project-local .NET config or
+  `global.json`, not by relying on old global SDK roots.
+- The downside is additional `mise` activation and shim behavior to maintain.
+  Shell, editor, and AI command contexts must keep the `mise` shim path and
+  `DOTNET_ROOT` aligned.
+- Removing `/usr/local/share/dotnet` remains approval-gated because it is
+  root-owned and may affect editors or workloads. Take a fresh snapshot before
+  any destructive cleanup.
