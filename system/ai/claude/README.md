@@ -30,6 +30,11 @@ The official Claude Code docs distinguish the stable `claude-code` cask from
 `claude-code@latest`; use the stable cask unless a later ADR deliberately
 chooses the latest release channel.
 
+Do not run `claude install` under the current policy. That installer creates a
+manual `~/.local/bin/claude` symlink to `~/.local/share/claude/versions/*`,
+which wins over the Homebrew cask on this PATH and makes doctor report
+`claude.command` as `migration_pending`.
+
 Local configuration, permissions, plugin caches, marketplace clones, histories,
 backups, and app state are Sensitive Local State.
 
