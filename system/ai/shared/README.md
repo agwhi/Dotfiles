@@ -33,7 +33,7 @@ baseline. opencode receives the shared skills under
 The following are intentionally not baseline assets:
 
 - `using-superpowers`
-- Pi-specific assets
+- Pi-specific assets, unless a future APM Pi target policy promotes them
 - Claude plugin cache contents
 - Codex runtime or system skills
 - broad language/framework skills

@@ -82,6 +82,8 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   and npm-installed Pi helper packages were removed on 2026-07-05, then Pi was
   restored through the canonical pnpm global manifest using the maintained
   `@earendil-works/pi-coding-agent` package and declared Pi extension packages.
+  Declared Pi packages were refreshed through pnpm on 2026-07-07. Keep `~/.pi`
+  as sensitive local state.
 - Undeclared `.NET` global tools: `amazon.lambda.testtool`, `csharpier`,
   `deadcsharp`, and `dotnet-ef` were removed on 2026-07-05. Project-specific
   .NET tooling should be pinned in consuming projects instead of reintroduced

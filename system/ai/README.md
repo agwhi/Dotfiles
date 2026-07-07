@@ -62,6 +62,7 @@ target-specific wrapper, not the source of truth.
 - Codex-safe managed configuration and adapters under `system/ai/codex/`.
 - Claude-safe managed configuration and adapters under `system/ai/claude/`.
 - opencode-safe managed configuration and adapters under `system/ai/opencode/`.
+- Pi-safe policy and package ownership docs under `system/ai/pi/`.
 - Shared AI Asset declarations and source mapping under `system/ai/shared/`.
 - Manual, local, and approval-gated AI classifications in
   `system/packages/manual-apps.md`.

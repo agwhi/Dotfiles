@@ -100,6 +100,7 @@ Repo paths inspected:
 - `system/ai/claude/README.md`
 - `system/ai/codex/README.md`
 - `system/ai/opencode/README.md`
+- `system/ai/pi/README.md`
 - `system/ai/shared/README.md`
 
 Classification: repo-managed documentation and sensitive-safe policy.
@@ -211,9 +212,11 @@ Declared packages:
 - `pi-subagents`
 - `pi-web-access`
 
-Classification: declared AI Tool Surface and user workflow tool. Pi-specific
-assets are not part of the shared APM baseline unless a later policy promotes
-them.
+Classification: declared AI Tool Surface and user workflow tool. Pi packages
+were refreshed through the canonical pnpm global path on 2026-07-07:
+`@plannotator/pi-extension` to `0.22.0`, `pi-lens` to `3.8.66`, and
+`pi-subagents` to `0.34.0`. Pi-specific assets are not part of the shared APM
+baseline unless a later policy promotes them.
 
 ### APM
 

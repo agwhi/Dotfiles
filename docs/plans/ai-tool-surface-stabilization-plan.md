@@ -73,7 +73,8 @@ Current local facts:
   after the Homebrew binary verified cleanly.
 - Pi is installed through the canonical fnm/pnpm global path as
   `@earendil-works/pi-coding-agent` version `0.80.3`, with declared Pi
-  extension packages in `system/packages/pnpm-global.txt`.
+  extension packages in `system/packages/pnpm-global.txt`. The declared Pi
+  extension packages were refreshed on 2026-07-07.
 - `~/.codex`, `~/.claude`, `~/.local/share/opencode`, and `~/.config/opencode`
   contain sensitive User-Managed AI State, histories, caches, auth-adjacent
   files, trusted-project state, local databases, generated adapters, and plugin
@@ -97,7 +98,7 @@ Current local facts:
 | Claude Code and Desktop | CLI: `/opt/homebrew/bin/claude` -> `/opt/homebrew/Caskroom/claude-code/2.1.191/claude`; Desktop: `/Applications/Claude.app` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | Homebrew casks `claude-code` and `claude` | canonical install surface | Keep both harness surfaces declared through Homebrew. Do not remove or migrate existing Claude state without a snapshot and approval. |
 | Claude plugins and commands | plugin cache under `~/.claude/plugins` | `~/.claude/plugins/cache`, `~/.claude/plugins/marketplaces`, install manifests | Claude-managed local cache | manual local / approval-gated cleanup | Do not commit cache contents. Reinstall selected shared assets through APM later, then remove old cache copies only behind approval. |
 | opencode | `/opt/homebrew/bin/opencode` | `~/.local/share/opencode`, `~/.config/opencode`, APM skills under `~/.config/opencode/skills` | Homebrew formula `anomalyco/tap/opencode` plus local config plus APM skill output | canonical CLI plus canonical shared skill target | Keep IVCE AI Gateway / Bedrock config local. Keep using the upstream tap rather than Homebrew core so opencode does not reintroduce Homebrew `node` ownership. |
-| Pi | `/Users/alex/Library/pnpm/pi`; extension commands such as `pi-lens-mcp`, `pi-mcp-adapter`, and `pi-subagents` | pnpm global package state under `~/Library/pnpm` | pnpm global manifest | declared AI Tool Surface | Keep Pi declared in `system/packages/pnpm-global.txt`. Pi-specific assets are not part of the shared APM baseline unless promoted later. |
+| Pi | `/Users/alex/Library/pnpm/pi`; extension commands such as `pi-lens-mcp`, `pi-mcp-adapter`, and `pi-subagents` | pnpm global package state under `~/Library/pnpm`; sensitive local state under `~/.pi` | pnpm global manifest | declared AI Tool Surface | Keep Pi declared in `system/packages/pnpm-global.txt`. Pi is not excluded; only Pi-specific assets are outside the shared APM baseline until a future adapter policy promotes them. |
 | ChatGPT and ChatGPT Atlas | Homebrew casks | app-local state outside this repo | Homebrew cask | canonical app surface | Keep install declarations in `system/packages/Brewfile`; no shared asset policy needed yet. |
 | Ollama | Homebrew formula | local model storage outside this repo | Homebrew formula | canonical app surface | Keep install declaration in `system/packages/Brewfile`; model downloads are local state and not repo assets. |
 

@@ -119,6 +119,15 @@ CODEX_STALE_BASELINE_FILES = [
 CODEX_ALLOWED_VENDOR_RUNTIME_SKILLS = [".system", "codex-primary-runtime"]
 EXCLUDED_AI_ASSETS = {"using-superpowers"}
 APM_BASELINE_TARGETS = ["codex", "claude", "opencode"]
+PI_PNPM_PACKAGES = [
+    "@earendil-works/pi-coding-agent",
+    "@plannotator/pi-extension",
+    "pi-lens",
+    "pi-mcp-adapter",
+    "pi-subagents",
+    "pi-web-access",
+]
+PI_EXPECTED_COMMANDS = ["pi", "pi-lens-mcp", "pi-mcp-adapter", "pi-subagents"]
 GRILL_WITH_DOCS_REF = "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1"
 GRILL_WITH_DOCS_APM_REFS = [
     "mattpocock/skills/skills/engineering/grill-with-docs#v1.0.1",
@@ -3998,7 +4007,98 @@ def scan_opencode_command(
         )
 
 
-def scan_ai_tools(findings: list[dict[str, Any]], brew_declared: dict[str, set[str]]) -> None:
+def scan_pi_command(findings: list[dict[str, Any]], pnpm_installed: set[str]) -> None:
+    declared_packages = set(clean_manifest_lines(PNPM_GLOBAL))
+    expected_packages = set(PI_PNPM_PACKAGES)
+    missing_declared = sorted(expected_packages - declared_packages)
+    missing_installed = sorted(expected_packages - pnpm_installed)
+    command_paths = {
+        command: [path_provenance(path) for path in which_all(command)]
+        for command in PI_EXPECTED_COMMANDS
+    }
+    missing_commands = [
+        command for command, paths in command_paths.items() if not paths
+    ]
+    active = shutil.which("pi")
+    version_result = (
+        command_result([active, "--version"], timeout=10)
+        if active
+        else {"ok": False, "stdout": "", "stderr": "", "returncode": None}
+    )
+    details = {
+        "package_manifest": str(PNPM_GLOBAL.relative_to(ROOT)),
+        "expected_packages": PI_PNPM_PACKAGES,
+        "declared_packages": sorted(declared_packages & expected_packages),
+        "installed_packages": sorted(pnpm_installed & expected_packages),
+        "missing_declared": missing_declared,
+        "missing_installed": missing_installed,
+        "expected_commands": PI_EXPECTED_COMMANDS,
+        "missing_commands": missing_commands,
+        "command_paths": command_paths,
+        "active_command": path_provenance(active),
+        "version": version_result["stdout"].splitlines()[0]
+        if version_result["stdout"]
+        else None,
+        "version_returncode": version_result["returncode"],
+        "version_stderr": version_result["stderr"][:300],
+        "local_state": {
+            "root": str(HOME / ".pi"),
+            "agent_root_exists": (HOME / ".pi/agent").exists(),
+            "subagent_extension_exists": (
+                HOME / ".pi/agent/extensions/subagent"
+            ).exists(),
+            "sensitive_local_state_excluded": [
+                str(HOME / ".pi/agent/auth.json"),
+                str(HOME / ".pi/agent/npm"),
+                str(HOME / ".pi/agent/extensions"),
+            ],
+        },
+    }
+
+    if (
+        active
+        and path_source(active) == "pnpm"
+        and not missing_declared
+        and not missing_installed
+        and not missing_commands
+    ):
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="pi.command",
+            summary="Pi CLI and declared Pi extension packages resolve through the canonical pnpm global path.",
+            details=details,
+        )
+    elif not missing_declared and not missing_installed:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="pi.command",
+            severity="low",
+            summary="Pi packages are declared and installed, but command visibility is incomplete.",
+            details=details,
+            recommendation="Repair pnpm global PATH visibility before treating Pi as fully canonical.",
+        )
+    else:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="declared_absent" if not missing_declared else "drift",
+            name="pi.command",
+            severity="medium",
+            summary="Pi CLI or declared Pi extension packages do not match the pnpm global manifest.",
+            details=details,
+            recommendation="Run the approved node-tool install path or update system/packages/pnpm-global.txt to match the intended Pi package set.",
+        )
+
+
+def scan_ai_tools(
+    findings: list[dict[str, Any]],
+    brew_declared: dict[str, set[str]],
+    pnpm_installed: set[str],
+) -> None:
     detected: dict[str, list[str]] = {}
     for command in AI_COMMANDS:
         matches = which_all(command)
@@ -4054,6 +4154,7 @@ def scan_ai_tools(findings: list[dict[str, Any]], brew_declared: dict[str, set[s
     scan_claude_code(findings)
     scan_opencode_command(findings, brew_declared)
     scan_opencode_baseline(findings)
+    scan_pi_command(findings, pnpm_installed)
 
     apm_paths = which_all("apm")
     if apm_paths:
@@ -4253,7 +4354,7 @@ def build_payload() -> dict[str, Any]:
     check_runtime_managers(findings)
     check_shell_parity(findings)
     check_dotnet(findings)
-    scan_ai_tools(findings, brew_declared)
+    scan_ai_tools(findings, brew_declared, pnpm_installed)
     check_manual_apps(findings, brew_declared)
 
     by_classification = Counter(finding["classification"] for finding in findings)
