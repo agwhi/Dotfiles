@@ -25,7 +25,6 @@ brew "fnm"           # Fast Node.js version manager
 
 # --- Language, Runtime & Data Tooling ---
 brew "mise"          # Strategic .NET SDK owner; SDK installs are later-gated
-brew "dotnet@8"      # Managed .NET migration exception until mise is active
 brew "uv"            # Fast Python package installer and resolver
 brew "composer"      # PHP dependency manager
 brew "mysql-client"  # MySQL client tools

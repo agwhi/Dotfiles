@@ -63,12 +63,12 @@ Current local facts:
   local state.
 - Claude Code is installed through Homebrew cask `claude-code`;
   `/opt/homebrew/bin/claude` resolves to
-  `/opt/homebrew/Caskroom/claude-code/2.1.191/claude` and reports
-  `2.1.191 (Claude Code)`.
+  `/opt/homebrew/Caskroom/claude-code/2.1.195/claude` and reports
+  `2.1.195 (Claude Code)`.
 - Claude Desktop is present at `/Applications/Claude.app` version `1.18286.0`.
   It is installed through Homebrew cask `claude`.
 - opencode is installed through the upstream Homebrew tap
-  `anomalyco/tap/opencode` version `1.17.14`. `opencode` is visible on PATH;
+  `anomalyco/tap/opencode` version `1.17.15`. `opencode` is visible on PATH;
   `open-code` is not. The old npm-global `opencode-ai` install was removed
   after the Homebrew binary verified cleanly.
 - Pi is installed through the canonical fnm/pnpm global path as
@@ -95,7 +95,7 @@ Current local facts:
 | Codex CLI | `/opt/homebrew/bin/codex`; app resource binary in `/Applications/Codex.app` | `~/.codex` plus app/runtime cache paths | Homebrew cask plus app runtime | canonical install surface | Keep Codex declared through Homebrew. Keep `~/.codex` as Sensitive Local State; mutate baseline skills only through approved APM target-write gates. |
 | Codex runtime helpers | `codex-execve-wrapper`, `codex_chronicle` in Codex app/runtime paths | Codex app runtime directories and temporary command wrappers | app_runtime | managed context | Do not classify these as package-manager drift. They are execution context from the Codex app. |
 | Codex skills | APM-managed split baseline under `~/.codex/skills`: `grill-with-docs`, `grilling`, and `domain-modeling`; system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | APM target output plus app/runtime | canonical baseline plus vendor state | Keep the split `grill-with-docs` workflow as the only target baseline. Keep `using-superpowers` absent. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |
-| Claude Code and Desktop | CLI: `/opt/homebrew/bin/claude` -> `/opt/homebrew/Caskroom/claude-code/2.1.191/claude`; Desktop: `/Applications/Claude.app` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | Homebrew casks `claude-code` and `claude` | canonical install surface | Keep both harness surfaces declared through Homebrew. Do not remove or migrate existing Claude state without a snapshot and approval. |
+| Claude Code and Desktop | CLI: `/opt/homebrew/bin/claude` -> `/opt/homebrew/Caskroom/claude-code/2.1.195/claude`; Desktop: `/Applications/Claude.app` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | Homebrew casks `claude-code` and `claude` | canonical install surface | Keep both harness surfaces declared through Homebrew. Do not remove or migrate existing Claude state without a snapshot and approval. |
 | Claude plugins and commands | plugin cache under `~/.claude/plugins` | `~/.claude/plugins/cache`, `~/.claude/plugins/marketplaces`, install manifests | Claude-managed local cache | manual local / approval-gated cleanup | Do not commit cache contents. Reinstall selected shared assets through APM later, then remove old cache copies only behind approval. |
 | opencode | `/opt/homebrew/bin/opencode` | `~/.local/share/opencode`, `~/.config/opencode`, APM skills under `~/.config/opencode/skills` | Homebrew formula `anomalyco/tap/opencode` plus local config plus APM skill output | canonical CLI plus canonical shared skill target | Keep IVCE AI Gateway / Bedrock config local. Keep using the upstream tap rather than Homebrew core so opencode does not reintroduce Homebrew `node` ownership. |
 | Pi | `/Users/alex/Library/pnpm/pi`; extension commands such as `pi-lens-mcp`, `pi-mcp-adapter`, and `pi-subagents` | pnpm global package state under `~/Library/pnpm`; sensitive local state under `~/.pi` | pnpm global manifest | declared AI Tool Surface | Keep Pi declared in `system/packages/pnpm-global.txt`. Pi is not excluded; only Pi-specific assets are outside the shared APM baseline until a future adapter policy promotes them. |

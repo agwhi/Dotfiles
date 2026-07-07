@@ -29,7 +29,7 @@ managed development ecosystem.
 | `fnm` | `eval "$(fnm env --shell zsh --use-on-cd)"` in interactive `.zshrc` | Recreated | Keeps project version switching in interactive zsh. |
 | zoxide | `eval "$(zoxide init zsh)"` in interactive `.zshrc` | Recreated | Loaded late, matching the intended interactive behavior. |
 | `.dotnet/tools` | `$HOME/.dotnet/tools` PATH prepend in `.zshenv` and `.zshrc` | Improved | Uses an expanded path so global tools resolve in zsh. |
-| temporary `dotnet@8` path | `/opt/homebrew/opt/dotnet@8/bin` PATH prepend | Recreated | Temporary until the separate `mise` .NET migration is approved and implemented. |
+| temporary `dotnet@8` path | Removed from PATH after `mise` became canonical | Completed | Homebrew `dotnet@8` is no longer part of the dev environment contract. |
 | Carapace | `CARAPACE_BRIDGES` and `source <(carapace _carapace zsh)` | Recreated | Interactive only. |
 | direnv | `eval "$(direnv hook zsh)"` | Recreated | Interactive only. |
 | fzf | `source <(fzf --zsh)` guarded by interactive zle availability | Improved | Avoids the previous non-interactive zle warnings. |
@@ -44,8 +44,8 @@ managed development ecosystem.
 - Do not keep Nu as a fallback shell or editor profile.
 - Do not make automation depend on zsh aliases or interactive shell startup.
 - Do not migrate .NET to `mise` in this adoption task.
-- Do not remove Homebrew `node`, Homebrew `pnpm`, Microsoft package .NET,
-  Homebrew `dotnet@8`, Pi, opencode, Claude, Codex, APM, or AI asset state.
+- Do not remove Homebrew `node`, Homebrew `pnpm`, Microsoft package .NET, Pi,
+  opencode, Claude, Codex, APM, or AI asset state.
 
 ## Rollback
 

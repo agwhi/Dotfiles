@@ -35,9 +35,9 @@ development-related Homebrew leaves and casks with no stronger owner were added
 to `system/packages/Brewfile`.
 
 `mise` was added as desired Homebrew state because ADR-0006 selects it as the
-strategic .NET SDK owner. The current Microsoft pkg .NET install and Homebrew
-`dotnet@8` stay as managed exceptions until the `mise` migration is explicitly
-approved and verified.
+strategic .NET SDK owner. Homebrew `dotnet@8` was removed after the `mise`
+migration was verified. The Microsoft pkg .NET install remains as a root-owned
+cleanup candidate until an interactive sudo cleanup session can remove it.
 
 Homebrew `node` and `pnpm` were not added. ADR-0007 selects `fnm` as the Node,
 Corepack, and pnpm owner. The installed Homebrew formulae are duplicate owners
@@ -88,11 +88,8 @@ Do not remove or migrate these without explicit approval:
 
 - Homebrew `node`, because it duplicates the ADR-0007 `fnm` Node owner.
 - Homebrew `pnpm`, because it duplicates the ADR-0007 Corepack/pnpm owner.
-- Homebrew `dotnet@8`, because it is a declared .NET migration exception.
-- Microsoft pkg .NET under `/usr/local/share/dotnet`, because it is the active
-  SDK source in the current zsh/Codex context.
-- Homebrew `unbound`, because it has resolver-service behavior and DNS
-  ownership has not been verified.
+- Microsoft pkg .NET under `/usr/local/share/dotnet`, because it is root-owned
+  legacy pkg state and requires interactive sudo cleanup.
 - Manual/local AI and editor shims recorded in
   `system/packages/manual-apps.md`.
 
@@ -134,6 +131,14 @@ On the follow-up pass, Firefox and Wispr Flow were promoted to the Brewfile,
 and Dia was removed as unwanted local state. Falcon remains explicitly outside
 repo ownership.
 
+The final cleanup pass removed Homebrew `dotnet@8` and confirmed no Homebrew
+`unbound` formula or service was installed. Remaining root-owned cleanup needs
+interactive sudo: Microsoft pkg .NET under `/usr/local/share/dotnet`, legacy
+manual APM under `/usr/local/bin/apm` and `/usr/local/lib/apm`, and NordVPN's
+helper upgrade path. The NordVPN cask upgrade target is `10.5.1`, but the
+installed version remained `10.1.0` after the non-interactive attempt failed at
+the helper/package uninstall step.
+
 ## Intentional Exclusion
 
 `whatsapp` is installed as a Homebrew cask, but it is personal messaging state
@@ -145,11 +150,5 @@ excluded instead of being promoted to the Brewfile.
 - Re-run `just doctor --json` after the Brewfile changes and confirm
   Homebrew present-undeclared drift is limited to duplicate or approval-gated
   state.
-- In a separate install/repair task, decide whether to link Homebrew `docker`
-  or remove the unlinked formula behind approval.
-- Decide whether Homebrew `unbound` belongs to the network-security baseline or
-  should be removed behind approval.
-- Implement ADR-0006's `mise` .NET migration in a separate approved task.
-- Remove Homebrew `node` and `pnpm` only after ADR-0007 shell parity and pnpm
-  global paths are verified.
+- Use an interactive sudo session for remaining root-owned cleanup candidates.
 - Keep AI CLI and asset decisions in the AI Tool Surface task.

@@ -18,28 +18,18 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 
 ## Approval-Gated Homebrew State
 
-- `dotnet@8` (Homebrew formula): declared managed exception and
-  approval-gated cleanup candidate. ADR-0006 selects `mise` as the strategic
-  .NET SDK owner, and the `mise` SDK root now exposes the declared .NET 10 and
-  .NET 8 SDK lines. Keep this formula installed until a separate cleanup task
-  confirms no project, editor, workload, recipe, or shell path still depends on
-  `/opt/homebrew/opt/dotnet@8`.
-- `unbound` (Homebrew formula/service): installed leaf with network-service
-  behavior and no current Brewfile declaration. Keep approval-gated until DNS
-  ownership between macOS, `dnscrypt-proxy`, and any local resolver workflow is
-  verified.
 - `nordvpn` (Homebrew cask): declared network/privacy tool. The 2026-07-07
-  non-interactive cask upgrade could not complete because NordVPN's helper
-  uninstall path requires `sudo`. Keep installed; upgrade through an
-  interactive Homebrew task.
+  non-interactive cask upgrade to `10.5.1` could not complete because
+  NordVPN's helper uninstall path requires `sudo`. Current installed cask
+  version remains `10.1.0`; upgrade through an interactive Homebrew task.
 
 ## Manual Or Local Tool State
 
 - `/usr/local/share/dotnet/dotnet`: Microsoft pkg .NET SDK source still
   present after the `mise` migration. It is no longer the canonical source when
   PATH resolves through `/Users/alex/.local/share/mise/shims/dotnet`; keep it
-  as an approval-gated cleanup candidate until a separate task confirms no
-  project, editor, workload, or Lambda workflow depends on the pkg root.
+  as an interactive-sudo cleanup candidate. A 2026-07-07 non-interactive
+  cleanup attempt could not remove it because `sudo` requires a password.
 - `/usr/local/bin/apm`: legacy manual/pkg duplicate resolving to
   `/usr/local/lib/apm/apm`. ADR-0008 selects APM as the AI Asset Manager, and
   the active `apm` command now resolves through `/opt/homebrew/bin/apm` from
@@ -48,7 +38,8 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   non-interactive cleanup attempt confirmed Homebrew PATH precedence but could
   not remove the duplicate because `sudo` requires a password. Do not
   self-update, reinstall, prune, or remove it without an interactive approval
-  path.
+  path. A 2026-07-07 non-interactive cleanup attempt could not remove it
+  because `sudo` requires a password.
 - `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
   Cursor cask. It points at
   `/Applications/Cursor.app/Contents/Resources/app/bin/code`, so keep it as
@@ -92,6 +83,11 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - Homebrew `docker`: linked successfully on 2026-07-07 after
   `docker-completion` was removed. Keep `docker` as the CLI for the Colima
   runtime; Docker Desktop was not installed and is not part of the baseline.
+- Homebrew `dotnet@8`: removed from the Brewfile and uninstalled on
+  2026-07-07 after `mise` became the canonical .NET SDK owner and exposed the
+  required .NET 10 and .NET 8 SDK lines.
+- Homebrew `unbound`: no installed Homebrew formula or service was detected on
+  2026-07-07, so the stale approval-gated cleanup note was removed.
 - `/Applications/Dia.app`: removed on 2026-07-07 after Alex confirmed it was
   not needed.
 - `/Applications/Firefox.app`: migrated to Homebrew cask `firefox` on

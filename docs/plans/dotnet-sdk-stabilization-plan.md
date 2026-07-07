@@ -1,6 +1,6 @@
 # .NET SDK Stabilization Plan
 
-Date: 2026-07-01. Updated: 2026-07-02.
+Date: 2026-07-01. Updated: 2026-07-07.
 
 This plan is non-mutating. It does not install, uninstall, relink, unlink,
 upgrade, repair, or remove any .NET SDK, runtime, workload, global tool, or
@@ -26,10 +26,10 @@ that can expose .NET 10 by default, keep .NET 8 side-by-side, and later remove
 the compatibility SDK when projects migrate.
 
 `mise` is now active for the shell/Codex path and lists both target SDK lines.
-The current Microsoft pkg install and Homebrew `dotnet@8` formula remain
-Managed Exceptions, but they are now cleanup candidates rather than fallback
-sources for normal repo-managed `.NET` work. Do not remove them without a fresh
-snapshot and explicit approval.
+Homebrew `dotnet@8` was removed on 2026-07-07. The Microsoft pkg install
+remains as a root-owned Managed Exception because `/usr/local/share/dotnet`
+requires interactive sudo cleanup; a non-interactive cleanup attempt failed
+because `sudo` requires a password.
 
 ## Evidence
 
@@ -45,7 +45,7 @@ Local command evidence collected on 2026-07-01:
 - Microsoft pkg receipts include
   `com.microsoft.dotnet.dev.8.0.412.component.osx.arm64` and runtime receipts
   under `usr/local/share/dotnet`.
-- Homebrew `dotnet@8` is installed on request and declared in
+- Homebrew `dotnet@8` was previously installed on request and declared in
   `system/packages/Brewfile`.
 - Homebrew `dotnet@8` version: `8.0.128`.
 - Direct Homebrew `dotnet@8` SDK: `8.0.128` at
@@ -62,7 +62,7 @@ Local command evidence collected on 2026-07-01:
 - Homebrew formula metadata reported `mise` as available before the migration,
   and `brew list --versions mise` now reports `mise 2026.6.14`.
 - `system/packages/Brewfile` now declares `mise` as the strategic .NET SDK
-  owner and keeps Homebrew `dotnet@8` as a managed migration exception.
+  owner and no longer declares Homebrew `dotnet@8`.
 - Repo-managed `mise` policy now lives at `system/mise/config.toml`, is linked
   to `~/.config/mise/config.toml` by `scripts/setup_symlinks.sh`, and declares
   .NET 10 plus .NET 8 without declaring Node.
@@ -118,10 +118,10 @@ External source context:
 
 | Option | Strengths | Weaknesses | Verdict |
 | --- | --- | --- | --- |
-| `mise` .NET | Strategic .NET owner that can install .NET 10 and .NET 8 side-by-side under a shared `DOTNET_ROOT` and supports project-level runtime selection. | Not installed yet, requires shell activation, doctor policy, editor-terminal parity, and migration from current SDK sources. | Select as the .NET strategic replacement. |
-| Microsoft pkg shared root | Native .NET side-by-side behavior, currently active, and compatible with .NET 10 plus .NET 8 overlap through pkg/cask installs. | Manual/pkg state is already outside the Brewfile, cleanup is receipt/root-owned, and project-level runtime ownership would remain less explicit than `mise`. | Keep as migration source and fallback until `mise` is proven. |
+| `mise` .NET | Strategic .NET owner that installs .NET 10 and .NET 8 side-by-side under a shared `DOTNET_ROOT` and supports project-level runtime selection. | Requires shell activation, doctor policy, editor-terminal parity, and migration from current SDK sources. | Selected as the .NET strategic replacement. |
+| Microsoft pkg shared root | Native .NET side-by-side behavior and compatible with .NET 10 plus .NET 8 overlap through pkg/cask installs. | Manual/pkg state is already outside the Brewfile, cleanup is receipt/root-owned, and project-level runtime ownership would remain less explicit than `mise`. | Rejected as canonical; remaining root-owned install is an interactive-sudo cleanup candidate. |
 | Homebrew casks `dotnet-sdk` plus `dotnet-sdk@8` | Repo-installable wrapper around Microsoft's pkg layout and supports .NET 10 plus .NET 8 overlap. | Still lands in `/usr/local/share/dotnet`, not a runtime-manager root; Homebrew cask upgrade/removal behavior needs careful gates. | Use only as fallback if `mise` is rejected during implementation. |
-| Homebrew formula `dotnet` plus `dotnet@8` | Formula `dotnet` provides .NET 10 and `dotnet@8` is already installed. | Versioned formulae live in separate Homebrew roots, making side-by-side SDK discovery and `DOTNET_ROOT` policy less clean. | Reject as the canonical owner. |
+| Homebrew formula `dotnet` plus `dotnet@8` | Formula `dotnet` provides .NET 10 and `dotnet@8` was available during evaluation. | Versioned formulae live in separate Homebrew roots, making side-by-side SDK discovery and `DOTNET_ROOT` policy less clean. | Reject as the canonical owner. |
 | `asdf` .NET plugin | Can manage .NET through a runtime-manager ecosystem. | Plugin-based, shell-specific `DOTNET_ROOT` setup, and weaker local Tool Fit than `mise`. | Reject unless a future ADR standardizes on `asdf`. |
 
 <!-- markdownlint-enable MD013 -->
@@ -146,9 +146,9 @@ clear .NET runtime-manager boundary:
 This does not change the Node decision. `fnm` remains the best-fit specialized
 Node owner unless a later Node-specific decision proves otherwise.
 
-The current Microsoft pkg install and Homebrew `dotnet@8` should stay in place
-until a separate cleanup task is approved, even though the core `mise` checks
-now pass:
+The Microsoft pkg install should stay in place until an interactive sudo
+cleanup task can remove it. Homebrew `dotnet@8` has already been removed
+because the core `mise` checks now pass:
 
 - `dotnet` resolves through the `mise` shim in the current shell/Codex context.
 - .NET 10 is available as the default SDK line.
@@ -294,14 +294,15 @@ Before removing the Microsoft pkg install:
   `/usr/local/share/dotnet`.
 - Prove .NET 8 compatibility projects build/test through `mise`.
 - Confirm that removing `/usr/local/share/dotnet` and Microsoft pkg receipts is
-  acceptable, then perform the removal only with explicit approval.
+  acceptable, then perform the removal only from an interactive sudo session.
 
-Before removing Homebrew `dotnet@8`:
+Homebrew `dotnet@8` cleanup:
 
 - Prove no shell, editor, recipe, workload, or project uses
   `/opt/homebrew/opt/dotnet@8`.
 - Update the Brewfile and doctor policy to stop expecting Homebrew `dotnet@8`.
-- Perform `brew uninstall dotnet@8` only with explicit approval.
+- Perform `brew uninstall dotnet@8` only with explicit approval. Done on
+  2026-07-07.
 
 Before removing or changing global tools:
 
@@ -340,7 +341,7 @@ Before removing or changing global tools:
 13. Re-run editor-terminal checks from VS Code and Cursor before SDK-source
    cleanup if those editors are in scope for the removal task.
 14. Only after cleanup gates pass, ask for explicit approval to remove
-   Microsoft pkg .NET and Homebrew `dotnet@8`.
+   Microsoft pkg .NET. Homebrew `dotnet@8` removal is done.
 15. Remove .NET 8 from `mise` only after all compatibility projects have
    migrated and a separate approval gate passes.
 
@@ -348,7 +349,8 @@ Before removing or changing global tools:
 
 - Do not reinstall, uninstall, relink, unlink, repair, or upgrade any .NET
   SDK/runtime during this cleanup-planning pass.
-- Do not remove Microsoft pkg files or Homebrew `dotnet@8`.
+- Do not remove Microsoft pkg files without an interactive sudo cleanup
+  session.
 - Do not install, update, or uninstall additional global tools during this
   cleanup-planning pass.
 - Keep `/Users/alex/.dotnet/tools` as an expanded path in shell and dev

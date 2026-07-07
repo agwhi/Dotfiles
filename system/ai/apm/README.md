@@ -14,7 +14,9 @@ The current APM binary is installed through the official Homebrew tap formula
 declared in `system/packages/Brewfile`:
 <https://microsoft.github.io/apm/getting-started/installation/#package-managers>.
 The old manual `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` install still
-exists as an approval-gated cleanup candidate, but it no longer wins PATH.
+exists as a root-owned approval-gated cleanup candidate, but it no longer wins
+PATH. A 2026-07-07 non-interactive cleanup attempt was blocked because `sudo`
+requires a password, so it requires an interactive sudo cleanup session.
 Selecting APM for assets does not approve self-updating, pruning, or migrating
 existing AI state.
 
@@ -315,5 +317,6 @@ Read-only APM inspection commands are acceptable when a task allows them.
 
 ## Unresolved
 
-- When the legacy manual `/usr/local/bin/apm` duplicate should be removed.
+- Remove the legacy manual `/usr/local/bin/apm` duplicate in an interactive
+  sudo cleanup session.
 - Which custom AI assets Alex will later place in a companion repo.

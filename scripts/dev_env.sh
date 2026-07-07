@@ -86,7 +86,6 @@ path_prepend "$HOME/.dotnet/tools"
 path_prepend "$PNPM_HOME"
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/.local/share/fnm/aliases/default/bin"
-path_prepend "/opt/homebrew/opt/dotnet@8/bin"
 path_prepend "$MISE_SHIMS_DIR"
 export PATH
 

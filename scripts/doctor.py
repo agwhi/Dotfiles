@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
 
 BREWFILE = ROOT / "system/packages/Brewfile"
+PERSONAL_BREWFILE = ROOT / "system/packages/personal.Brewfile"
 VSCODE_EXTENSIONS = ROOT / "system/packages/vscode-extensions.txt"
 CURSOR_EXTENSIONS = ROOT / "system/packages/cursor-extensions.txt"
 PNPM_GLOBAL = ROOT / "system/packages/pnpm-global.txt"
@@ -1807,6 +1808,7 @@ def is_dev_related(name: str) -> bool:
 def check_brew(findings: list[dict[str, Any]]) -> dict[str, set[str]]:
     add_manifest_presence(findings, "brew", BREWFILE, "Homebrew")
     declared = parse_brewfile(BREWFILE)
+    personal_declared = parse_brewfile(PERSONAL_BREWFILE)
 
     brew_path = shutil.which("brew")
     if not brew_path:
@@ -1889,15 +1891,19 @@ def check_brew(findings: list[dict[str, Any]]) -> dict[str, set[str]]:
         ),
     )
 
+    declared_or_personal_formulae = declared["brew"] | personal_declared["brew"]
+    declared_or_personal_casks = declared["cask"] | personal_declared["cask"]
     undeclared_formulae = sorted(
         name
         for name in installed_leaves
-        if not equivalent_member(name, declared["brew"]) and is_dev_related(name)
+        if not equivalent_member(name, declared_or_personal_formulae)
+        and is_dev_related(name)
     )
     undeclared_casks = sorted(
         name
         for name in installed_casks
-        if not equivalent_member(name, declared["cask"]) and is_dev_related(name)
+        if not equivalent_member(name, declared_or_personal_casks)
+        and is_dev_related(name)
     )
     if undeclared_formulae or undeclared_casks:
         add_finding(
@@ -1924,6 +1930,68 @@ def check_brew(findings: list[dict[str, Any]]) -> dict[str, set[str]]:
             classification="canonical",
             name="homebrew.dev_tools.present_undeclared",
             summary="No undeclared Homebrew dev-related leaves or casks were detected.",
+        )
+
+    if PERSONAL_BREWFILE.exists():
+        personal_present_formulae = sorted(
+            name
+            for name in personal_declared["brew"]
+            if equivalent_member(name, installed_formulae)
+        )
+        personal_missing_formulae = sorted(
+            name
+            for name in personal_declared["brew"]
+            if not equivalent_member(name, installed_formulae)
+        )
+        personal_present_casks = sorted(
+            name
+            for name in personal_declared["cask"]
+            if equivalent_member(name, installed_casks)
+        )
+        personal_missing_casks = sorted(
+            name
+            for name in personal_declared["cask"]
+            if not equivalent_member(name, installed_casks)
+        )
+        personal_missing = personal_missing_formulae or personal_missing_casks
+        add_finding(
+            findings,
+            area="brew",
+            classification="canonical" if not personal_missing else "declared_absent",
+            name="homebrew.personal_packages",
+            severity="info" if not personal_missing else "low",
+            source=str(PERSONAL_BREWFILE.relative_to(ROOT)),
+            summary=(
+                "Gitignored personal Homebrew packages are installed."
+                if not personal_missing
+                else "Some gitignored personal Homebrew packages are missing."
+            ),
+            details={
+                "manifest_gitignored": True,
+                "present": {
+                    "formulae": personal_present_formulae,
+                    "casks": personal_present_casks,
+                },
+                "missing": {
+                    "formulae": personal_missing_formulae,
+                    "casks": personal_missing_casks,
+                },
+            },
+            recommendation=(
+                "Run just install-personal-brew if these personal packages should stay on this laptop."
+                if personal_missing
+                else None
+            ),
+        )
+    else:
+        add_finding(
+            findings,
+            area="brew",
+            classification="not_required",
+            name="homebrew.personal_packages",
+            source=str(PERSONAL_BREWFILE.relative_to(ROOT)),
+            summary="No gitignored personal Homebrew package manifest is present.",
+            details={"manifest_gitignored": True},
         )
 
     return declared
@@ -2890,13 +2958,41 @@ def check_dotnet(findings: list[dict[str, Any]]) -> None:
             "workloads": active_inventory["workloads"],
         },
         recommendation=(
-            "Keep existing SDK sources as managed exceptions until mise dotnet@10 and dotnet@8 are installed and active."
+            "Keep existing SDK sources as managed exceptions until the ADR-0006 mise SDK lines are installed and active."
             if active_source != "mise_dotnet"
             else "Repair missing ADR-0006 mise SDK lines in a later approved mutation step."
             if not expected_sdk_major_lines_visible
             else None
         ),
     )
+
+    legacy_sdk_candidates = [
+        candidate
+        for candidate in candidates
+        if candidate["provenance"].get("source") in {"homebrew", "microsoft_dotnet_pkg"}
+    ]
+    if legacy_sdk_candidates:
+        add_finding(
+            findings,
+            area="dotnet",
+            classification="approval_gated_removal",
+            name="dotnet.sdk_sources.legacy_present",
+            severity="low",
+            summary="Legacy .NET SDK source candidates are still present outside mise.",
+            details={"candidates": legacy_sdk_candidates},
+            recommendation=(
+                "Remove legacy SDK roots only through an explicit cleanup task; "
+                "root-owned Microsoft pkg files require interactive sudo."
+            ),
+        )
+    else:
+        add_finding(
+            findings,
+            area="dotnet",
+            classification="canonical",
+            name="dotnet.sdk_sources.legacy_present",
+            summary="No legacy Homebrew or Microsoft pkg .NET SDK source candidates were detected.",
+        )
 
     tool_result = command_result(
         ["dotnet", "tool", "list", "--global"],

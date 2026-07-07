@@ -6,7 +6,7 @@ upstream OpenCode tap, and its shared APM skill baseline is deployed.
 Current local state:
 
 - Package: Homebrew formula `anomalyco/tap/opencode`
-- Version observed: `1.17.14`
+- Version observed: `1.17.15`
 - Binary observed: `/opt/homebrew/bin/opencode`
 - State root: `~/.local/share/opencode`
 - Config root: `~/.config/opencode`

@@ -6,8 +6,8 @@ Homebrew casks.
 Current local state:
 
 - CLI binary: `/opt/homebrew/bin/claude`
-- Resolved CLI binary: `/opt/homebrew/Caskroom/claude-code/2.1.191/claude`
-- CLI version observed: `2.1.191 (Claude Code)`
+- Resolved CLI binary: `/opt/homebrew/Caskroom/claude-code/2.1.195/claude`
+- CLI version observed: `2.1.195 (Claude Code)`
 - CLI install source: Homebrew cask `claude-code`
 - Desktop app: `/Applications/Claude.app`
 - Desktop version observed: `1.18286.0`

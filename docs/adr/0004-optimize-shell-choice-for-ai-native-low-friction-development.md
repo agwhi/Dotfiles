@@ -46,7 +46,7 @@ repo-managed zsh files:
 - expanded `PNPM_HOME`
 - `fnm` activation with `--use-on-cd`
 - Starship, zoxide, direnv, carapace, and fzf
-- `.dotnet/tools` plus the temporary Homebrew `dotnet@8` path
+- `.dotnet/tools` plus the `mise` .NET shim path
 - a non-interactive development PATH wrapper for agent/tool command launches
 - existing daily aliases for interactive use
 

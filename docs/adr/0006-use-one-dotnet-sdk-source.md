@@ -39,11 +39,11 @@ Tools that need `DOTNET_ROOT` should use the `mise` .NET root:
 /Users/alex/.local/share/mise/dotnet-root
 ```
 
-The current Microsoft pkg install under `/usr/local/share/dotnet` and Homebrew
-`dotnet@8` under `/opt/homebrew/opt/dotnet@8` are Managed Exceptions and
-approval-gated cleanup candidates. They must not be removed until `mise` has
-been verified against shell parity, editor discovery, project-level SDK
-selection, workloads, and global tool command visibility.
+The Microsoft pkg install under `/usr/local/share/dotnet` remains a root-owned
+Managed Exception and approval-gated cleanup candidate. Homebrew `dotnet@8`
+was removed on 2026-07-07 after `mise` was verified as the active SDK owner.
+The Microsoft pkg root must not be removed until an interactive sudo cleanup
+session can verify and remove it from the laptop.
 
 ## Considered Options
 
