@@ -50,8 +50,9 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   self-update, reinstall, prune, or remove it without an interactive approval
   path.
 - `/usr/local/bin/cursor`: app-provided CLI shim for the Homebrew-managed
-  Cursor cask. Keep as local app state unless a later editor policy migrates
-  it.
+  Cursor cask. It points at
+  `/Applications/Cursor.app/Contents/Resources/app/bin/code`, so keep it as
+  app runtime state rather than a separate package.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
   `codex_chronicle`: app-runtime-context, not package-manager drift.
 - `/Users/alex/Applications/Claude Code URL Handler.app`: Claude Code app
@@ -72,8 +73,8 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   `wispr-flow` exists and was newer at `1.5.1095`; add it to the Brewfile if
   it is part of the dev productivity baseline, otherwise keep local or remove.
 - `/Applications/Falcon.app` (`com.crowdstrike.falcon.App`, version `7.38`):
-  likely external security/MDM-managed software. Do not remove or migrate from
-  this repo without explicit confirmation.
+  external security/MDM-managed software. Keep it out of this repo's package
+  manifests and do not remove or migrate it without explicit confirmation.
 - Bundled Apple apps such as Safari, GarageBand, iMovie, Keynote, Numbers, and
   Pages are treated as OS/app-suite state, not development baseline drift.
 
@@ -146,4 +147,5 @@ Rebuild Snapshot:
 ## Intentional Exclusions
 
 - `whatsapp` (Homebrew cask): personal messaging app observed in Homebrew
-  state, but not part of the Development Ecosystem baseline in this pass.
+  state, but not part of the Development Ecosystem baseline. Keep it in the
+  gitignored local `system/packages/personal.Brewfile`.

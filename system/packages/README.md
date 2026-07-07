@@ -46,6 +46,33 @@ intentional exclusions, and removal candidates that need a Reset Approval Gate.
 This keeps installed local state visible without turning cleanup into an
 implicit install or uninstall instruction.
 
+## Personal Local Packages
+
+Use `system/packages/personal.Brewfile` for non-development personal apps that
+should remain installed on this laptop but should not become part of the
+Development Ecosystem baseline. This file is gitignored. Example entries:
+
+```ruby
+cask "whatsapp"
+```
+
+Install or check it explicitly:
+
+```sh
+just install-personal-brew
+just check-personal-brew
+brew bundle --file=system/packages/personal.Brewfile
+brew bundle check --file=system/packages/personal.Brewfile --verbose
+```
+
+Do not include MDM/security-managed software such as Falcon in this personal
+manifest unless ownership is explicitly confirmed.
+
+`brew bundle cleanup --file=system/packages/Brewfile` only knows about the
+development baseline, so it may report personal casks from this ignored file as
+cleanup candidates. Do not run that cleanup with `--force` unless personal
+casks have been reviewed separately.
+
 ## Read-only Doctor
 
 Run `just doctor` from the repo root to audit installed tools against these

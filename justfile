@@ -5,6 +5,7 @@ js_toolchain := "./scripts/js_toolchain.sh"
 dotnet_snapshot := "./scripts/dotnet_snapshot.sh"
 dotnet_sdk_install := "./scripts/dotnet_sdk_install.sh"
 dotnet_toolchain := "./scripts/dotnet_toolchain.sh"
+personal_brewfile := "./system/packages/personal.Brewfile"
 
 # Set up all dotfile symlinks safely
 link:
@@ -37,6 +38,14 @@ install-brew:
 
 # Alias for install-brew task
 brew: install-brew
+
+# Install local-only personal Homebrew packages if a gitignored manifest exists
+install-personal-brew:
+    sh -c 'if [ -f "{{personal_brewfile}}" ]; then brew bundle --file="{{personal_brewfile}}"; else echo "No {{personal_brewfile}} found"; fi'
+
+# Check local-only personal Homebrew packages if a gitignored manifest exists
+check-personal-brew:
+    sh -c 'if [ -f "{{personal_brewfile}}" ]; then brew bundle check --file="{{personal_brewfile}}" --verbose; else echo "No {{personal_brewfile}} found"; fi'
 
 # Install VS Code extensions
 install-vscode-extensions:

@@ -9,6 +9,10 @@ backup-log.txt
 # Local migration snapshots and command reports
 reports/
 
+# Local personal package manifests. These are intentionally outside the
+# development baseline, but can be consumed manually with brew bundle.
+system/packages/personal.Brewfile
+
 # APM generated dependency and target output
 system/ai/apm/apm_modules/
 system/ai/apm/.agents/
