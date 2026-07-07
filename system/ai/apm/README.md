@@ -253,6 +253,22 @@ metadata to the symlinked `apm.lock.yaml` even with `--frozen`; that generated
 metadata was reverted so the repo lockfile remains source evidence only. Check
 the lockfile after any future global install.
 
+On 2026-07-07, the approved opencode target-write gate used a scratch install
+first, then deployed opencode only with:
+
+```sh
+apm install --global --frozen --target opencode --legacy-skill-paths
+```
+
+The live opencode output was limited to
+`~/.config/opencode/skills/domain-modeling`,
+`~/.config/opencode/skills/grill-with-docs`, and
+`~/.config/opencode/skills/grilling`. `using-superpowers` was absent. The IVCE
+AI Gateway / Bedrock files under `~/.config/opencode/opencode.json` and
+`~/.config/opencode/ai-gateway-sigv4-wrapper/` were verified by hash before
+and after deployment and remain local-only. APM again added deployment metadata
+to the symlinked `apm.lock.yaml`; that generated metadata was reverted.
+
 Preferred model:
 
 - keep `system/ai/apm/apm.yml` and `system/ai/apm/apm.lock.yaml` as the repo
@@ -277,7 +293,8 @@ per-target approval gate:
 - `~/.claude`
 - `~/.local/share/claude`
 - `~/.local/share/opencode`
-- `~/.config/opencode`
+- `~/.config/opencode`, except approved APM skill target output under
+  `~/.config/opencode/skills`
 - `~/Library/pnpm/pi`
 - npm global `opencode-ai`
 - any auth, history, database, log, trusted-project, or cache state

@@ -95,7 +95,7 @@ Current local facts:
 | Codex skills | APM-managed split baseline under `~/.codex/skills`: `grill-with-docs`, `grilling`, and `domain-modeling`; system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | APM target output plus app/runtime | canonical baseline plus vendor state | Keep the split `grill-with-docs` workflow as the only target baseline. Keep `using-superpowers` absent. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |
 | Claude Code and Desktop | CLI: `/opt/homebrew/bin/claude` -> `/opt/homebrew/Caskroom/claude-code/2.1.191/claude`; Desktop: `/Applications/Claude.app` | `~/.claude`, `~/.claude.json`, `~/.local/share/claude` | Homebrew casks `claude-code` and `claude` | canonical install surface | Keep both harness surfaces declared through Homebrew. Do not remove or migrate existing Claude state without a snapshot and approval. |
 | Claude plugins and commands | plugin cache under `~/.claude/plugins` | `~/.claude/plugins/cache`, `~/.claude/plugins/marketplaces`, install manifests | Claude-managed local cache | manual local / approval-gated cleanup | Do not commit cache contents. Reinstall selected shared assets through APM later, then remove old cache copies only behind approval. |
-| opencode | `opencode-ai` npm global binary under the `fnm` default alias path | `~/.local/share/opencode`, `~/.config/opencode` | npm global plus local config | legacy managed exception | Do not add to the Global AI Baseline now. Decide later whether opencode is a project-local tool, declared AI Tool Surface, or removal candidate. |
+| opencode | `opencode-ai` npm global binary under the `fnm` default alias path | `~/.local/share/opencode`, `~/.config/opencode`, APM skills under `~/.config/opencode/skills` | npm global plus local config plus APM skill output | legacy CLI managed exception plus canonical shared skill target | Keep IVCE AI Gateway / Bedrock config local. Decide later whether the opencode CLI should remain npm-global, move to a better installer, or be removed. |
 | Pi | `/Users/alex/Library/pnpm/pi`; extension commands such as `pi-lens-mcp`, `pi-mcp-adapter`, and `pi-subagents` | pnpm global package state under `~/Library/pnpm` | pnpm global manifest | declared AI Tool Surface | Keep Pi declared in `system/packages/pnpm-global.txt`. Pi-specific assets are not part of the shared APM baseline unless promoted later. |
 | ChatGPT and ChatGPT Atlas | Homebrew casks | app-local state outside this repo | Homebrew cask | canonical app surface | Keep install declarations in `system/packages/Brewfile`; no shared asset policy needed yet. |
 | Ollama | Homebrew formula | local model storage outside this repo | Homebrew formula | canonical app surface | Keep install declaration in `system/packages/Brewfile`; model downloads are local state and not repo assets. |
@@ -180,15 +180,17 @@ name exactly which files or directories are in scope.
 5. Prefer `apm targets --json`, `apm lock`, and `apm audit --ci` before any
    command that deploys, prunes, updates, or uninstalls assets.
 6. Record the intended generated targets for Codex, Claude Code, opencode, and
-   future surfaces before running APM.
+   future surfaces before running APM. Done for the shared baseline.
 7. Add doctor checks for the selected baseline after an APM manifest exists.
+   Done for Codex, Claude Code, and opencode.
 
 ### P1 Expose The APM Project
 
 1. Link `~/.apm/apm.yml` to `system/ai/apm/apm.yml` through normal setup.
 2. Link `~/.apm/apm.lock.yaml` to `system/ai/apm/apm.lock.yaml` through normal setup.
 3. Let setup back up any existing live APM project files before replacing them.
-4. Keep live Codex deployment blocked until a target-write gate is approved.
+4. Keep live target deployment blocked until a per-target write gate is
+   approved. Done for Codex, Claude Code, and opencode.
 5. Verify doctor reports repo APM files separately from live APM symlink state.
 
 ### P2 Cleanup Behind Approval
@@ -198,12 +200,13 @@ name exactly which files or directories are in scope.
    later ADR changes the Global AI Baseline.
 3. Keep Pi declared through the pnpm global manifest unless a later policy
    moves it.
-4. Remove or migrate `opencode-ai` if it is not a declared AI Tool Surface.
+4. Remove or migrate `opencode-ai` only if a later task decides the opencode
+   CLI should not remain an npm-global managed exception.
 5. Tighten doctor so undeclared AI tools and assets are actionable drift.
 
 ## Open Questions
 
-1. Should opencode remain available as a project-local experiment, or should it
-   be removed after APM/Codex/Claude coverage is stable?
+1. Should the opencode CLI remain npm-global, move to a better installer, or
+   be removed now that APM skills are deployed?
 2. Should Pi receive any APM-managed shared assets if APM adds a confirmed Pi
    target or adapter model?

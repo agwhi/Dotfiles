@@ -75,7 +75,7 @@ tree.
 | Codex runtime helpers | `codex-execve-wrapper`, `codex_chronicle` | not versioned separately | app runtime | No | App runtime context | Surfaced by doctor as Codex-provided helpers. They are not standalone tools to declare. |
 | Claude Code | `/opt/homebrew/bin/claude` -> `/opt/homebrew/Caskroom/claude-code/2.1.191/claude` | `2.1.191 (Claude Code)` | Homebrew cask `claude-code` | Yes, `cask "claude-code"` | Canonical AI Tool Surface | The previous manual `~/.local/bin/claude` symlink and `~/.local/share/claude/versions` executables were removed during the approved migration. |
 | Claude Desktop | `/Applications/Claude.app` | `1.18286.0` | Homebrew cask `claude` | Yes, `cask "claude"` | Canonical AI Tool Surface | Sensitive `~/.claude` state remains local and out of git. |
-| opencode | `/Users/alex/.local/share/fnm/aliases/default/bin/opencode` | `1.17.13` | npm global under fnm default Node, package `opencode-ai` | No | Legacy managed exception | `open-code` is not on PATH. Decide later whether opencode is project-local, managed, or removed behind approval. |
+| opencode | `/Users/alex/.local/share/fnm/aliases/default/bin/opencode` | `1.17.13` | npm global under fnm default Node, package `opencode-ai`; APM skills deployed under `~/.config/opencode/skills` | Partial | Legacy CLI managed exception plus canonical shared skill target | `open-code` is not on PATH. Preserve IVCE AI Gateway / Bedrock config in local opencode config; do not commit it. |
 | Pi | `/Users/alex/Library/pnpm/pi` | `0.80.3` | pnpm global, package `@earendil-works/pi-coding-agent`; extensions declared in `system/packages/pnpm-global.txt` | Yes, pnpm manifest | Declared AI Tool Surface | Restored on 2026-07-05 through the canonical fnm/pnpm global path after the deprecated `@mariozechner` package was removed. Pi-specific assets are not part of the shared APM baseline unless promoted later. |
 | APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm`; legacy duplicate at `/usr/local/bin/apm` | `0.23.1 (d1d926d)` | Homebrew formula `microsoft/apm/apm` plus legacy manual duplicate | Yes, `brew "microsoft/apm/apm"` | Selected AI Asset Manager, canonical binary plus approval-gated cleanup candidate | ADR-0008 selects APM for AI Assets. The active command now resolves through Homebrew; the old `/usr/local` manual binary remains a lower-priority cleanup candidate. Do not self-update or mutate with APM without approval. |
 | ChatGPT | Homebrew cask app | `1.2026.160,1781312926` | Homebrew cask | Yes, `cask "chatgpt"` | Canonical app surface | App state is local and out of repo. No shared asset policy is needed yet. |
@@ -188,11 +188,14 @@ No `/Users/alex/.config/opencode/command` or
 `/Users/alex/.config/opencode/agent` directory was observed.
 
 Classification: sensitive local state and manual tool configuration. It is not
-an APM-managed shared asset target yet.
+source-of-truth asset state. The approved APM opencode target deployment has
+materialized the shared split skill baseline under
+`/Users/alex/.config/opencode/skills`.
 
 Excluded as Sensitive Local State: account files, auth files, MCP auth files,
 local databases, logs, snapshots, storage, repos, provider configuration,
-local wrappers, npm package state, and generated dependencies.
+local wrappers, npm package state, generated dependencies, and IVCE AI Gateway
+/ Bedrock config values.
 
 ### Pi
 
@@ -372,10 +375,10 @@ APM should eventually support:
 - audit and policy checks for installed AI Assets
 - generated modules and target output through approved target-write gates
 
-Open questions before live deployment:
+Open questions after live deployment:
 
-1. Should opencode remain a local experiment, become a declared AI Tool
-   Surface, or be removed behind approval?
+1. Should opencode CLI remain an npm-global managed exception, move to a
+   better installer, or be removed behind approval?
 2. When should the legacy manual `/usr/local/bin/apm` duplicate be removed?
 
 ## Repo Versus Companion Repo
@@ -478,11 +481,12 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 4. Treat `~/.apm/apm.yml` and `~/.apm/apm.lock.yaml` symlink state as
    canonical when they point to the repo source files.
 5. Update doctor to report repo APM validity, live APM symlink state, and the
-   live split Codex baseline separately.
+   live split Codex, Claude, and opencode baselines separately. Done.
 
 ### P2: Keep The Corrected Deployment Canonical
 
-1. Keep the approved split-skill Codex layout canonical in doctor.
+1. Keep the approved split-skill Codex, Claude, and opencode layouts canonical
+   in doctor.
 2. Keep old `grill-with-docs/` format references absent.
 3. Keep `using-superpowers` intentionally excluded unless a later ADR changes
    the Global AI Baseline.
@@ -492,8 +496,9 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
 1. Capture a Rebuild Snapshot for AI local state.
 2. Remove duplicate or non-baseline global assets only after the APM-generated
    baseline is verified.
-3. Decide whether opencode remains a local tool, becomes a declared surface, or
-   is removed; keep Pi declared through pnpm unless a later policy moves it.
+3. Decide whether opencode CLI remains npm-global, moves to a better
+   installer, or is removed; keep Pi declared through pnpm unless a later
+   policy moves it.
 4. Tighten doctor so undeclared AI tools and shared assets are actionable
    drift.
 

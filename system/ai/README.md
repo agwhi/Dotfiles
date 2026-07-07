@@ -25,8 +25,8 @@ The current APM manifest targets Codex, Claude Code, and opencode so those
 harnesses converge on the same shared baseline. The lockfile pins the public
 `grill-with-docs` package plus its public `grilling` and `domain-modeling`
 dependency skills. Approved Codex and Claude deployments have materialized that
-split baseline; opencode still requires a separate target-write gate before
-APM materializes assets for it.
+split baseline, and the approved opencode deployment has materialized the same
+skills under `~/.config/opencode/skills`.
 
 Do not include `using-superpowers`, Pi-specific assets, opencode-specific
 assets, broad language/framework skills, or project-specific prompts in the

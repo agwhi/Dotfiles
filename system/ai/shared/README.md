@@ -26,9 +26,9 @@ Scratch validation on 2026-07-03 showed that `grilling` lives under
 scratch install generated `grill-with-docs`, `grilling`, and
 `domain-modeling`, and it did not generate `using-superpowers`.
 
-Live Codex and Claude Code deployments have materialized the split baseline.
-opencode is part of the shared APM target set, but its live target output still
-needs a separate preview and deployment gate.
+Live Codex, Claude Code, and opencode deployments have materialized the split
+baseline. opencode receives the shared skills under
+`~/.config/opencode/skills`.
 
 The following are intentionally not baseline assets:
 

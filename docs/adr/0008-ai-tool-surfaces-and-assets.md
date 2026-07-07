@@ -31,6 +31,5 @@ The APM package evidence files are `system/ai/apm/apm.yml` and
 public `grilling` and `domain-modeling` dependency skills at the same
 `v1.0.1` tag. ADR-0009 exposes the repo APM project to `~/.apm` with symlinks.
 The manifest targets Codex, Claude Code, and opencode so each supported
-harness receives the same shared baseline. The approved Codex and Claude Code
-deployments have materialized the split baseline; opencode still requires a
-separate target-write gate before APM materializes assets for it.
+harness receives the same shared baseline. The approved Codex, Claude Code,
+and opencode deployments have materialized the split baseline.

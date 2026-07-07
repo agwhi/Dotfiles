@@ -43,6 +43,7 @@ APM_USER_MANIFEST = HOME / ".apm/apm.yml"
 APM_USER_LOCKFILE = HOME / ".apm/apm.lock.yaml"
 CODEX_SKILLS_DIR = HOME / ".codex/skills"
 CLAUDE_SKILLS_DIR = HOME / ".claude/skills"
+OPENCODE_SKILLS_DIR = HOME / ".config/opencode/skills"
 CLAUDE_COMMAND = HOME / ".local/bin/claude"
 CLAUDE_VERSIONS_DIR = HOME / ".local/share/claude/versions"
 CLAUDE_DESKTOP_APP = Path("/Applications/Claude.app")
@@ -3275,6 +3276,10 @@ def claude_split_baseline_state() -> dict[str, Any]:
     return split_skill_baseline_state(CLAUDE_SKILLS_DIR)
 
 
+def opencode_split_baseline_state() -> dict[str, Any]:
+    return split_skill_baseline_state(OPENCODE_SKILLS_DIR)
+
+
 def claude_code_state() -> dict[str, Any]:
     paths = which_all("claude")
     primary_path = paths[0] if paths else None
@@ -3862,25 +3867,59 @@ def scan_claude_code(findings: list[dict[str, Any]]) -> None:
 
 
 def scan_opencode_baseline(findings: list[dict[str, Any]]) -> None:
-    add_finding(
-        findings,
-        area="ai_tools",
-        classification="migration_pending",
-        name="opencode.apm_baseline",
-        severity="low",
-        summary="opencode is part of the shared APM baseline target set, but live opencode target output is not deployed yet.",
-        details={
-            "target": "opencode",
-            "baseline_required": True,
-            "target_declared": "opencode" in APM_BASELINE_TARGETS,
-            "future_candidate_skills": CODEX_BASELINE_SKILLS,
-            "excluded_assets": sorted(EXCLUDED_AI_ASSETS),
-        },
-        recommendation=(
-            "Preview and deploy opencode target output only through a separate "
-            "approved APM target-write gate."
-        ),
-    )
+    opencode_baseline = opencode_split_baseline_state()
+    details = {
+        "target": "opencode",
+        "baseline_required": True,
+        "target_declared": "opencode" in APM_BASELINE_TARGETS,
+        "expected_skills": CODEX_BASELINE_SKILLS,
+        "excluded_assets": sorted(EXCLUDED_AI_ASSETS),
+        "skills_path": str(OPENCODE_SKILLS_DIR),
+        "sensitive_local_state_excluded": [
+            str(HOME / ".config/opencode/opencode.json"),
+            str(HOME / ".config/opencode/ai-gateway-sigv4-wrapper"),
+            str(HOME / ".local/share/opencode"),
+        ],
+        "baseline": opencode_baseline,
+    }
+    if not opencode_baseline["exists"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="migration_pending",
+            name="opencode.apm_baseline",
+            severity="low",
+            summary="opencode is part of the shared APM baseline target set, but live opencode target output is not deployed yet.",
+            details=details,
+            recommendation=(
+                "Preview and deploy opencode target output only through a separate "
+                "approved APM target-write gate."
+            ),
+        )
+    elif opencode_baseline["canonical"]:
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification="canonical",
+            name="opencode.apm_baseline",
+            summary="opencode has the approved APM-managed split skill baseline.",
+            details=details,
+        )
+    else:
+        classification = "missing" if opencode_baseline["missing_files"] else "drift"
+        add_finding(
+            findings,
+            area="ai_tools",
+            classification=classification,
+            name="opencode.apm_baseline",
+            severity="medium",
+            summary="opencode live skills do not match the approved split baseline.",
+            details=details,
+            recommendation=(
+                "Review the live opencode target output against the APM manifest "
+                "and use a separate approved deployment or cleanup gate for changes."
+            ),
+        )
 
 
 def scan_ai_tools(findings: list[dict[str, Any]]) -> None:

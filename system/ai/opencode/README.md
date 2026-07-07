@@ -1,7 +1,7 @@
 # opencode
 
-opencode is currently present as a legacy npm-global AI Tool Surface, not as a
-declared global baseline tool.
+opencode is currently present as a legacy npm-global AI Tool Surface. Its CLI
+installer is not canonical yet, but its shared APM skill baseline is deployed.
 
 Current local state:
 
@@ -10,6 +10,7 @@ Current local state:
 - Binary observed: `~/.local/share/fnm/aliases/default/bin/opencode`
 - State root: `~/.local/share/opencode`
 - Config root: `~/.config/opencode`
+- APM-managed skills root: `~/.config/opencode/skills`
 
 The current zsh/Codex-compatible PATH exposes `opencode`. `open-code` is not
 on PATH.
@@ -17,13 +18,20 @@ on PATH.
 ## Classification
 
 `opencode-ai` is a legacy managed exception and possible project-local tool.
-The opencode target is still included in the shared APM baseline target set so
-that, if opencode remains installed, it receives the same global skills and AI
-assets as Codex and Claude Code.
+The opencode target is included in the shared APM baseline target set, and the
+approved APM deployment has materialized the same split skill baseline as Codex
+and Claude Code:
+
+- `grill-with-docs`
+- `grilling`
+- `domain-modeling`
 
 `~/.local/share/opencode` and `~/.config/opencode` are Sensitive Local State.
 They include account/auth files, local databases, logs, snapshots, storage, and
-provider configuration. Do not commit them directly.
+provider configuration. The IVCE AI Gateway / Bedrock configuration remains
+local in `~/.config/opencode/opencode.json` and
+`~/.config/opencode/ai-gateway-sigv4-wrapper/`; do not commit those files
+directly.
 
 ## Target Policy
 
@@ -33,8 +41,7 @@ shared prompts, skills, commands, MCP definitions, or agents.
 
 Later options:
 
-- keep opencode as a documented project-local or manual-local tool
-- preview and deploy the shared APM target output for opencode
+- keep opencode as a documented npm-global managed exception
+- migrate opencode CLI installation to a better canonical installer if one is
+  chosen
 - remove npm global `opencode-ai` behind a Reset Approval Gate
-
-No option is implemented in this task.

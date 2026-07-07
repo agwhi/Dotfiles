@@ -55,15 +55,20 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   `codex_chronicle`: app-runtime-context, not package-manager drift.
 - `~/.local/share/fnm/aliases/default/bin/opencode`: npm-global
   `opencode-ai` binary observed under the `fnm` default Node path. Current
-  observed version is `1.17.13`. Keep as a legacy managed exception until the
-  AI Tool Surface policy decides whether opencode is project-local, managed,
-  or removed.
+  observed version is `1.17.13`. Its shared APM skills are deployed under
+  `~/.config/opencode/skills`; keep the CLI itself as a legacy managed
+  exception until the AI Tool Surface policy decides whether opencode stays
+  npm-global, moves to a better installer, or is removed.
 
 ## AI Approval-Gated Cleanup
 
 - `~/.codex/skills/grill-with-docs`, `~/.codex/skills/grilling`, and
   `~/.codex/skills/domain-modeling`: APM-managed Codex baseline. Mutate only
   through approved APM target-write gates.
+- `~/.config/opencode/skills/grill-with-docs`,
+  `~/.config/opencode/skills/grilling`, and
+  `~/.config/opencode/skills/domain-modeling`: APM-managed opencode baseline.
+  Mutate only through approved APM target-write gates.
 - `~/.codex/skills/using-superpowers`: intentionally excluded and currently
   absent from the live baseline. Reinstall only if a later ADR changes the
   Global AI Baseline.
