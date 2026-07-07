@@ -82,11 +82,13 @@ brew "zlib"          # Compression library
 brew "topgrade"      # One command to upgrade everything
 cask "caffeine"      # Prevent sleep during long-running tasks
 cask "maccy"         # Clipboard manager
+cask "wispr-flow"    # AI dictation and auto-editing
 
 # --- Fonts & UI ---
 cask "font-fira-code-nerd-font" # Dev font
 cask "arc"           # Browser
 cask "raycast"       # Productivity launcher
+cask "firefox"       # Browser
 cask "google-chrome" # Browser
 cask "secretive"     # Secure key storage
 cask "slack"         # Messaging

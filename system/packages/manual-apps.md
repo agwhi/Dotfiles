@@ -60,18 +60,6 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 
 ## Manual GUI Apps Observed
 
-- `/Applications/Dia.app` (`company.thebrowser.dia`, version `1.26.0`):
-  manual browser/AI app. No matching Homebrew cask was found in this pass.
-  Decide later whether it is part of the development baseline or should be
-  removed.
-- `/Applications/Firefox.app` (`org.mozilla.firefox`, version `152.0.4`):
-  manual browser install. Homebrew cask `firefox` exists; add it to the
-  Brewfile if Firefox is a required dev/test browser, otherwise remove it
-  outside this repo's baseline.
-- `/Applications/Wispr Flow.app` (`com.electron.wispr-flow`, version
-  `1.5.695`): manual AI dictation/productivity app. Homebrew cask
-  `wispr-flow` exists and was newer at `1.5.1095`; add it to the Brewfile if
-  it is part of the dev productivity baseline, otherwise keep local or remove.
 - `/Applications/Falcon.app` (`com.crowdstrike.falcon.App`, version `7.38`):
   external security/MDM-managed software. Keep it out of this repo's package
   manifests and do not remove or migrate it without explicit confirmation.
@@ -104,6 +92,12 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - Homebrew `docker`: linked successfully on 2026-07-07 after
   `docker-completion` was removed. Keep `docker` as the CLI for the Colima
   runtime; Docker Desktop was not installed and is not part of the baseline.
+- `/Applications/Dia.app`: removed on 2026-07-07 after Alex confirmed it was
+  not needed.
+- `/Applications/Firefox.app`: migrated to Homebrew cask `firefox` on
+  2026-07-07.
+- `/Applications/Wispr Flow.app`: migrated to Homebrew cask `wispr-flow` on
+  2026-07-07.
 - npm global `opencode-ai`: removed after migrating opencode CLI ownership to
   the upstream Homebrew tap `anomalyco/tap/opencode` on 2026-07-07. The IVCE
   AI Gateway / Bedrock config and opencode APM skills were verified unchanged

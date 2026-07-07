@@ -124,10 +124,15 @@ Remaining Homebrew/manual app decisions:
 
 - `nordvpn` remains declared but needs an interactive upgrade because its
   helper uninstall path requires `sudo`.
-- `whatsapp` remains an installed, outdated, intentionally excluded cask.
-- Manual GUI apps outside the Brewfile were recorded in
+- `whatsapp` remains an installed, intentionally excluded cask managed through
+  the gitignored local `system/packages/personal.Brewfile`.
+- Initial manual GUI apps outside the Brewfile were recorded in
   `system/packages/manual-apps.md`: Dia, Firefox, Wispr Flow, Falcon, and the
   Claude Code URL handler.
+
+On the follow-up pass, Firefox and Wispr Flow were promoted to the Brewfile,
+and Dia was removed as unwanted local state. Falcon remains explicitly outside
+repo ownership.
 
 ## Intentional Exclusion
 
