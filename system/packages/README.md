@@ -82,4 +82,8 @@ manifests without changing the machine. The doctor reports drift and install
 provenance only; it does not install, uninstall, migrate, back up, start
 services, or rewrite files.
 
+The default human output is concise: it says the ecosystem is ready when there
+are no actionable findings, otherwise it prints only the actionable issues.
+Use `just doctor --all` for the full read-only audit inventory.
+
 Use `just doctor --json` when another agent or script needs structured output.

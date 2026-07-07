@@ -83,6 +83,19 @@ AREA_ORDER = [
     "other",
 ]
 
+ACTIONABLE_CLASSIFICATIONS = {
+    "approval_gated_removal",
+    "declared_absent",
+    "drift",
+    "duplicate",
+    "legacy",
+    "manual",
+    "migration_pending",
+    "missing",
+    "present_undeclared",
+}
+ACTIONABLE_SEVERITIES = {"medium", "high"}
+
 SHELL_NAMES = {"bash", "fish", "sh", "zsh"}
 JS_COMMANDS = ["node", "npm", "npx", "pnpm", "corepack"]
 NPM_RUNTIME_GLOBALS = {"corepack", "npm"}
@@ -702,7 +715,16 @@ def parse_manual_apps(path: Path) -> set[str]:
         value = line[2:].strip()
         if not value or value.startswith("_"):
             continue
-        apps.add(normalize_app_name(value))
+        candidates = [value]
+        candidates.extend(re.findall(r"`([^`]+)`", value))
+        for candidate in list(candidates):
+            candidate_path_name = Path(candidate).name
+            if candidate_path_name and candidate_path_name != candidate:
+                candidates.append(candidate_path_name)
+        for candidate in candidates:
+            normalized = normalize_app_name(candidate)
+            if normalized:
+                apps.add(normalized)
     return apps
 
 
@@ -4451,12 +4473,16 @@ def check_manual_apps(
     apps = scan_applications([Path("/Applications"), HOME / "Applications"])
     manual_dev_apps = []
     canonical_apps = []
+    declared_manual_apps = []
     for app in apps:
         normalized = normalize_app_name(app["name"])
         if normalized in installed_cask_norms or normalized in declared_cask_norms:
             canonical_apps.append(app)
             continue
-        if normalized in manual_declared or DEV_APP_RE.search(app["name"]):
+        if normalized in manual_declared:
+            declared_manual_apps.append(app)
+            continue
+        if DEV_APP_RE.search(app["name"]):
             manual_dev_apps.append(app)
 
     if manual_dev_apps:
@@ -4479,11 +4505,23 @@ def check_manual_apps(
             name="manual_apps.applications",
             source="/Applications, ~/Applications",
             summary="No obvious manual dev applications were detected outside declared Homebrew casks.",
-            details={"canonical_app_count": len(canonical_apps)},
+            details={
+                "canonical_app_count": len(canonical_apps),
+                "declared_manual_app_count": len(declared_manual_apps),
+            },
         )
 
     bin_tools = scan_bin_dir(Path("/usr/local/bin")) + scan_bin_dir(HOME / ".local/bin")
-    if bin_tools:
+    unknown_bin_tools = [
+        tool
+        for tool in bin_tools
+        if normalize_app_name(tool["name"]) not in manual_declared
+        and normalize_app_name(Path(tool["path"]).name) not in manual_declared
+    ]
+    declared_manual_bin_tools = [
+        tool for tool in bin_tools if tool not in unknown_bin_tools
+    ]
+    if unknown_bin_tools:
         add_finding(
             findings,
             area="manual_apps",
@@ -4492,7 +4530,10 @@ def check_manual_apps(
             severity="low",
             source="/usr/local/bin, ~/.local/bin",
             summary="Manual dev-related executables were detected in local bin directories.",
-            details={"tools": bin_tools[:80], "truncated": len(bin_tools) > 80},
+            details={
+                "tools": unknown_bin_tools[:80],
+                "truncated": len(unknown_bin_tools) > 80,
+            },
             recommendation="Declare intentional local tools or migrate them to a canonical installer.",
         )
     else:
@@ -4503,6 +4544,7 @@ def check_manual_apps(
             name="manual_apps.bin_tools",
             source="/usr/local/bin, ~/.local/bin",
             summary="No obvious manual dev-related executables were detected in local bin directories.",
+            details={"declared_manual_tool_count": len(declared_manual_bin_tools)},
         )
 
 
@@ -4578,7 +4620,19 @@ def format_items(value: Any, max_items: int = 10) -> str:
     return str(value)
 
 
-def emit_markdown(payload: dict[str, Any]) -> None:
+def is_actionable_finding(finding: dict[str, Any]) -> bool:
+    classification = finding.get("classification")
+    severity = finding.get("severity")
+    return bool(
+        classification in ACTIONABLE_CLASSIFICATIONS
+        or (
+            severity in ACTIONABLE_SEVERITIES
+            and classification not in {"canonical", "managed_exception", "not_required"}
+        )
+    )
+
+
+def emit_full_markdown(payload: dict[str, Any]) -> None:
     print("# Development Ecosystem Doctor")
     print()
     print(f"- Repo: `{payload['repo_root']}`")
@@ -4637,6 +4691,45 @@ def emit_markdown(payload: dict[str, Any]) -> None:
                 print(f"  - later: {finding['recommendation']}")
 
 
+def emit_concise_markdown(payload: dict[str, Any]) -> None:
+    findings = [finding for finding in payload["findings"] if is_actionable_finding(finding)]
+    if not findings:
+        print("Your development ecosystem is ready.")
+        return
+
+    print(f"Doctor found {len(findings)} issue{'s' if len(findings) != 1 else ''}:")
+    for area in AREA_ORDER:
+        area_findings = [finding for finding in findings if finding["area"] == area]
+        if not area_findings:
+            continue
+        print()
+        print(f"## {area}")
+        for finding in area_findings:
+            print(f"- `{finding['name']}`: {finding['summary']}")
+            details = finding.get("details", {})
+            interesting: list[str] = []
+            for key in (
+                "missing",
+                "packages",
+                "tools",
+                "formulae",
+                "casks",
+                "extensions",
+                "apps",
+                "commands",
+                "installed_versions",
+            ):
+                if key in details and details[key]:
+                    interesting.append(f"{key}: {format_items(details[key])}")
+            if interesting:
+                print(f"  - details: {'; '.join(interesting)}")
+            if finding.get("recommendation"):
+                print(f"  - fix: {finding['recommendation']}")
+
+    print()
+    print("Run `doctor --all` for the full read-only audit or `doctor --json` for machine-readable output.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Read-only audit of this dotfiles Development Ecosystem."
@@ -4646,14 +4739,23 @@ def main() -> int:
         action="store_true",
         help="Emit machine-readable JSON instead of markdown.",
     )
+    parser.add_argument(
+        "--all",
+        "--verbose",
+        action="store_true",
+        dest="show_all",
+        help="Emit the full markdown audit instead of only actionable findings.",
+    )
     args = parser.parse_args()
 
     payload = build_payload()
     if args.json:
         json.dump(payload, sys.stdout, indent=2, sort_keys=True)
         print()
+    elif args.show_all:
+        emit_full_markdown(payload)
     else:
-        emit_markdown(payload)
+        emit_concise_markdown(payload)
     return 0
 
 
