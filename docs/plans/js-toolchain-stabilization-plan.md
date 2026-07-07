@@ -46,10 +46,19 @@ Grounding from `just doctor --json` generated at
 - Homebrew `corepack` is absent and intentionally not declared.
 - `FNM_COREPACK_ENABLED` is not set in the current shell probes.
 - Trusted pnpm globals now include declared development CLIs plus the declared
-  Pi CLI and extension packages.
-- npm globals remain under `primary_fnm_default`: `context-mode`, `corepack`,
-  and `npm`. The old Homebrew npm scope was removed with Homebrew `node`, and
+  Pi CLI and extension packages. Declared non-Pi pnpm globals were refreshed
+  on 2026-07-07: `@biomejs/biome` `2.5.2`, `aws-cdk` `2.1129.0`,
+  `cdk-dia` `0.12.3`, and `markdownlint-cli` `0.49.0`.
+- npm reports only `corepack` and `npm` under `primary_fnm_default`; doctor
+  classifies those as runtime-owned packages from the selected fnm Node
+  installation rather than user-global drift.
+- The undeclared npm global `context-mode` was removed on 2026-07-07 after no
+  current AI harness config referenced it and Alex did not recognize it.
+- The old Homebrew npm scope was removed with Homebrew `node`, and
   `opencode-ai` was removed when opencode CLI ownership moved to Homebrew.
+- Stale Homebrew-prefix Node-global leftovers under
+  `/opt/homebrew/lib/node_modules` and `/opt/homebrew/bin/cdk` were removed on
+  2026-07-07 so `cdk` resolves through the declared pnpm global path.
 - No competing runtime manager signals were detected for `mise`, `asdf`,
   `nodenv`, `nvm`, `volta`, or related managers.
 
@@ -157,19 +166,23 @@ Not a steady-state owner. It is absent and not declared. Installing it would
 pull toward Homebrew `node` ownership.
 
 npm globals under `primary_fnm_default`:
-Migration exceptions only. Current packages are `corepack` and `npm`.
-`opencode-ai` was removed after opencode CLI ownership moved to the upstream
-Homebrew tap.
+Runtime-owned packages only. Current packages are `corepack` and `npm`, both
+inside the selected fnm Node installation. Do not manually remove them as
+user-global cleanup; reinstall or repair the fnm Node version if either becomes
+corrupt.
 
 npm globals under Homebrew npm:
-Removed on 2026-07-05 with Homebrew `node`. `aws-cdk` remains available through
-the declared pnpm global path.
+Removed on 2026-07-05 with Homebrew `node`. A stale Homebrew-prefix
+`aws-cdk` copy and `cdk` symlink were removed on 2026-07-07. `aws-cdk`
+remains available through the declared pnpm global path.
 
 pnpm global packages:
 Keep `@biomejs/biome`, `aws-cdk`, `cdk-dia`, and `markdownlint-cli` as
 declared globals for now. Keep Pi declared through the maintained
 `@earendil-works/pi-coding-agent` package plus the declared Pi extension
-packages because Alex uses Pi as part of the AI workflow.
+packages because Alex uses Pi as part of the AI workflow. Declared pnpm
+globals are intentionally unpinned and should be refreshed through the
+canonical fnm/pnpm path.
 
 Current-process Codex runtime `pnpm`:
 Non-canonical context only. Do not use it to make laptop drift claims or install
@@ -188,16 +201,16 @@ context until PATH parity proves Homebrew `npx` is no longer first.
   ownership.
 - Do not keep both Homebrew `pnpm` and Corepack/fnm pnpm as equal owners.
 - Do not add new npm globals except as explicitly approved migration steps.
-- Do not remove Homebrew `node`, Homebrew `pnpm`, npm globals, pnpm globals, or
-  `fnm` Node versions without a Reset Approval Gate.
+- Do not manually remove runtime-owned `npm` or `corepack` from the active fnm
+  Node installation.
+- Do not remove Homebrew `node`, Homebrew `pnpm`, pnpm globals, or `fnm` Node
+  versions without a Reset Approval Gate.
 - Do not treat Codex runtime `pnpm` as laptop state.
 
 ## Reset Approval Gate List
 
 Destructive or state-moving actions that need explicit approval later:
 
-- Remove `primary_fnm_default` npm global `corepack`.
-- Remove `primary_fnm_default` npm global `npm`.
 - Remove pnpm global `markdownlint-cli` if Alex decides it is not baseline.
 - Remove old `fnm` Node versions after a retention policy is documented:
   `v20.10.0`, `v20.13.1`, `v20.18.1`, `v22.10.0`, `v22.14.0`, `v22.18.0`,
@@ -275,12 +288,13 @@ edits after Alex approves the target state.
 
 1. Confirm `node`, `npm`, `npx`, `corepack`, and `pnpm` resolve through the
    trusted `fnm` path in zsh and Codex-command contexts. Done.
-2. Homebrew npm global `aws-cdk` removal is complete; `cdk` resolves through
-   the declared pnpm global path.
+2. Homebrew npm global `aws-cdk` removal is complete; the stale Homebrew-prefix
+   `cdk` symlink and package copy were removed, and `cdk` resolves through the
+   declared pnpm global path.
 3. Homebrew `pnpm` removal is complete.
 4. Homebrew `node` removal is complete.
-5. After approval, remove npm global `corepack` and rely on `fnm` Node
-   Corepack for Node versions that provide it.
+5. Treat `npm` and `corepack` under the active fnm Node as runtime-owned
+   packages, not user globals.
 6. Keep Pi declared through pnpm unless a later policy changes it.
 
 ### P2 Docs And Doctor Strictness

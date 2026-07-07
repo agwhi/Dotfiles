@@ -84,6 +84,7 @@ AREA_ORDER = [
 
 SHELL_NAMES = {"bash", "fish", "sh", "zsh"}
 JS_COMMANDS = ["node", "npm", "npx", "pnpm", "corepack"]
+NPM_RUNTIME_GLOBALS = {"corepack", "npm"}
 
 DEV_RE = re.compile(
     r"(ai|apm|ast-grep|aws|azure|bash|biome|bun|cargo|cdk|clang|claude|"
@@ -1709,6 +1710,79 @@ def check_js_toolchain(findings: list[dict[str, Any]]) -> dict[str, Any]:
             details=info,
         )
 
+    stale_packages: list[dict[str, Any]] = []
+    for root in (Path("/opt/homebrew/lib/node_modules"), Path("/usr/local/lib/node_modules")):
+        if not root.is_dir():
+            continue
+        try:
+            for child in sorted(root.iterdir(), key=lambda value: value.name):
+                stale_packages.append(
+                    {
+                        "root": str(root),
+                        "name": child.name,
+                        "path": str(child),
+                        "kind": "directory" if child.is_dir() else "file",
+                    }
+                )
+        except OSError as exc:
+            stale_packages.append({"root": str(root), "error": str(exc)})
+
+    stale_symlinks: list[dict[str, str]] = []
+    for directory in (Path("/opt/homebrew/bin"), Path("/usr/local/bin")):
+        if not directory.is_dir():
+            continue
+        try:
+            for child in sorted(directory.iterdir(), key=lambda value: value.name):
+                if not child.is_symlink():
+                    continue
+                try:
+                    target = os.readlink(child)
+                except OSError:
+                    continue
+                if "node_modules" in target or "node_modules" in str(child.resolve()):
+                    stale_symlinks.append(
+                        {
+                            "path": str(child),
+                            "target": target,
+                            "resolved_path": str(child.resolve()),
+                        }
+                    )
+        except OSError:
+            continue
+
+    if stale_packages or stale_symlinks:
+        add_finding(
+            findings,
+            area="js_toolchain",
+            classification="drift",
+            name="js_toolchain.homebrew_prefix_node_globals",
+            severity="medium",
+            summary="Homebrew-prefix Node global leftovers are present outside the canonical fnm/pnpm ownership model.",
+            details={
+                "packages": stale_packages,
+                "bin_symlinks": stale_symlinks,
+            },
+            recommendation=(
+                "Remove stale Homebrew-prefix Node globals after confirming their "
+                "commands are provided by the declared pnpm global manifest."
+            ),
+        )
+    else:
+        add_finding(
+            findings,
+            area="js_toolchain",
+            classification="canonical",
+            name="js_toolchain.homebrew_prefix_node_globals",
+            summary="No Homebrew-prefix Node global packages or bin symlinks were detected.",
+            details={
+                "checked_package_roots": [
+                    "/opt/homebrew/lib/node_modules",
+                    "/usr/local/lib/node_modules",
+                ],
+                "checked_bin_dirs": ["/opt/homebrew/bin", "/usr/local/bin"],
+            },
+        )
+
     return commands
 
 
@@ -2271,7 +2345,12 @@ def check_npm(
         result = run_npm_list(scope["args"], env=scope["env"])
         installed = result["installed"]
         duplicate_with_pnpm = sorted(installed & duplicate_basis)
-        legacy_globals = sorted(installed - set(duplicate_with_pnpm))
+        runtime_owned = (
+            installed & NPM_RUNTIME_GLOBALS
+            if scope["scope"] == "primary_fnm_default"
+            else set()
+        )
+        legacy_globals = sorted(installed - set(duplicate_with_pnpm) - runtime_owned)
         current_process_codex = scope["scope"] == "current_process" and any(
             is_codex_runtime_path(value.get("path"))
             for value in [scope["toolchain"].get("npm", {})]
@@ -2305,13 +2384,14 @@ def check_npm(
             classification = "legacy" if trusted else "unknown"
         else:
             classification = "canonical" if trusted else "unknown"
+        has_actionable_drift = bool(duplicate_with_pnpm or legacy_globals)
 
         add_finding(
             findings,
             area="npm",
             classification=classification,
             name=f"npm.globals.{scope['scope']}",
-            severity="medium" if trusted and installed else "low",
+            severity="medium" if trusted and has_actionable_drift else "low",
             source=scope["scope"],
             summary=(
                 f"{scope['scope']} npm reports {len(installed)} globals; "
@@ -2324,6 +2404,7 @@ def check_npm(
                 "installed": sorted(installed),
                 "duplicate_with_pnpm": duplicate_with_pnpm,
                 "legacy_packages": legacy_globals,
+                "runtime_owned_packages": sorted(runtime_owned),
                 "toolchain": scope["toolchain"],
                 "returncode": result["returncode"],
                 "stderr": result["stderr"][:400],

@@ -78,6 +78,15 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   the upstream Homebrew tap `anomalyco/tap/opencode` on 2026-07-07. The IVCE
   AI Gateway / Bedrock config and opencode APM skills were verified unchanged
   by hash during the migration.
+- npm global `context-mode`: removed on 2026-07-07 after no current Codex,
+  Claude, opencode, or Pi config referenced it and Alex did not recognize it.
+- Stale Homebrew-prefix Node globals: `/opt/homebrew/bin/cdk`,
+  `/opt/homebrew/lib/node_modules/aws-cdk`, and
+  `/opt/homebrew/lib/node_modules/npm` were removed on 2026-07-07. `cdk` now
+  resolves through the declared pnpm global `aws-cdk`.
+- Declared pnpm globals: `@biomejs/biome`, `aws-cdk`, `cdk-dia`, and
+  `markdownlint-cli` were refreshed through the canonical fnm/pnpm path on
+  2026-07-07.
 - Pi global packages: the deprecated `@mariozechner/pi-coding-agent` package
   and npm-installed Pi helper packages were removed on 2026-07-05, then Pi was
   restored through the canonical pnpm global manifest using the maintained
