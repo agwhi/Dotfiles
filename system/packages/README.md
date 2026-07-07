@@ -35,11 +35,11 @@ explicitly mutating when run, requires the repo-managed
 `system/mise/config.toml`, and does not fall back to Microsoft pkg .NET or
 Homebrew `dotnet@8`.
 
-The remaining Microsoft pkg root under `/usr/local/share/dotnet` is root-owned
-local state; remove it only from an interactive sudo cleanup session after a
-fresh snapshot. A 2026-07-07 non-interactive cleanup attempt was blocked
-because `sudo` requires a password. Homebrew `dotnet@8` was removed on
-2026-07-07.
+Homebrew `dotnet@8` and the Microsoft pkg SDK source root under
+`/usr/local/share/dotnet` were removed on 2026-07-07 after `mise` was verified
+as canonical. Stale Microsoft pkg receipts may remain visible through
+`pkgutil`, but no legacy SDK source path is present and doctor reports `.NET`
+source state as canonical.
 
 ## Manual And Approval-Gated State
 

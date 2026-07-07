@@ -1,7 +1,8 @@
 # Use APM For Shared AI Assets And Manifests For AI Tool Surfaces
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-07-01.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Refines: ADR-0002, ADR-0003.
 Implemented by: ADR-0009.
 Related: ADR-0001, ADR-0002, ADR-0003, ADR-0009,
@@ -82,8 +83,8 @@ lockfile pins the public `grill-with-docs` wrapper plus its `grilling` and
 - Tool homes such as `~/.codex`, `~/.claude`, and `~/.config/opencode` remain
   local state except for APM-managed target output.
 - The active `apm` command should resolve through the Homebrew formula declared
-  in the Brewfile. The old manual `/usr/local` APM install remains only an
-  approval-gated cleanup candidate.
+  in the Brewfile. The old manual `/usr/local` APM install was removed on
+  2026-07-07 and should not be reintroduced.
 - The downside is relying on APM's target behavior and lockfile semantics.
   Doctor must therefore verify both package evidence and deployed baseline
   output.

@@ -1,7 +1,8 @@
 # Use mise As The .NET SDK Source
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-07-01.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Related: ADR-0001, ADR-0007,
 docs/plans/dotnet-sdk-stabilization-plan.md, system/mise/config.toml,
 system/packages/Brewfile, system/packages/dotnet-tools.txt,
@@ -21,8 +22,10 @@ The repo's policy is best-fit runtime ownership, not generic consolidation.
 
 As of 2026-07-07, `dotnet` resolves through the `mise` shim,
 `dotnet --list-sdks` shows `8.0.422` and `10.0.301` from the `mise` .NET
-root, Homebrew `dotnet@8` has been removed, and the Microsoft pkg root remains
-a root-owned cleanup candidate requiring interactive sudo.
+root, Homebrew `dotnet@8` has been removed, and the Microsoft pkg SDK source
+root under `/usr/local/share/dotnet` has been removed. Stale Microsoft pkg
+receipts may still be visible through `pkgutil`, but they are not an active SDK
+source.
 
 ## Decision Drivers
 
@@ -43,8 +46,8 @@ a root-owned cleanup candidate requiring interactive sudo.
   a shared `DOTNET_ROOT`, supports project-level runtime selection, and gives
   this repo one runtime-manager boundary for .NET.
 - Microsoft pkg shared root: rejected as canonical because it is manual/pkg
-  state outside the repo package manifests and requires receipt/root-owned
-  cleanup. It remains a temporary managed exception.
+  state outside the repo package manifests and required receipt/root-owned
+  cleanup during migration.
 - Homebrew casks `dotnet-sdk` and `dotnet-sdk@8`: rejected as the primary
   owner because they wrap pkg-style state under `/usr/local/share/dotnet`
   rather than a repo-managed runtime-manager root.
@@ -87,6 +90,5 @@ be installed through the canonical `mise`-managed `dotnet`.
 - The downside is additional `mise` activation and shim behavior to maintain.
   Shell, editor, and AI command contexts must keep the `mise` shim path and
   `DOTNET_ROOT` aligned.
-- Removing `/usr/local/share/dotnet` remains approval-gated because it is
-  root-owned and may affect editors or workloads. Take a fresh snapshot before
-  any destructive cleanup.
+- Removing stale Microsoft pkg receipts remains out of scope unless they create
+  installer or doctor-visible drift.

@@ -1,7 +1,8 @@
 # Use One Node Runtime and One Global JS Tool Path
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-06-30.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Refined by: ADR-0007.
 Related: ADR-0001, docs/plans/js-toolchain-stabilization-plan.md,
 system/packages/Brewfile, system/packages/pnpm-global.txt,

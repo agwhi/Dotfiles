@@ -35,13 +35,12 @@ development-related Homebrew leaves and casks with no stronger owner were added
 to `system/packages/Brewfile`.
 
 `mise` was added as desired Homebrew state because ADR-0006 selects it as the
-strategic .NET SDK owner. Homebrew `dotnet@8` was removed after the `mise`
-migration was verified. The Microsoft pkg .NET install remains as a root-owned
-cleanup candidate until an interactive sudo cleanup session can remove it.
+strategic .NET SDK owner. Homebrew `dotnet@8` and the Microsoft pkg SDK source
+root were removed after the `mise` migration was verified.
 
 Homebrew `node` and `pnpm` were not added. ADR-0007 selects `fnm` as the Node,
-Corepack, and pnpm owner. The installed Homebrew formulae are duplicate owners
-and approval-gated removal candidates.
+Corepack, and pnpm owner. The duplicate Homebrew formulae were removed during
+cleanup, and `node` and `pnpm` now resolve through the `fnm` default Node.
 
 Docker/Colima was promoted to the Brewfile as the container development
 baseline. The intended model is Colima as the runtime and Homebrew `docker` as
@@ -85,14 +84,11 @@ Casks added as canonical Homebrew-managed applications or support tools:
 
 ## Managed Exceptions And Approval Gates
 
-Do not remove or migrate these without explicit approval:
+No active Homebrew duplicate-owner exceptions remain from this pass.
 
-- Homebrew `node`, because it duplicates the ADR-0007 `fnm` Node owner.
-- Homebrew `pnpm`, because it duplicates the ADR-0007 Corepack/pnpm owner.
-- Microsoft pkg .NET under `/usr/local/share/dotnet`, because it is root-owned
-  legacy pkg state and requires interactive sudo cleanup.
-- Manual/local AI and editor shims recorded in
-  `system/packages/manual-apps.md`.
+Future manual/local exceptions should be recorded in
+`system/packages/manual-apps.md` before cleanup. Stale package receipts are
+informational unless they create doctor-visible drift or installer conflicts.
 
 ## 2026-07-07 Reconciliation
 
@@ -120,8 +116,6 @@ Docker/Colima target state after reconciliation:
 
 Remaining Homebrew/manual app decisions:
 
-- `nordvpn` remains declared but needs an interactive upgrade because its
-  helper uninstall path requires `sudo`.
 - `whatsapp` remains an installed, intentionally excluded cask managed through
   the gitignored local `system/packages/personal.Brewfile`.
 - Initial manual GUI apps outside the Brewfile were recorded in
@@ -136,11 +130,11 @@ The final cleanup pass removed Homebrew `dotnet@8` and confirmed no Homebrew
 `unbound` formula or service was installed. Postman was replaced by Bruno for
 GUI API development and HTTPie for command-line API requests.
 
-Remaining root-owned cleanup needs interactive sudo: Microsoft pkg .NET under
-`/usr/local/share/dotnet`, legacy manual APM under `/usr/local/bin/apm` and
-`/usr/local/lib/apm`, and NordVPN's helper upgrade path. The NordVPN cask
-upgrade target is `10.5.1`, but the installed version remained `10.1.0` after
-the non-interactive attempt failed at the helper/package uninstall step.
+The later interactive cleanup pass removed the remaining root-owned manual
+state for Microsoft pkg .NET under `/usr/local/share/dotnet` and legacy manual
+APM under `/usr/local/bin/apm` and `/usr/local/lib/apm`. NordVPN is now
+upgraded to cask version `10.5.1`. Stale Microsoft pkg receipts may still be
+visible through `pkgutil`, but no legacy SDK source path remains.
 
 ## Intentional Exclusion
 
@@ -153,5 +147,6 @@ excluded instead of being promoted to the Brewfile.
 - Re-run `just doctor --json` after the Brewfile changes and confirm
   Homebrew present-undeclared drift is limited to duplicate or approval-gated
   state.
-- Use an interactive sudo session for remaining root-owned cleanup candidates.
+- Keep stale package receipts informational unless they create doctor-visible
+  drift or installer conflicts.
 - Keep AI CLI and asset decisions in the AI Tool Surface task.

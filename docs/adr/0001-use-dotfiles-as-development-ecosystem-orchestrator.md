@@ -1,7 +1,8 @@
 # Use Dotfiles as the Development Ecosystem Orchestrator
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-06-30.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Related: docs/adr/README.md, system/packages/Brewfile,
 system/packages/README.md, scripts/setup_symlinks.sh, scripts/doctor.py.
 

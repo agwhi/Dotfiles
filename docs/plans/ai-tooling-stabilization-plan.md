@@ -77,7 +77,7 @@ tree.
 | Claude Desktop | `/Applications/Claude.app` | `1.18286.0` | Homebrew cask `claude` | Yes, `cask "claude"` | Canonical AI Tool Surface | Sensitive `~/.claude` state remains local and out of git. |
 | opencode | `/opt/homebrew/bin/opencode` | `1.17.15` | Homebrew formula `anomalyco/tap/opencode`; APM skills deployed under `~/.config/opencode/skills` | Yes, Brewfile | Canonical CLI plus canonical shared skill target | `open-code` is not on PATH. Preserve IVCE AI Gateway / Bedrock config in local opencode config; do not commit it. Use the upstream tap rather than Homebrew core so opencode does not reintroduce Homebrew `node` ownership. |
 | Pi | `/Users/alex/Library/pnpm/pi` | `0.80.3` | pnpm global, package `@earendil-works/pi-coding-agent`; extensions declared in `system/packages/pnpm-global.txt` | Yes, pnpm manifest | Declared AI Tool Surface | Restored on 2026-07-05 through the canonical fnm/pnpm global path after the deprecated `@mariozechner` package was removed. Pi-specific assets are not part of the shared APM baseline unless promoted later. |
-| APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm`; legacy duplicate at `/usr/local/bin/apm` | `0.23.1 (d1d926d)` | Homebrew formula `microsoft/apm/apm` plus legacy manual duplicate | Yes, `brew "microsoft/apm/apm"` | Selected AI Asset Manager, canonical binary plus approval-gated cleanup candidate | ADR-0008 selects APM for AI Assets. The active command now resolves through Homebrew; the old `/usr/local` manual binary remains a lower-priority cleanup candidate. Do not self-update or mutate with APM without approval. |
+| APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm` | `0.23.1 (d1d926d)` | Homebrew formula `microsoft/apm/apm` | Yes, `brew "microsoft/apm/apm"` | Selected AI Asset Manager and canonical Homebrew binary | ADR-0008 selects APM for AI Assets. The active command resolves through Homebrew; the old `/usr/local` manual binary was removed on 2026-07-07. Do not self-update or mutate with APM without approval. |
 | ChatGPT | Homebrew cask app | `1.2026.160,1781312926` | Homebrew cask | Yes, `cask "chatgpt"` | Canonical app surface | App state is local and out of repo. No shared asset policy is needed yet. |
 | ChatGPT Atlas | Homebrew cask app | `1.2026.98.2,20260416164957000` | Homebrew cask | Yes, `cask "chatgpt-atlas"` | Canonical app surface | App state is local and out of repo. |
 | Ollama | Homebrew formula | `0.30.11` | Homebrew formula | Yes, `brew "ollama"` | Canonical app surface | Model downloads and local server state are local state, not repo assets. |
@@ -224,13 +224,11 @@ Name-only paths inspected:
 
 - `/opt/homebrew/bin/apm`
 - `/opt/homebrew/Cellar/apm/0.23.1`
-- `/usr/local/lib/apm`
 - `/Users/alex/.apm`
 - `system/ai/apm`
 
 Classification: selected AI Asset Manager with a Homebrew-managed canonical
-binary and a legacy manual duplicate. `~/.apm/config.json` is local state and
-was not read.
+binary. `~/.apm/config.json` is local state and was not read.
 
 `apm targets --json` can auto-detect unrelated repo targets. The repo APM
 manifest pins the shared harness target set explicitly as
@@ -381,6 +379,8 @@ APM should eventually support:
 Open questions after live deployment:
 
 1. When should the legacy manual `/usr/local/bin/apm` duplicate be removed?
+   Answered on 2026-07-07: it was removed after Homebrew APM ownership was
+   verified.
 
 ## Repo Versus Companion Repo
 
@@ -464,8 +464,8 @@ These actions require a later explicit approval and a Rebuild Snapshot first:
    by the Homebrew formula.
 3. Accept ADR-0009 as the APM project-file placement decision: repo manifest
    and lockfile symlinked into `~/.apm`.
-4. Keep the legacy `/usr/local/bin/apm` manual binary only as an
-   approval-gated cleanup candidate until a separate task removes it.
+4. Keep APM binary ownership with the declared Homebrew formula. The legacy
+   `/usr/local/bin/apm` manual binary was removed on 2026-07-07.
 5. Do not broaden the Global AI Baseline beyond the split `grill-with-docs`
    workflow.
 

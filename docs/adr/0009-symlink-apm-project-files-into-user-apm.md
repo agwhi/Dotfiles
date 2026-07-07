@@ -1,7 +1,8 @@
 # Symlink APM Project Files Into User APM
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-07-03.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Implements: ADR-0008.
 Related: ADR-0001, ADR-0002, ADR-0003, ADR-0008,
 system/ai/apm/README.md, system/ai/apm/apm.yml,

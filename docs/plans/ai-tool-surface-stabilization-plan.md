@@ -55,8 +55,8 @@ Current local facts:
   commands in the current app context.
 - APM is present at `/opt/homebrew/bin/apm`, resolves through the Homebrew
   formula `microsoft/apm/apm`, and reports version `0.23.1`. The old
-  `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` manual install remains as a
-  lower-priority approval-gated cleanup candidate.
+  `/usr/local/bin/apm` -> `/usr/local/lib/apm/apm` manual install was removed
+  on 2026-07-07.
 - APM uses `apm.yml` and `apm.lock.yaml` for package declarations and locks.
   `apm lock` writes a lockfile without deploying files, while `apm install`,
   `apm update`, `apm prune`, `apm uninstall`, and `apm self-update` mutate
@@ -91,7 +91,7 @@ Current local facts:
 
 | Tool or surface | Current binaries | Config and state paths | Current provenance | Classification | Recommendation |
 | --- | --- | --- | --- | --- | --- |
-| APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm`; legacy duplicate at `/usr/local/bin/apm` | repo manifest and lockfile under `system/ai/apm/`; live project symlinks under `~/.apm` | Homebrew formula `microsoft/apm/apm` plus legacy manual duplicate | canonical binary plus approval-gated cleanup candidate | Use APM as the AI Asset Manager. Keep the old `/usr/local` binary only until a later cleanup removes the duplicate. Do not run `apm install`, `apm update`, `apm prune`, `apm uninstall`, or `apm self-update` without approval. |
+| APM | `/opt/homebrew/bin/apm` -> `/opt/homebrew/Cellar/apm/0.23.1/bin/apm` | repo manifest and lockfile under `system/ai/apm/`; live project symlinks under `~/.apm` | Homebrew formula `microsoft/apm/apm` | canonical binary | Use APM as the AI Asset Manager. The old `/usr/local` binary was removed on 2026-07-07. Do not run `apm install`, `apm update`, `apm prune`, `apm uninstall`, or `apm self-update` without approval. |
 | Codex CLI | `/opt/homebrew/bin/codex`; app resource binary in `/Applications/Codex.app` | `~/.codex` plus app/runtime cache paths | Homebrew cask plus app runtime | canonical install surface | Keep Codex declared through Homebrew. Keep `~/.codex` as Sensitive Local State; mutate baseline skills only through approved APM target-write gates. |
 | Codex runtime helpers | `codex-execve-wrapper`, `codex_chronicle` in Codex app/runtime paths | Codex app runtime directories and temporary command wrappers | app_runtime | managed context | Do not classify these as package-manager drift. They are execution context from the Codex app. |
 | Codex skills | APM-managed split baseline under `~/.codex/skills`: `grill-with-docs`, `grilling`, and `domain-modeling`; system/runtime skills | `~/.codex/skills`, `~/.codex/plugins`, `~/.codex/vendor_imports` | APM target output plus app/runtime | canonical baseline plus vendor state | Keep the split `grill-with-docs` workflow as the only target baseline. Keep `using-superpowers` absent. Treat system/runtime skills and plugin caches as vendor/app state unless intentionally promoted. |

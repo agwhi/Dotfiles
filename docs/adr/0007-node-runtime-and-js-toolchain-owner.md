@@ -1,7 +1,8 @@
 # Use fnm As The Node Runtime And JS Toolchain Owner
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-07-01.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Refines: ADR-0005.
 Related: ADR-0001, ADR-0005,
 docs/plans/js-toolchain-stabilization-plan.md, system/packages/Brewfile,

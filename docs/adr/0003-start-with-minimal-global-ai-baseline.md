@@ -1,7 +1,8 @@
 # Start with a Minimal Global AI Baseline
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-06-30.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Related: ADR-0001, ADR-0002, ADR-0008, ADR-0009,
 system/ai/README.md, system/ai/apm/apm.yml,
 system/ai/apm/apm.lock.yaml, docs/plans/ai-tooling-stabilization-plan.md.

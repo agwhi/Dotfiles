@@ -26,10 +26,10 @@ that can expose .NET 10 by default, keep .NET 8 side-by-side, and later remove
 the compatibility SDK when projects migrate.
 
 `mise` is now active for the shell/Codex path and lists both target SDK lines.
-Homebrew `dotnet@8` was removed on 2026-07-07. The Microsoft pkg install
-remains as a root-owned Managed Exception because `/usr/local/share/dotnet`
-requires interactive sudo cleanup; a non-interactive cleanup attempt failed
-because `sudo` requires a password.
+Homebrew `dotnet@8` and the Microsoft pkg SDK source root under
+`/usr/local/share/dotnet` were removed on 2026-07-07. Stale Microsoft pkg
+receipts may still be visible through `pkgutil`, but no legacy SDK source path
+is present and doctor reports the SDK source as canonical.
 
 ## Evidence
 
@@ -119,7 +119,7 @@ External source context:
 | Option | Strengths | Weaknesses | Verdict |
 | --- | --- | --- | --- |
 | `mise` .NET | Strategic .NET owner that installs .NET 10 and .NET 8 side-by-side under a shared `DOTNET_ROOT` and supports project-level runtime selection. | Requires shell activation, doctor policy, editor-terminal parity, and migration from current SDK sources. | Selected as the .NET strategic replacement. |
-| Microsoft pkg shared root | Native .NET side-by-side behavior and compatible with .NET 10 plus .NET 8 overlap through pkg/cask installs. | Manual/pkg state is already outside the Brewfile, cleanup is receipt/root-owned, and project-level runtime ownership would remain less explicit than `mise`. | Rejected as canonical; remaining root-owned install is an interactive-sudo cleanup candidate. |
+| Microsoft pkg shared root | Native .NET side-by-side behavior and compatible with .NET 10 plus .NET 8 overlap through pkg/cask installs. | Manual/pkg state is outside the Brewfile, cleanup is receipt/root-owned, and project-level runtime ownership would remain less explicit than `mise`. | Rejected as canonical; the active SDK source has moved to `mise`. |
 | Homebrew casks `dotnet-sdk` plus `dotnet-sdk@8` | Repo-installable wrapper around Microsoft's pkg layout and supports .NET 10 plus .NET 8 overlap. | Still lands in `/usr/local/share/dotnet`, not a runtime-manager root; Homebrew cask upgrade/removal behavior needs careful gates. | Use only as fallback if `mise` is rejected during implementation. |
 | Homebrew formula `dotnet` plus `dotnet@8` | Formula `dotnet` provides .NET 10 and `dotnet@8` was available during evaluation. | Versioned formulae live in separate Homebrew roots, making side-by-side SDK discovery and `DOTNET_ROOT` policy less clean. | Reject as the canonical owner. |
 | `asdf` .NET plugin | Can manage .NET through a runtime-manager ecosystem. | Plugin-based, shell-specific `DOTNET_ROOT` setup, and weaker local Tool Fit than `mise`. | Reject unless a future ADR standardizes on `asdf`. |
@@ -146,19 +146,18 @@ clear .NET runtime-manager boundary:
 This does not change the Node decision. `fnm` remains the best-fit specialized
 Node owner unless a later Node-specific decision proves otherwise.
 
-The Microsoft pkg install should stay in place until an interactive sudo
-cleanup task can remove it. Homebrew `dotnet@8` has already been removed
-because the core `mise` checks now pass:
+The Microsoft pkg SDK source root and Homebrew `dotnet@8` have both been
+removed because the core `mise` checks now pass:
 
 - `dotnet` resolves through the `mise` shim in the current shell/Codex context.
 - .NET 10 is available as the default SDK line.
 - .NET 8 is available for compatibility projects.
 - Declared global tools are installed and visible.
 
-Removal confidence still needs project/editor-specific confirmation where
-relevant:
+Further cleanup confidence still needs project/editor-specific confirmation
+where relevant:
 
-- .NET 8 projects build/test without relying on `/usr/local/share/dotnet`.
+- .NET 8 projects build/test without relying on legacy SDK paths.
 - Workloads such as Aspire remain visible where needed.
 - Editors discover the intended SDK root.
 
@@ -288,13 +287,15 @@ Remaining parity gates before SDK-source removal:
   confidence is required.
 - Prove workloads remain visible where needed.
 
-Before removing the Microsoft pkg install:
+Microsoft pkg cleanup:
 
-- Prove no active project, editor, or Lambda workflow depends on
-  `/usr/local/share/dotnet`.
-- Prove .NET 8 compatibility projects build/test through `mise`.
-- Confirm that removing `/usr/local/share/dotnet` and Microsoft pkg receipts is
-  acceptable, then perform the removal only from an interactive sudo session.
+- `/usr/local/share/dotnet` was removed on 2026-07-07 after `mise` became the
+  canonical SDK source.
+- Stale Microsoft pkg receipts may remain visible through `pkgutil`; treat them
+  as informational unless they create doctor-visible drift or installer
+  conflicts.
+- Prove .NET 8 compatibility projects build/test through `mise` before removing
+  the .NET 8 SDK line from `system/mise/config.toml`.
 
 Homebrew `dotnet@8` cleanup:
 
@@ -340,8 +341,8 @@ Before removing or changing global tools:
    Lambda test tool package. Done.
 13. Re-run editor-terminal checks from VS Code before SDK-source cleanup if
    editor verification is in scope for the removal task.
-14. Only after cleanup gates pass, ask for explicit approval to remove
-   Microsoft pkg .NET. Homebrew `dotnet@8` removal is done.
+14. Microsoft pkg .NET source cleanup and Homebrew `dotnet@8` removal are
+   done.
 15. Remove .NET 8 from `mise` only after all compatibility projects have
    migrated and a separate approval gate passes.
 
@@ -349,8 +350,8 @@ Before removing or changing global tools:
 
 - Do not reinstall, uninstall, relink, unlink, repair, or upgrade any .NET
   SDK/runtime during this cleanup-planning pass.
-- Do not remove Microsoft pkg files without an interactive sudo cleanup
-  session.
+- Do not remove stale Microsoft pkg receipts unless they create installer or
+  doctor-visible drift.
 - Do not install, update, or uninstall additional global tools during this
   cleanup-planning pass.
 - Keep `/Users/alex/.dotnet/tools` as an expanded path in shell and dev

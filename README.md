@@ -1,13 +1,27 @@
 # 💻 Dotfiles Setup – macOS Dev Environment
 
 A carefully curated developer setup for Node.js (via fnm-managed Node and
-Corepack/pnpm), .NET 8 (C#),
-TypeScript (CDK + Serverless), and React/Next.js on macOS, designed to
-maximise dev experience and developer security with a fast, consistent
-toolchain.
+Corepack/pnpm), .NET via mise, TypeScript (CDK + Serverless), and React/Next.js
+on macOS, designed to maximise dev experience and developer security with a
+fast, consistent toolchain.
 
 This repository manages your macOS development environment through dotfiles,
 providing a unified setup for all your development tools and configurations.
+
+---
+
+## 📚 Documentation Map
+
+- [`docs/README.md`](docs/README.md) explains the documentation model and where
+  to put tutorials, how-tos, reference, explanation, ADRs, plans, and audits.
+- [`docs/architecture.md`](docs/architecture.md) explains the current
+  Orchestrator Repo architecture.
+- [`CONTEXT.md`](CONTEXT.md) defines the Development Ecosystem language used by
+  docs, ADRs, plans, scripts, and agents.
+- [`system/packages/README.md`](system/packages/README.md) documents package
+  ownership, manifests, and doctor usage.
+- [`system/ai/README.md`](system/ai/README.md) documents AI Tool Surface and AI
+  Asset ownership.
 
 ---
 
@@ -96,7 +110,7 @@ This comprehensive setup will:
 - Install all Homebrew packages from `system/packages/Brewfile`
 - Install VS Code extensions
 - Install Node.js LTS and global tools (Biome, AWS CDK)
-- Install .NET 8 and Lambda tools
+- Install .NET SDKs through mise and install Lambda tools
 - Configure security tools and direnv
 - Configure network security tools (DNS encryption, VPN, firewall)
 - Back up existing config files to `backups/`
@@ -318,7 +332,7 @@ just setup-network-security # Configure DNS encryption and VPN tools
 
 # Environment setup (use global commands for other projects)
 just setup-node            # Install Node.js LTS and global tools (Biome, CDK)
-just setup-dotnet          # Install .NET 8 Lambda tools
+just setup-dotnet          # Install mise-managed .NET SDKs and global tools
 just setup-aws             # Configure AWS CLI (CDK tools installed via Node.js)
 
 # Quality checks
@@ -616,6 +630,13 @@ maintainable configuration management:
 
 ```text
 dotfiles/
+├── docs/                    # Docs, ADRs, plans, audits, and how-tos
+│   ├── README.md            # Documentation map
+│   ├── architecture.md      # Current architecture overview
+│   ├── adr/                 # Architecture decision records
+│   ├── how-to/              # Task-focused guides
+│   ├── plans/               # Stabilization and migration plans
+│   └── audit/               # Dated audit reports
 ├── system/                  # System-wide configuration files
 │   ├── vscode/             # Global VS Code configuration
 │   │   └── settings.jsonc  # VS Code settings (formatting, extensions)

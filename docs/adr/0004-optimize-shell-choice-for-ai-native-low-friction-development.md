@@ -1,7 +1,8 @@
 # Optimize Shell Choice For AI-Native Low-Friction Development
 
 Status: accepted.
-Date: 2026-07-07.
+Date: 2026-07-01.
+Amended: 2026-07-07. Reconstructed decision history and ADR quality structure.
 Amended by: ADR-0011.
 Related: ADR-0001, docs/plans/zsh-primary-adoption-plan.md,
 scripts/dev_env.sh, scripts/js_toolchain.sh, system/packages/Brewfile.

@@ -18,28 +18,10 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 
 ## Approval-Gated Homebrew State
 
-- `nordvpn` (Homebrew cask): declared network/privacy tool. The 2026-07-07
-  non-interactive cask upgrade to `10.5.1` could not complete because
-  NordVPN's helper uninstall path requires `sudo`. Current installed cask
-  version remains `10.1.0`; upgrade through an interactive Homebrew task.
+No current approval-gated Homebrew state is recorded here.
 
 ## Manual Or Local Tool State
 
-- `/usr/local/share/dotnet/dotnet`: Microsoft pkg .NET SDK source still
-  present after the `mise` migration. It is no longer the canonical source when
-  PATH resolves through `/Users/alex/.local/share/mise/shims/dotnet`; keep it
-  as an interactive-sudo cleanup candidate. A 2026-07-07 non-interactive
-  cleanup attempt could not remove it because `sudo` requires a password.
-- `/usr/local/bin/apm`: legacy manual/pkg duplicate resolving to
-  `/usr/local/lib/apm/apm`. ADR-0008 selects APM as the AI Asset Manager, and
-  the active `apm` command now resolves through `/opt/homebrew/bin/apm` from
-  the declared Homebrew formula `microsoft/apm/apm`. Keep the old root-owned
-  manual binary as an approval-gated removal candidate. A 2026-07-05
-  non-interactive cleanup attempt confirmed Homebrew PATH precedence but could
-  not remove the duplicate because `sudo` requires a password. Do not
-  self-update, reinstall, prune, or remove it without an interactive approval
-  path. A 2026-07-07 non-interactive cleanup attempt could not remove it
-  because `sudo` requires a password.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
   `codex_chronicle`: app-runtime-context, not package-manager drift.
 - `/Users/alex/Applications/Claude Code URL Handler.app`: Claude Code app
@@ -82,6 +64,15 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - Homebrew `dotnet@8`: removed from the Brewfile and uninstalled on
   2026-07-07 after `mise` became the canonical .NET SDK owner and exposed the
   required .NET 10 and .NET 8 SDK lines.
+- Microsoft pkg .NET SDK source files under `/usr/local/share/dotnet`: removed
+  on 2026-07-07 after the `mise` SDK source was verified. Stale pkg receipts
+  may still be listed by `pkgutil`, but no legacy SDK source path is present
+  and doctor reports `.NET` source state as canonical.
+- Legacy manual APM duplicate under `/usr/local/bin/apm` and
+  `/usr/local/lib/apm`: removed on 2026-07-07. The active `apm` command now
+  resolves only through the declared Homebrew formula `microsoft/apm/apm`.
+- Homebrew `nordvpn`: upgraded to cask version `10.5.1` on 2026-07-07 after
+  the earlier non-interactive helper cleanup blocker was resolved.
 - Homebrew `unbound`: no installed Homebrew formula or service was detected on
   2026-07-07, so the stale approval-gated cleanup note was removed.
 - Homebrew `cursor`: removed from the Brewfile and uninstalled on 2026-07-07
