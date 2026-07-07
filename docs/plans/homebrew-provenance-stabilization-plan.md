@@ -2,9 +2,10 @@
 
 Date: 2026-07-01.
 
-This pass is non-mutating. It records live Homebrew state against the repo
-source of truth without installing, uninstalling, upgrading, linking, unlinking,
-cleaning up, or changing taps.
+This original pass was non-mutating. It recorded live Homebrew state against
+the repo source of truth without installing, uninstalling, upgrading, linking,
+unlinking, cleaning up, or changing taps. A later 2026-07-07 reconciliation
+pass applied the approved Homebrew work described below.
 
 ## Evidence
 
@@ -43,8 +44,8 @@ Corepack, and pnpm owner. The installed Homebrew formulae are duplicate owners
 and approval-gated removal candidates.
 
 Docker/Colima was promoted to the Brewfile as the container development
-baseline. Current state still needs a later repair pass: `docker` is installed
-on request but unlinked, so `docker` is not on PATH. This task does not link it.
+baseline. The intended model is Colima as the runtime and Homebrew `docker` as
+the CLI. Docker Desktop is not part of the baseline.
 
 AI-related Homebrew packages were represented only at the install-surface
 level. Deeper AI CLI, asset, cache, and config classification remains reserved
@@ -59,7 +60,6 @@ Formulae added as canonical Homebrew-managed development tools:
 - `composer`
 - `docker`
 - `docker-buildx`
-- `docker-completion`
 - `docker-compose`
 - `ffmpeg`
 - `graphviz`
@@ -93,10 +93,41 @@ Do not remove or migrate these without explicit approval:
   SDK source in the current zsh/Codex context.
 - Homebrew `unbound`, because it has resolver-service behavior and DNS
   ownership has not been verified.
-- The Homebrew `docker` link repair, because linking is a state-changing action
-  and this pass is read-only against Homebrew state.
 - Manual/local AI and editor shims recorded in
   `system/packages/manual-apps.md`.
+
+## 2026-07-07 Reconciliation
+
+`brew bundle install --file=system/packages/Brewfile` updated declared
+formulae and casks. The pass found two source-of-truth corrections:
+
+- `docker-completion` conflicted with the `docker` formula. The `docker`
+  formula already ships bash, zsh, fish, and PowerShell completions, so the
+  separate completion formula was removed from the Brewfile and uninstalled.
+- `github.copilot-chat` is now built into VS Code on this laptop. Installing
+  the marketplace extension attempted to downgrade the built-in version, so it
+  was removed from the Brewfile and `system/packages/vscode-extensions.txt`.
+- `github.copilot` also resolves as app-managed VS Code content under
+  `/Applications/Visual Studio Code.app/Contents/Resources/app/extensions/copilot`;
+  the marketplace install path still tried to install the built-in chat
+  dependency, so it was removed from the explicit extension manifests too.
+
+Docker/Colima target state after reconciliation:
+
+- Keep `colima` as the container runtime manager.
+- Keep `docker` as the CLI used to talk to Colima.
+- Keep `docker-buildx` and `docker-compose` as declared CLI plugins/tools.
+- Do not install Docker Desktop unless a future workflow specifically needs
+  Docker Desktop features.
+
+Remaining Homebrew/manual app decisions:
+
+- `nordvpn` remains declared but needs an interactive upgrade because its
+  helper uninstall path requires `sudo`.
+- `whatsapp` remains an installed, outdated, intentionally excluded cask.
+- Manual GUI apps outside the Brewfile were recorded in
+  `system/packages/manual-apps.md`: Dia, Firefox, Wispr Flow, Falcon, and the
+  Claude Code URL handler.
 
 ## Intentional Exclusion
 

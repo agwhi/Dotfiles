@@ -41,7 +41,6 @@ cask "rider"         # .NET IDE
 brew "colima"        # macOS container runtime manager
 brew "docker"        # Docker CLI
 brew "docker-buildx" # Docker BuildKit CLI plugin
-brew "docker-completion" # Docker shell completions
 brew "docker-compose" # Docker Compose CLI
 cask "postman"       # API development client
 
@@ -99,9 +98,9 @@ vscode "bradlc.vscode-tailwindcss"
 vscode "dbaeumer.vscode-eslint"
 vscode "eamodio.gitlens"
 vscode "esbenp.prettier-vscode"
-vscode "github.copilot"
-vscode "github.copilot-chat"
+vscode "genaiscript.genaiscript-vscode"
 vscode "ionide.ionide-fsharp"
+vscode "likec4.likec4-vscode"
 vscode "ms-dotnettools.csdevkit"
 vscode "ms-dotnettools.csharp"
 vscode "ms-dotnettools.dotnet-interactive-vscode"

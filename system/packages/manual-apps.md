@@ -28,9 +28,10 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   behavior and no current Brewfile declaration. Keep approval-gated until DNS
   ownership between macOS, `dnscrypt-proxy`, and any local resolver workflow is
   verified.
-- `docker` link state: the Homebrew formula is declared as part of the
-  container baseline, but its keg is currently unlinked and `docker` is not on
-  PATH. Link or repair it only in a later approved install/repair task.
+- `nordvpn` (Homebrew cask): declared network/privacy tool. The 2026-07-07
+  non-interactive cask upgrade could not complete because NordVPN's helper
+  uninstall path requires `sudo`. Keep installed; upgrade through an
+  interactive Homebrew task.
 
 ## Manual Or Local Tool State
 
@@ -53,6 +54,28 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
   it.
 - Codex app runtime helper commands such as `codex-execve-wrapper` and
   `codex_chronicle`: app-runtime-context, not package-manager drift.
+- `/Users/alex/Applications/Claude Code URL Handler.app`: Claude Code app
+  runtime helper. Keep as app-runtime-context, not an independent package.
+
+## Manual GUI Apps Observed
+
+- `/Applications/Dia.app` (`company.thebrowser.dia`, version `1.26.0`):
+  manual browser/AI app. No matching Homebrew cask was found in this pass.
+  Decide later whether it is part of the development baseline or should be
+  removed.
+- `/Applications/Firefox.app` (`org.mozilla.firefox`, version `152.0.4`):
+  manual browser install. Homebrew cask `firefox` exists; add it to the
+  Brewfile if Firefox is a required dev/test browser, otherwise remove it
+  outside this repo's baseline.
+- `/Applications/Wispr Flow.app` (`com.electron.wispr-flow`, version
+  `1.5.695`): manual AI dictation/productivity app. Homebrew cask
+  `wispr-flow` exists and was newer at `1.5.1095`; add it to the Brewfile if
+  it is part of the dev productivity baseline, otherwise keep local or remove.
+- `/Applications/Falcon.app` (`com.crowdstrike.falcon.App`, version `7.38`):
+  likely external security/MDM-managed software. Do not remove or migrate from
+  this repo without explicit confirmation.
+- Bundled Apple apps such as Safari, GarageBand, iMovie, Keynote, Numbers, and
+  Pages are treated as OS/app-suite state, not development baseline drift.
 
 ## AI Approval-Gated Cleanup
 
@@ -74,6 +97,12 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 
 - Homebrew `node` and Homebrew `pnpm`: removed on 2026-07-05 after ADR-0007
   made `fnm` plus Corepack/pnpm the canonical JavaScript toolchain owner.
+- Homebrew `docker-completion`: removed from the baseline on 2026-07-07 because
+  the `docker` formula ships bash, zsh, fish, and PowerShell completions itself
+  and the separate formula blocked `docker` from linking.
+- Homebrew `docker`: linked successfully on 2026-07-07 after
+  `docker-completion` was removed. Keep `docker` as the CLI for the Colima
+  runtime; Docker Desktop was not installed and is not part of the baseline.
 - npm global `opencode-ai`: removed after migrating opencode CLI ownership to
   the upstream Homebrew tap `anomalyco/tap/opencode` on 2026-07-07. The IVCE
   AI Gateway / Bedrock config and opencode APM skills were verified unchanged
