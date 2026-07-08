@@ -3,7 +3,7 @@
 # install.sh - Install requirements for dotfiles just scripts
 # This script installs the prerequisites needed to use the justfile tasks
 
-set -e
+set -euo pipefail
 
 echo "🔧 Installing prerequisites for dotfiles..."
 
@@ -14,7 +14,10 @@ if ! command -v brew > /dev/null 2>&1; then
 
     # Add Homebrew to PATH for Apple Silicon Macs
     if [[ $(uname -m) == "arm64" ]]; then
-        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+        shellenv_line='eval "$(/opt/homebrew/bin/brew shellenv)"'
+        if [[ ! -f ~/.zprofile ]] || ! grep -qxF "$shellenv_line" ~/.zprofile; then
+            echo "$shellenv_line" >> ~/.zprofile
+        fi
         eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
 else
@@ -29,21 +32,13 @@ else
     echo "✅ just already installed"
 fi
 
-# Install brew bundle if not available
-if ! brew bundle --help > /dev/null 2>&1; then
-    echo "📦 Installing brew bundle..."
-    brew tap Homebrew/bundle
-else
-    echo "✅ brew bundle already available"
-fi
-
 echo ""
 echo "🎉 Prerequisites installed successfully!"
 echo ""
 echo "Next steps:"
-echo "  just setup    # Full setup: install packages and create symlinks"
-echo "  just brew     # Install Homebrew packages only"
-echo "  just backup   # Backup current system config"
-echo "  just edit     # Open dotfiles in VS Code"
+echo "  just bootstrap   # Complete laptop setup (packages, toolchains, symlinks)"
+echo "  just brew        # Install Homebrew packages only"
+echo "  just backup      # Backup current system config"
+echo "  just doctor      # Audit the development ecosystem"
 echo ""
 echo "For more commands, run: just --list"

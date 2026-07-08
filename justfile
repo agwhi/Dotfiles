@@ -27,9 +27,9 @@ backup:
 backup-and-link: backup link
     echo "✅ Backup and symlink setup complete!"
 
-# Upgrade all packages and tools (use global: dotfile upgrade)
+# Upgrade all packages and tools (delegates to the global justfile)
 upgrade:
-    @echo "Use 'dotfile upgrade' for system-wide upgrades"
+    @just --global-justfile upgrade
 
 # Install all Homebrew packages
 install-brew:
@@ -52,14 +52,14 @@ install-vscode-extensions:
     sed -n '/^[[:space:]]*#/d; /^[[:space:]]*$/d; p' system/packages/vscode-extensions.txt | xargs -n 1 code --install-extension
 
 # Full bootstrap: complete laptop setup
-bootstrap: install-brew install-vscode-extensions setup-node setup-dotnet setup-security setup-network-security backup-and-link
+bootstrap: install-brew install-vscode-extensions setup-node setup-dotnet backup-and-link
     echo "✅ Complete laptop bootstrap complete!"
     echo "📝 Next steps:"
+    echo "   - Restart your terminal to load all shell changes"
+    echo "   - Run 'just doctor' to verify the setup"
     echo "   - Run 'just setup-aws-cli' to configure AWS"
     echo "   - Copy system/git/gitconfig.local.example to ~/.gitconfig.local and edit"
-    echo "   - Configure NordVPN account and Brave browser settings"
-    echo "   - Use 'secure-on' when on public Wi-Fi networks"
-    echo "   - Restart your terminal to load all changes"
+    echo "   - For untrusted Wi-Fi, run 'secure-on' (alias for 'dotfile secure-mode-on')"
 
 # Alias for bootstrap (for discoverability)
 install: bootstrap
@@ -127,49 +127,22 @@ setup-aws-cli:
     echo "✅ AWS CLI configured"
     echo "💡 Use 'dotfile setup-aws' for future AWS setup in other projects"
 
-# Setup direnv for environment management
-setup-direnv:
-    @echo "direnv is configured by system/zsh/.zshrc"
-    @echo "Run 'just link-only' to refresh shell symlinks"
+# Security tools install via the Brewfile; their configs are applied by 'just link'.
+# Network security commands live in the global justfile:
+# dotfile secure-mode-on, dotfile dns-leak-test, etc.
+# (see docs/how-to/secure-public-networks.md)
 
-# Setup security tools
-setup-security: setup-direnv
-    echo "✅ Security tools installed and configured"
-
-# Run security scans (use global: dotfile security-scan)
+# Run security scans (delegates to the global justfile)
 security-scan:
-    @echo "Use 'dotfile security-scan' for system-wide security scans"
+    @just --global-justfile security-scan
 
-# Network security commands are available globally via 'dotfile' aliases
-# Use: dotfile secure-mode-on, dotfile dns-leak-test, etc.
-
-# Setup network security tools
-setup-network-security:
-    # Create dnscrypt-proxy config directory
-    mkdir -p ~/.config/dnscrypt-proxy
-    echo "✅ Network security tools configured"
-    echo "📝 Next steps:"
-    echo "   - Run 'secure-on' to enable protection"
-    echo "   - Configure NordVPN account in the app"
-    echo "   - Set up Brave browser privacy settings"
-
-# Run quality checks (use global: dotfile quality-check)
+# Run quality checks (delegates to the global justfile)
 quality-check:
-    @echo "Use 'dotfile quality-check' for system-wide quality checks"
+    @just --global-justfile quality-check
 
-# Fix formatting issues automatically (use global: dotfile fix-formatting)
+# Fix formatting issues automatically (delegates to the global justfile)
 fix-formatting:
-    @echo "Use 'dotfile fix-formatting' for system-wide formatting fixes"
-
-# Fix common formatting issues using sed
-fix-formatting-comprehensive:
-    # Fix trailing whitespace
-    fd -t f -e json -e md -e mdc -e lua -e sh -e txt -e config -x sed -i '' 's/[[:space:]]*$//' {}
-    # Ensure final newline
-    fd -t f -e json -e md -e mdc -e lua -e sh -e txt -e config -x sh -c 'if [ "$(tail -c1 "$1" | wc -l)" -eq 0 ]; then echo >> "$1"; fi' _ {}
-    # Convert tabs to 4 spaces
-    fd -t f -e json -e md -e mdc -e lua -e sh -e txt -e config -x sed -i '' 's/\t/    /g' {}
-    echo "✅ Comprehensive formatting fixes applied"
+    @just --global-justfile fix-formatting
 
 readme-lint:
     {{js_toolchain}} markdownlint README.md
