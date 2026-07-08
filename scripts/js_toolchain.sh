@@ -8,16 +8,7 @@ if ! command -v fnm >/dev/null 2>&1; then
     exit 127
 fi
 
-: "${PNPM_HOME:=$HOME/Library/pnpm}"
-case "$PNPM_HOME" in
-    "~")
-        PNPM_HOME=$HOME
-        ;;
-    "~/"*)
-        PNPM_HOME=$HOME/${PNPM_HOME#\~/}
-        ;;
-esac
-export PNPM_HOME
-export PATH="$PNPM_HOME:$PATH"
+DOTFILES_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)"
+. "$DOTFILES_DIR/system/shell/path.sh"
 
 exec fnm exec --using default "$@"

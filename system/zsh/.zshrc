@@ -4,47 +4,10 @@
 
 setopt interactive_comments
 
-_dotfiles_zsh_path_prepend() {
-    local entry="$1"
-    local current
-    local -a new_path
-
-    [[ -n "$entry" ]] || return 0
-
-    new_path=("$entry")
-    for current in "${path[@]}"; do
-        local normalized_current="${current/#\~/$HOME}"
-        [[ -n "$current" && "$current" != "$entry" && "$normalized_current" != "$entry" ]] || continue
-        new_path+=("$current")
-    done
-
-    path=("${new_path[@]}")
-    export PATH
-}
-
-case "${MISE_DATA_DIR:-}" in
-    "")
-        _dotfiles_mise_data_dir="$HOME/.local/share/mise"
-        ;;
-    "~")
-        _dotfiles_mise_data_dir="$HOME"
-        ;;
-    "~/"*)
-        _dotfiles_mise_data_dir="$HOME/${MISE_DATA_DIR#\~/}"
-        ;;
-    *)
-        _dotfiles_mise_data_dir="$MISE_DATA_DIR"
-        ;;
-esac
-_dotfiles_mise_shims_dir="$_dotfiles_mise_data_dir/shims"
-
-_dotfiles_zsh_path_prepend "/usr/local/bin"
-_dotfiles_zsh_path_prepend "/opt/homebrew/sbin"
-_dotfiles_zsh_path_prepend "/opt/homebrew/bin"
-_dotfiles_zsh_path_prepend "$HOME/.dotnet/tools"
-_dotfiles_zsh_path_prepend "$PNPM_HOME"
-_dotfiles_zsh_path_prepend "$HOME/.local/bin"
-_dotfiles_zsh_path_prepend "$_dotfiles_mise_shims_dir"
+# Re-assert the shared PATH contract for interactive shells.
+if [[ -r "$HOME/.dotfiles/system/shell/path.sh" ]]; then
+    . "$HOME/.dotfiles/system/shell/path.sh"
+fi
 
 _dotfiles_zsh_has_tty=0
 if [[ -t 0 && -t 1 ]]; then
@@ -56,7 +19,10 @@ fi
 if command -v fnm >/dev/null 2>&1; then
     eval "$(fnm env --shell zsh --use-on-cd)"
 fi
-_dotfiles_zsh_path_prepend "$_dotfiles_mise_shims_dir"
+# fnm env prepends its session dir; keep mise shims ahead of it.
+if command -v dotfiles_path_prepend >/dev/null 2>&1; then
+    dotfiles_path_prepend "$DOTFILES_MISE_SHIMS_DIR"
+fi
 
 if command -v direnv >/dev/null 2>&1; then
     eval "$(direnv hook zsh)"
@@ -111,5 +77,3 @@ if (( _dotfiles_zsh_has_tty )) && [[ ${TERM:-} != dumb ]] && command -v starship
 fi
 
 unset _dotfiles_zsh_has_tty
-unset _dotfiles_mise_data_dir _dotfiles_mise_shims_dir
-unfunction _dotfiles_zsh_path_prepend

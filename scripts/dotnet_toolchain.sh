@@ -8,7 +8,7 @@ if [ "$#" -eq 0 ]; then
     exit 64
 fi
 
-DOTFILES_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)"
+DOTFILES_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)"
 MISE_CONFIG_FILE="${MISE_GLOBAL_CONFIG_FILE:-$DOTFILES_DIR/system/mise/config.toml}"
 
 MISE_BIN="${MISE_BIN:-}"
@@ -39,18 +39,8 @@ export DOTNET_CLI_TELEMETRY_OPTOUT="${DOTNET_CLI_TELEMETRY_OPTOUT:-1}"
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE="${DOTNET_SKIP_FIRST_TIME_EXPERIENCE:-1}"
 export DOTNET_NOLOGO="${DOTNET_NOLOGO:-1}"
 
-MISE_DOTNET_ROOT="${MISE_DOTNET_ROOT:-$HOME/.local/share/mise/dotnet-root}"
-case "$MISE_DOTNET_ROOT" in
-    "~")
-        MISE_DOTNET_ROOT="$HOME"
-        ;;
-    "~/"*)
-        MISE_DOTNET_ROOT="$HOME/${MISE_DOTNET_ROOT#\~/}"
-        ;;
-esac
-if [ -d "$MISE_DOTNET_ROOT" ]; then
-    export DOTNET_ROOT="$MISE_DOTNET_ROOT"
-fi
+# DOTNET_ROOT (and the rest of the toolchain env) comes from the shared contract.
+. "$DOTFILES_DIR/system/shell/path.sh"
 
 if ! "$MISE_BIN" which dotnet >/dev/null 2>&1; then
     echo "mise is available, but ADR-0006 .NET SDKs are not installed or active yet." >&2
