@@ -16,6 +16,9 @@ setup, licensing, approval, or a Reset Approval Gate before automation.
 - `intentionally-excluded`: observed local state that is outside the
   Development Ecosystem baseline for now.
 
+Entries under Completed Cleanup are history, not exemptions: doctor ignores
+that section, so leftovers of a removed tool are reported again.
+
 ## Approval-Gated Homebrew State
 
 No current approval-gated Homebrew state is recorded here.

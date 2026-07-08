@@ -583,12 +583,17 @@ def parse_brewfile(path: Path) -> dict[str, set[str]]:
 
 
 def parse_manual_apps(path: Path) -> set[str]:
+    """Names exempted by manual-apps.md, excluding removal-history sections."""
     apps: set[str] = set()
     if not path.exists():
         return apps
+    in_history_section = False
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
-        if not line.startswith("- "):
+        if line.startswith("## "):
+            in_history_section = line[3:].strip().lower() == "completed cleanup"
+            continue
+        if in_history_section or not line.startswith("- "):
             continue
         value = line[2:].strip()
         if not value or value.startswith("_"):
