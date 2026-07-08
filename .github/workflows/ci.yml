@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint scripts and recipes
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install checkers
+        run: brew install shellcheck just
+
+      - name: Shellcheck all shell scripts
+        run: shellcheck --severity=warning -x scripts/*.sh system/shell/path.sh
+
+      - name: Justfile recipes parse
+        run: |
+          just --list > /dev/null
+          just --justfile system/global-justfile --list > /dev/null
+
+      - name: Doctor compiles and reports
+        run: |
+          python3 -m py_compile scripts/doctor.py
+          ./scripts/doctor.py --json | python3 -m json.tool > /dev/null
+
+      - name: PATH contract is POSIX and idempotent
+        run: |
+          sh -n system/shell/path.sh
+          A=$(sh -c '. ./system/shell/path.sh && echo "$PATH"')
+          B=$(sh -c '. ./system/shell/path.sh && . ./system/shell/path.sh && echo "$PATH"')
+          test "$A" = "$B"
+
+      - name: Zsh startup files parse
+        run: |
+          zsh -n system/zsh/.zshenv
+          zsh -n system/zsh/.zprofile
+          zsh -n system/zsh/.zshrc
