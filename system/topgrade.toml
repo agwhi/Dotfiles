@@ -2,8 +2,12 @@
 # Disables npm and yarn, enables only pnpm
 
 [misc]
-# Disable node (includes npm) and yarn steps, keep pnpm
-disable = ["node", "yarn"]
+# Disable node (includes npm) and yarn steps, keep pnpm.
+# "atom" is Atom's package manager step; its `apm` probe collides with
+# Microsoft APM (updated through Homebrew). "containers" would re-pull
+# private per-deploy images (e.g. CDK assets in ECR) that need fresh SSO
+# auth and are not upgrade targets.
+disable = ["node", "yarn", "atom", "containers"]
 
 # Don't ask for confirmations
 assume_yes = true
@@ -42,10 +46,11 @@ arguments = "--rebase --autostash"
 # Don't pull the predefined git repos (we manage our own)
 pull_predefined = false
 
-# Additional git repositories to pull
+# Additional git repositories to pull. Only this repo: auto-rebasing work
+# repos (~/Dev/*) from a background upgrader risks autostash/rebase surprises
+# and needs per-repo SSH auth.
 repos = [
-    "~/Dev/*/",
-    "~/.config/*/"
+    "~/Dev/dotfiles/"
 ]
 
 [vscode]
