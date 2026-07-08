@@ -1836,17 +1836,32 @@ def check_ai_commands(findings: list[dict[str, Any]], brew_declared: dict[str, s
         if which_all(command)
     }
     if detected:
+        # Homebrew and pnpm are the declared installers for AI CLIs
+        # (system/ai/README.md); anything else is a managed exception.
+        undeclared_sources = sorted(
+            {
+                str(info.get("source"))
+                for paths in detected.values()
+                for info in paths
+                if info.get("source") not in {"homebrew", "pnpm"}
+            }
+        )
         add_finding(
             findings,
             area="ai_tools",
-            classification="managed_exception",
+            classification="canonical" if not undeclared_sources else "managed_exception",
             name="ai_tools.path",
-            severity="low",
-            summary="AI Tool Surface commands were found on PATH.",
-            details={"commands": detected},
+            severity="info" if not undeclared_sources else "low",
+            summary=(
+                "All AI Tool Surface commands resolve through declared installers."
+                if not undeclared_sources
+                else "Some AI Tool Surface commands resolve outside the declared installers."
+            ),
+            details={"commands": detected, "undeclared_sources": undeclared_sources},
             recommendation=(
-                "Keep binaries separate from APM-managed assets; declare or "
-                "clean up each manual CLI through its own tool-surface policy."
+                None
+                if not undeclared_sources
+                else "Declare or clean up each manual CLI through its own tool-surface policy."
             ),
         )
     else:
@@ -1993,9 +2008,21 @@ def scan_bin_dir(path: Path) -> list[dict[str, str]]:
                 continue
             if not (item.is_file() or item.is_symlink()):
                 continue
-            if not os.access(item, os.X_OK):
-                continue
             if not is_dev_related(item.name):
+                continue
+            if item.is_symlink() and not item.exists():
+                # Dangling symlinks fail the executable check but are still
+                # drift: a leftover pointing at an uninstalled tool.
+                tools.append(
+                    {
+                        "name": item.name,
+                        "path": str(item),
+                        "resolved_source": "dangling_symlink",
+                        "link_target": os.readlink(item),
+                    }
+                )
+                continue
+            if not os.access(item, os.X_OK):
                 continue
             source = path_source(str(item))
             if source == "homebrew":
@@ -2056,6 +2083,25 @@ def check_manual_apps(
         )
 
     bin_tools = scan_bin_dir(Path("/usr/local/bin")) + scan_bin_dir(HOME / ".local/bin")
+    # Dangling symlinks are incomplete removals; a manual-apps.md mention
+    # documents history but does not exempt the leftover link itself.
+    dangling = [tool for tool in bin_tools if tool["resolved_source"] == "dangling_symlink"]
+    bin_tools = [tool for tool in bin_tools if tool["resolved_source"] != "dangling_symlink"]
+    if dangling:
+        add_finding(
+            findings,
+            area="manual_apps",
+            classification="approval_gated_removal",
+            name="manual_apps.dangling_symlinks",
+            severity="low",
+            source="/usr/local/bin, ~/.local/bin",
+            summary=f"{len(dangling)} dangling dev-tool symlink(s) point at removed targets.",
+            details={"tools": dangling},
+            recommendation=(
+                "Remove the dead links (root-owned ones need sudo, e.g. "
+                "sudo rm /usr/local/bin/<name>)."
+            ),
+        )
     unknown_bin_tools = [
         tool
         for tool in bin_tools
