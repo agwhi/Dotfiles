@@ -17,7 +17,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
-DOTFILES_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)"
+DOTFILES_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)"
 MISE_CONFIG_FILE="$DOTFILES_DIR/system/mise/config.toml"
 
 if [ ! -f "$MISE_CONFIG_FILE" ]; then
@@ -25,26 +25,30 @@ if [ ! -f "$MISE_CONFIG_FILE" ]; then
     exit 78
 fi
 
-DOTNET_ROOT_VALUE="$(
-    awk '
+# Print the raw right-hand side of `key = value` inside [section].
+# The section argument is an awk regex fragment (escape dots).
+toml_key_value() {
+    awk -v section="$1" -v key="$2" '
         /^[[:space:]]*\[/ {
-            in_dotnet_settings = ($0 ~ /^[[:space:]]*\[settings\.dotnet\][[:space:]]*(#.*)?$/)
+            in_section = ($0 ~ "^[[:space:]]*\\[" section "\\][[:space:]]*(#.*)?$")
             next
         }
-        in_dotnet_settings {
+        in_section {
             line = $0
             sub(/[[:space:]]*#.*/, "", line)
-            if (line !~ /^[[:space:]]*dotnet_root[[:space:]]*=/) {
+            if (line !~ "^[[:space:]]*" key "[[:space:]]*=") {
                 next
             }
-            sub(/^[[:space:]]*dotnet_root[[:space:]]*=[[:space:]]*/, "", line)
+            sub("^[[:space:]]*" key "[[:space:]]*=[[:space:]]*", "", line)
             sub(/^[[:space:]]+/, "", line)
             sub(/[[:space:]]+$/, "", line)
             print line
             exit
         }
     ' "$MISE_CONFIG_FILE"
-)"
+}
+
+DOTNET_ROOT_VALUE="$(toml_key_value 'settings\\.dotnet' 'dotnet_root')"
 case "$DOTNET_ROOT_VALUE" in
     \"*)
         DOTNET_ROOT_VALUE_CHECK="${DOTNET_ROOT_VALUE#\"}"
@@ -93,28 +97,8 @@ if [ -z "$MISE_BIN" ]; then
 fi
 
 DOTNET_VERSIONS="$(
-    awk '
-        /^[[:space:]]*\[/ {
-            in_tools = ($0 ~ /^[[:space:]]*\[tools\][[:space:]]*(#.*)?$/)
-            next
-        }
-        in_tools {
-            line = $0
-            sub(/[[:space:]]*#.*/, "", line)
-            if (line !~ /^[[:space:]]*dotnet[[:space:]]*=/) {
-                next
-            }
-            sub(/^[[:space:]]*dotnet[[:space:]]*=[[:space:]]*/, "", line)
-            gsub(/[][]/, " ", line)
-            gsub(/[",]/, " ", line)
-            count = split(line, versions, /[[:space:]]+/)
-            for (i = 1; i <= count; i++) {
-                if (versions[i] != "") {
-                    print versions[i]
-                }
-            }
-        }
-    ' "$MISE_CONFIG_FILE"
+    toml_key_value 'tools' 'dotnet' |
+        awk '{ gsub(/[][",]/, " "); for (i = 1; i <= NF; i++) print $i }'
 )"
 
 if [ -z "$DOTNET_VERSIONS" ]; then

@@ -1,4 +1,5 @@
 amazonwebservices.aws-toolkit-vscode
+biomejs.biome
 bradlc.vscode-tailwindcss
 dbaeumer.vscode-eslint
 eamodio.gitlens

@@ -25,3 +25,9 @@ system/ai/apm/CLAUDE.md
 # Python validation/cache artifacts
 __pycache__/
 *.py[cod]
+
+# macOS Finder noise
+.DS_Store
+
+# Accidental literal-tilde directory (unexpanded ~ from a script)
+/~/

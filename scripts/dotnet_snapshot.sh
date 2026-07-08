@@ -3,7 +3,7 @@
 
 set -eu
 
-DOTFILES_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)"
+DOTFILES_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)"
 REPORTS_DIR="${DOTNET_SNAPSHOT_REPORTS_DIR:-$DOTFILES_DIR/reports}"
 TIMESTAMP="$(date '+%Y%m%d-%H%M%S')"
 REPORT="$REPORTS_DIR/dotnet-migration-snapshot-$TIMESTAMP.md"
@@ -14,7 +14,7 @@ mkdir -p "$REPORTS_DIR"
 is_sensitive_value() {
     value="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
     case "$value" in
-        *token* | *secret* | *password* | *passwd* | *credential* | *api_key* | *apikey* | *access_key* | *client_secret* | *authorization* | *bearer* | *private_key*)
+        *token* | *secret* | *password* | *passwd* | *credential* | *api_key* | *apikey* | *access_key* | *authorization* | *bearer* | *private_key*)
             return 0
             ;;
     esac

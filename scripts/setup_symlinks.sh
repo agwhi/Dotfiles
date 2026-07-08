@@ -67,7 +67,8 @@ create_symlink() {
 
     # Check if target already exists and is correctly symlinked
     if [[ -L "$target" ]]; then
-        local current_target="$(readlink "$target")"
+        local current_target
+        current_target="$(readlink "$target")"
         if [[ "$current_target" == "$source" ]]; then
             echo "✅ $description already correctly symlinked"
             return

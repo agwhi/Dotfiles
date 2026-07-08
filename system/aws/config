@@ -1,5 +1,6 @@
-# AWS configuration
-# TODO: Add AWS configuration
+# AWS CLI configuration (symlinked to ~/.aws/config).
+# Profiles are added by 'aws configure sso' (just setup-aws-cli).
+# Credentials never live here; SSO tokens are cached outside the repo.
 
 [profile gen-ai]
 region = eu-west-1
