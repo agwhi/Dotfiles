@@ -86,7 +86,6 @@ the package intentionally.
 - `just --list`
 - `~/.dotfiles/scripts/js_toolchain.sh markdownlint --version`
 - `just doctor --json | python3 -m json.tool >/dev/null`
-- `DOTFILES_DOCTOR_ALLOW_STARTUP_PROBES=1 just doctor --json | python3 -m json.tool >/dev/null`
 - `./scripts/js_toolchain.sh markdownlint docs/plans/zsh-primary-adoption-plan.md docs/adr/0004-optimize-shell-choice-for-ai-native-low-friction-development.md`
 - `ripsecrets --strict-ignore .`
 - `gitleaks detect --source . --no-git --redact --no-banner`
