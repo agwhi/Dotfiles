@@ -1,6 +1,8 @@
 # AI Tool Surface Stabilization Plan
 
 Date: 2026-07-01.
+Status: completed. Historical record; current state comes from `just doctor`
+and the package manifests.
 
 This plan is non-mutating. It classifies current AI Tool Surface state without
 installing, uninstalling, upgrading, relinking, deleting, moving, or rewriting

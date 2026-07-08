@@ -1,6 +1,10 @@
 # Development Ecosystem Audit v0
 
 Audit date: 2026-06-30.
+Status: HISTORICAL. This audit predates the 2026-07 stabilization work
+(JS toolchain cleanup, .NET migration to mise, Nushell and Cursor removal,
+AI baseline deployment); its findings and score reflect that earlier state
+and have since been addressed. For current state run `just doctor`.
 
 Primary evidence:
 

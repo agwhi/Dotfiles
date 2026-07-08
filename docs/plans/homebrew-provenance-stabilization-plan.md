@@ -1,6 +1,8 @@
 # Homebrew Provenance Stabilization Plan
 
 Date: 2026-07-01.
+Status: completed. Historical record; current state comes from `just doctor`
+and the package manifests.
 
 This original pass was non-mutating. It recorded live Homebrew state against
 the repo source of truth without installing, uninstalling, upgrading, linking,

@@ -72,8 +72,8 @@ flowchart TB
 
 Bootstrap and repair work flows through explicit tasks:
 
-1. `just bootstrap` installs declared packages, installs tool globals, configures
-   security/network helpers, backs up existing config, and links managed files.
+1. `just bootstrap` installs declared packages and tool globals, backs up
+   existing config, and links managed files (including security tool configs).
 2. `scripts/setup_symlinks.sh` links selected files from `system/` into the
    expected home-directory locations.
 3. `just doctor` runs `scripts/doctor.py` as a read-only audit against manifests,
@@ -93,6 +93,7 @@ The current runtime ownership model is:
 | AI shared assets | APM | ADR-0008 and `system/ai/apm/` |
 | Editor settings | symlinked repo files | `system/vscode/` |
 | Shell startup | symlinked zsh files | ADR-0004 and `system/zsh/` |
+| PATH assembly | shared shell contract | `system/shell/path.sh` |
 
 ## Deployment View
 
@@ -147,8 +148,6 @@ how-to guides or plans.
 
 ## Current Risks
 
-- Root README content can drift from current ADR and package policy because it
-  still contains long-form setup and tool descriptions.
 - Some older ADRs predate the current ADR quality guide and are intentionally
   less structured than new records should be.
 - Historical audits and plans can preserve old observations after cleanup has

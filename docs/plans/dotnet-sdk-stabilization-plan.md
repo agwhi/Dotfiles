@@ -1,6 +1,8 @@
 # .NET SDK Stabilization Plan
 
 Date: 2026-07-01. Updated: 2026-07-07.
+Status: completed. Historical record; current state comes from `just doctor`
+and the package manifests.
 
 This plan is non-mutating. It does not install, uninstall, relink, unlink,
 upgrade, repair, or remove any .NET SDK, runtime, workload, global tool, or

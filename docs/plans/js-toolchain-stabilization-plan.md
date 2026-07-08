@@ -1,6 +1,8 @@
 # JavaScript Toolchain Stabilization Plan
 
 Date: 2026-07-01.
+Status: completed. Historical record; current state comes from `just doctor`
+and the package manifests.
 
 This plan is non-mutating. It does not install, uninstall, migrate, delete, edit
 PATH, or clean local state. It turns the current JavaScript toolchain drift into

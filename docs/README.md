@@ -28,6 +28,9 @@ or reader need exists, not to fill the framework.
 | Understand the architecture | [`architecture.md`](architecture.md) | Explanation |
 | Audit local drift | [`how-to/audit-drift.md`](how-to/audit-drift.md) | How-to |
 | Add or classify a tool | [`how-to/add-managed-tool.md`](how-to/add-managed-tool.md) | How-to |
+| Secure public Wi-Fi use | [`how-to/secure-public-networks.md`](how-to/secure-public-networks.md) | How-to |
+| Look up managed tools | [`reference/tools.md`](reference/tools.md) | Reference |
+| Look up commands and aliases | [`reference/commands.md`](reference/commands.md) | Reference |
 | Review durable decisions | [`adr/`](adr/) | Decision log |
 | Review stabilization work | [`plans/`](plans/) | Plans |
 | Review historical audit evidence | [`audit/`](audit/) | Audit reports |

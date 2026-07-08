@@ -1,6 +1,8 @@
 # AI Tooling Stabilization Plan
 
 Date: 2026-07-03.
+Status: completed. Historical record; current state comes from `just doctor`
+and the package manifests.
 
 This plan documents the current AI Tool Surface and AI Asset state. The
 original discovery pass was non-mutating. A later approved gate created the

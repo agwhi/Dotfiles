@@ -1,6 +1,8 @@
 # Zsh Primary Adoption Plan
 
 Date: 2026-07-01.
+Status: completed. Historical record; current state comes from `just doctor`
+and the package manifests.
 
 This plan records the completed zsh-primary adoption. It adds repo-managed zsh
 startup files, points managed editor terminals at zsh, and removes Nushell from
