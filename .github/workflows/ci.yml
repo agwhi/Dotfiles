@@ -28,6 +28,9 @@ jobs:
           python3 -m py_compile scripts/doctor.py
           ./scripts/doctor.py --json | python3 -m json.tool > /dev/null
 
+      - name: Doctor parser tests
+        run: python3 scripts/doctor_test.py
+
       - name: PATH contract is POSIX and idempotent
         run: |
           sh -n system/shell/path.sh
@@ -40,3 +43,24 @@ jobs:
           zsh -n system/zsh/.zshenv
           zsh -n system/zsh/.zprofile
           zsh -n system/zsh/.zshrc
+
+  docs-and-secrets:
+    name: Markdown lint and secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: |
+            **/*.md
+            !backups/**
+            !reports/**
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
